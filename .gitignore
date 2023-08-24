@@ -10,4 +10,4 @@
 !README.md
 !.gitignore
 !init.sh
-!/verilator-test/*/*
+!./verilator-test/ysyx-example/*
