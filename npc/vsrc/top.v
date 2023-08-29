@@ -22,12 +22,12 @@ module top (
     output [7:0] seg7
 );
 
-//led led1(
-    //.clk(clk),
-    //.rst(rst),
-    //.sw(sw),
-    //.ledr(ledr)
-//);
+led led1(
+    .clk(clk),
+    .rst(rst),
+    .sw(sw),
+    .ledr(ledr)
+);
 
 assign VGA_CLK = clk;
 
