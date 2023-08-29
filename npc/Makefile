@@ -42,9 +42,12 @@ $(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
 all: default
 	@echo "Write this Makefile by your self."
 
-sim: $(BIN)
+#sim: $(BIN)
+	#$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
+	#@$^
+
+sim:  
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	@$^
 
 clean:
 	rm -rf $(BUILD_DIR)
