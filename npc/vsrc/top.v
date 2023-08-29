@@ -56,18 +56,18 @@ wire [23:0] vga_data;
     //.ps2_data(ps2_data)
 //);
 
-seg mu_seg(
-    .clk(clk),
-    .rst(rst),
-    .o_seg0(seg0),
-    .o_seg1(seg1),
-    .o_seg2(seg2),
-    .o_seg3(seg3),
-    .o_seg4(seg4),
-    .o_seg5(seg5),
-    .o_seg6(seg6),
-    .o_seg7(seg7)
-);
+//seg mu_seg(
+    //.clk(clk),
+    //.rst(rst),
+    //.o_seg0(seg0),
+    //.o_seg1(seg1),
+    //.o_seg2(seg2),
+    //.o_seg3(seg3),
+    //.o_seg4(seg4),
+    //.o_seg5(seg5),
+    //.o_seg6(seg6),
+    //.o_seg7(seg7)
+//);
 
 vmem my_vmem(
     .h_addr(h_addr),
