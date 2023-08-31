@@ -1,5 +1,7 @@
 TOPNAME = top
+#TOPNAME = our
 NXDC_FILES = constr/top.nxdc
+#NXDC_FILES = constr/our.nxdc
 INC_PATH ?=
 
 VERILATOR = verilator
@@ -43,8 +45,9 @@ all: default
 	@echo "Write this Makefile by your self."
 
 sim: $(BIN)
-	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	@$^
+	 $(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
+	 @$^
+
 
 clean:
 	rm -rf $(BUILD_DIR)

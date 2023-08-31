@@ -5,7 +5,7 @@ STUNAME = 李彦泽
 
 TRACER = tracer-ysyx
 GITFLAGS = -q --author='$(TRACER) <tracer@ysyx.org>' --no-verify --allow-empty
-
+NEMU_HOME = /home/alan/Project/ysyx/ysyx-workbench/npc
 YSYX_HOME = $(NEMU_HOME)/..
 WORK_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 WORK_INDEX = $(YSYX_HOME)/.git/index.$(WORK_BRANCH)
