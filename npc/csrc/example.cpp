@@ -20,10 +20,10 @@ int main(int arg, char** argv){
 
   while(1) {
     nvboard_update();
-    int a = rand() & 1;
-    int b = rand() & 1;
-    dut.a = a;
-    dut.b = b;
+    //int a = rand() & 1;
+    //int b = rand() & 1;
+    //dut.a = a;
+    //dut.b = b;
     dut.eval();
   }
 }
