@@ -12,9 +12,9 @@ void single_cycle() {
 }
 
 void reset(int times) {
-    dut.rst = 0;
-    while(times--) single_cycle();
     dut.rst = 1;
+    while(times--) single_cycle();
+    dut.rst = 0;
 }
 
 
