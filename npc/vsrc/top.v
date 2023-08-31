@@ -1,9 +1,14 @@
+
+`timescale 1ns/100ps
+`define clk_cycle 50
+
 module top(
     input clk,
     input rst,
     output reg[15:0] ledr
 );
 reg[31:0] count;
+
 
 always @(posedge clk) begin
     if(rst) begin ledr <= 1; count <= 0; end
