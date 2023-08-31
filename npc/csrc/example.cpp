@@ -12,15 +12,16 @@ void single_cycle() {
 }
 
 void reset(int times) {
-    dut.rst = 0;
+    dut.rst = 1;
     while(times--) single_cycle();
+    dut.rst = 0;
 }
 
 
 int main(int arg, char** argv){
   nvboard_bind_all_pins(&dut);
   nvboard_init();
-  //reset(10);
+  reset(10);
 
   while(1) {
     nvboard_update();
