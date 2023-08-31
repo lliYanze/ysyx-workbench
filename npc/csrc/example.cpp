@@ -27,6 +27,7 @@ int main(int arg, char** argv){
 
   while(1) {
     nvboard_update();
+    single_cycle();
     dut.eval();
   }
 }
