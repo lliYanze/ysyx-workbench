@@ -23,11 +23,12 @@ void reset(int times) {
 int main(int arg, char** argv){
   nvboard_bind_all_pins(&dut);
   nvboard_init();
-  reset(1);
+  reset(5);
 
   while(1) {
     nvboard_update();
     single_cycle();
     dut.eval();
+    reset(10);
   }
 }
