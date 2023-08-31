@@ -1,5 +1,7 @@
 TOPNAME = top
+#TOPNAME = our
 NXDC_FILES = constr/top.nxdc
+#NXDC_FILES = constr/our.nxdc
 INC_PATH ?=
 
 VERILATOR = verilator
