@@ -5,7 +5,7 @@ module top(
 );
 reg[31:0] count;
 
-always @( clk) begin
+always @( !clk) begin
     if(rst) begin ledr <= 1; count <= 0; end
     else begin 
         if(count == 0) ledr <= {ledr[14:0], ledr[15]};
