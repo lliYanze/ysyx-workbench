@@ -1,21 +1,21 @@
-
-`timescale 1ns/100ps
-`define clk_cycle 50
-
 module top(
-    input clk,
-    input rst,
-    output reg[15:0] ledr
+    input wire[1:0] Y,
+    input wire[1:0] X0,
+    input wire[1:0] X1,
+    input wire[1:0] X2,
+    input wire[1:0] X3,
+    output reg[1:0] F
+    
 );
-reg[31:0] count;
 
 
-always @(posedge clk) begin
-    if(rst) begin ledr <= 1; count <= 0; end
-    else begin 
-        if(count == 0) ledr <= {ledr[14:0], ledr[15]};
-        count <= (count >= 5000000 ? 32'b0 : count+1);
-        end
+always @(Y or X0 or X1 or X2 or X3) begin
+    case(Y) 
+        2'b00: F = X0;
+        2'b01: F = X1;
+        2'b10: F = X2;
+        2'b11: F = X3;
+        default: F = 2'b0;
+    endcase
     end
-
 endmodule
