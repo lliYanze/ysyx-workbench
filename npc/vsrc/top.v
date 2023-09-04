@@ -1,47 +1,18 @@
 module top(
-    input wire[7:0] sw,
-    input wire sw_enable,
-    output reg no_input,
-    output reg [2:0] ledr,
-    output reg[7:0] seg0
-    
+    input wire[3:0] A,
+    input wire[3:0] B,
+    input wire[2:0] mod,
+    output reg[3:0] result,
+    output reg zero,
+    output reg C,
+    output reg overflow
 );
 
-wire [2:0] num;
-
-
-tran_8to3 tran1(.tran_input_wire(sw),
-           .tran_enable(sw_enable),
-           .tran_all_down(no_input),
-           .tran_output_wire(num)
-);
-
-digital_led digital_led1(.input_num(num),
-    .output_seg(seg0)
-);
-
-
-always @(num) begin
-    if(num[0] == 1'b1) begin
-        ledr[0] = 1;
-    end
-    else begin
-        ledr[0] = 0;
-    end
-    if(num[1] == 1'b1) begin
-        ledr[1] = 1;
-    end
-    else begin
-        ledr[1] = 0;
-    end
-    if(num[2] == 1'b1) begin
-        ledr[2] = 1;
-    end
-    else begin
-        ledr[2] = 0;
-    end
+always @(A or B or mod) begin
+    case(mod)
+        3'b000: begin {C,result} = A + B;  end //add
+        default: begin C = 1'b0; zero = 1'b0;result = 4'b0000;overflow = 1'b0;end
+    endcase
 end
 
 endmodule
-
-
