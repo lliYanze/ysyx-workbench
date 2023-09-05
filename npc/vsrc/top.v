@@ -21,11 +21,12 @@ always @(A or B or mod) begin
         //sub
         3'b001: begin
             B_complement = ~B + 1;
-            {C,result} = A + B_complement;  
+            result = A + B_complement;  
             //{C,result} = A + ~B + 1;  
             overflow = (A[3] == B_complement[3])&(A[3] != result[3]);
             //overflow = (A[3] == [3])&(A[3] != result[3]);
             zero = ~(|result);
+            C = overflow;
 
         end
         //取反
@@ -70,13 +71,21 @@ always @(A or B or mod) begin
             else begin
                 B_complement = ~B + 1;
                 {C,result} = A + B_complement;  
-                zero = ~(|result[2:0]);
+                zero = ~(|result[3:0]);
                 overflow = (A[3] == B[3])&(A[3] != result[3]);
                 if(result[3] ) 
                     C = 1;
                 else 
                     C = 0;
             end
+        end
+        //判断是否相等
+        3'b111: begin
+            B_complement = ~B + 1;
+            result = A + B_complement;  
+            zero = ~(|result[3:0]);
+            overflow = (A[3] == B[3])&(A[3] != result[3]);
+            C = zero;
         end
 
 
