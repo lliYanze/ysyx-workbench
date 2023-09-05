@@ -25,6 +25,15 @@ always @(A or B or mod) begin
             zero = ~(|result);
 
         end
+        //取反
+        3'b010: begin
+            if(A[3]) begin
+                result = {A[3],~A[2:0]};
+            end 
+            else begin
+                result = A;
+            end
+        end
         default: begin C = 1'b0; zero = 1'b0;result = 4'b0000;overflow = 1'b0;end
     endcase
 end
