@@ -44,6 +44,42 @@ always @(A or B or mod) begin
             overflow = 0;
             C = 0;
         end
+        //或
+        3'b100: begin
+            result = A | B;
+            zero = 0;
+            overflow = 0;
+            C = 0;
+        end
+
+        //异或
+        3'b101: begin
+            result = A ^ B;
+            zero = 0;
+            overflow = 0;
+            C = 0;
+        end
+        //比较大小
+        3'b110 : begin 
+            if(A[3] > B[3]) begin
+                C = 1;
+                zero = 0;
+                result = 0;
+                overflow = 0;
+            end
+            else begin
+                B_complement = ~B + 1;
+                {C,result} = A + B_complement;  
+                zero = ~(|result[2:0]);
+                overflow = (A[3] == B[3])&(A[3] != result[3]);
+                if(result[3] ) 
+                    C = 1;
+                else 
+                    C = 0;
+            end
+        end
+
+
         default: begin C = 1'b0; zero = 1'b0;result = 4'b0000;overflow = 1'b0;end
     endcase
 end
