@@ -1,0 +1,11 @@
+top=top
+
+A (SW3, SW2, SW1, SW0)
+B (SW7, SW6, SW5, SW4)
+
+mod (SW15, SW14, SW13)
+
+result (LD3, LD2, LD1, LD0)
+C LD5
+overflow LD7
+zero LD9
