@@ -13,10 +13,14 @@
 # See the Mulan PSL v2 for more details.
 #**************************************************************************************/
 
--include $(NEMU_HOME)/../Makefile
+$(info test NEMU_HOME is $(NEMU_HOME))
+
+#-include $(NEMU_HOME)/../Makefile
 include $(NEMU_HOME)/scripts/build.mk
+#include ~/Project/ysyx/ysyx-workbench/nemu/scripts/build.mk
 
 include $(NEMU_HOME)/tools/difftest.mk
+#include ~/Project/ysyx/ysyx-workbench/nemu/tools/difftest.mk
 
 compile_git:
 	$(call git_commit, "compile NEMU")

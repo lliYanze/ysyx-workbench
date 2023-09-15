@@ -54,16 +54,20 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+static int cmd_si(char *args);
+
 static struct {
   const char *name;
   const char *description;
   int (*handler) (char *);
 } cmd_table [] = {
-  { "help", "Display information about all supported commands", cmd_help },
-  { "c", "Continue the execution of the program", cmd_c },
-  { "q", "Exit NEMU", cmd_q },
+    { "help", "Display information about all supported commands", cmd_help },
+    { "c", "Continue the execution of the program", cmd_c },
+    { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
+    { "si", "run program step by step", cmd_si},
+
 
 };
 
@@ -90,6 +94,12 @@ static int cmd_help(char *args) {
     printf("Unknown command '%s'\n", arg);
   }
   return 0;
+}
+
+//单步调试
+static int cmd_si(char *args) {
+    printf("this test si\n");
+    return -1;
 }
 
 void sdb_set_batch_mode() {
