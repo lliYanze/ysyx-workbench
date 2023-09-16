@@ -18,6 +18,12 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include <memory.h>
+#include <memory/paddr.h>
+
+
+word_t vaddr_read(vaddr_t addr, int len);
+word_t paddr_read(vaddr_t addr, int len);
 
 static int is_batch_mode = false;
 
@@ -56,6 +62,10 @@ static int cmd_help(char *args);
 
 static int cmd_si(char *args);
 
+static int cmd_info(char *args);
+
+static int cmd_x(char *args);
+
 static struct {
   const char *name;
   const char *description;
@@ -67,8 +77,8 @@ static struct {
 
   /* TODO: Add more commands */
     { "si", "run program step by step", cmd_si},
-
-
+    { "info", "show reg info", cmd_info},
+    { "x", "show data info ", cmd_x},
 };
 
 #define NR_CMD ARRLEN(cmd_table)
@@ -98,8 +108,61 @@ static int cmd_help(char *args) {
 
 //单步调试
 static int cmd_si(char *args) {
-    printf("this test si\n");
-    return -1;
+    /*printf("this test si\n");*/
+    /*printf("get line : %s\n", args);*/
+    char* get_step_num = strtok(args, " ");
+    int step_num = 1;
+    if(get_step_num != NULL) {
+        step_num = strtoimax(get_step_num, NULL, 0);
+    }
+    cpu_exec(step_num);
+    printf("have run %d times\n", step_num);
+    return 0;
+}
+
+static int cmd_info(char *args) {
+    char* regname = strtok(args, " ");
+    if(regname == NULL) {
+        printf("please add the reg name \n");
+        return 0;
+    }
+    switch (*regname) {
+        case 'r' : isa_reg_display();break;
+        default: printf("please info the right reg\n");
+    }
+    return 0;
+}
+
+static int cmd_x(char *args) {
+    char *str = NULL;
+    char *token = NULL;
+    char* get_param[2];
+    str = args;
+    printf("str is %s \n", str);
+    for(int i = 0; ;++i, str = NULL) {
+        token = strtok(str, " ");
+        if(token == NULL) {
+            break;
+        }
+        if(i > 1) {
+            printf("too many param ,please give me two\n");
+            return 0;
+        }
+        get_param[i] = token;
+
+    }
+    if(get_param[0] == NULL || get_param[1] == NULL) {
+        printf("too less param ,please give me two\n");
+    }
+    int data_size = strtoimax(get_param[0], NULL, 0);
+    vaddr_t data_addr = (vaddr_t)strtoul(get_param[1], NULL, 16);
+    printf("data_size is %d\n", data_size);
+
+    for(int i = 0; i < data_size; ++i) {
+        printf("0x%08x \n", vaddr_read(data_addr, 4));
+        data_addr += 4;
+    }
+    return 0;
 }
 
 void sdb_set_batch_mode() {
