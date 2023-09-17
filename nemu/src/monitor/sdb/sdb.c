@@ -66,6 +66,8 @@ static int cmd_info(char *args);
 
 static int cmd_x(char *args);
 
+static int cmd_cal(char *args);
+
 static struct {
   const char *name;
   const char *description;
@@ -79,6 +81,7 @@ static struct {
     { "si", "run program step by step", cmd_si},
     { "info", "show reg info", cmd_info},
     { "x", "show data info ", cmd_x},
+    { "cal", "calculate", cmd_cal},
 };
 
 #define NR_CMD ARRLEN(cmd_table)
@@ -162,6 +165,30 @@ static int cmd_x(char *args) {
         printf("0x%08x \n", vaddr_read(data_addr, 4));
         data_addr += 4;
     }
+    return 0;
+}
+
+static int cmd_cal(char *args) {
+    printf("now you can calculate\n");
+    char *calculate_str = NULL;
+      if (calculate_str) {
+        free(calculate_str);
+        calculate_str = NULL;
+      }
+
+    do {
+        calculate_str = readline("calculate # ");
+        bool is_success = true;
+        Assert(calculate_str != NULL, "calculate is NULL\n");
+        if (*calculate_str) {
+          add_history(calculate_str);
+        }
+        expr(calculate_str, &is_success);
+        if(!is_success)  {
+            printf("get wrong token\n");
+        }
+    } while(strcmp(calculate_str, "q") != 0);
+
     return 0;
 }
 

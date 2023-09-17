@@ -35,10 +35,15 @@ static struct rule {
   /* TODO: Add more rules.
    * Pay attention to the precedence level of different rules.
    */
+    //正则表达式已经实现了 这里是正则表达式选择出来的 比如 " +"是正则表达式中的空格重复至少1次 \\+是 \+ 所以正则不会将+当做正则中的元
 
   {" +", TK_NOTYPE},    // spaces
   {"\\+", '+'},         // plus
   {"==", TK_EQ},        // equal
+  {"\\-", '-'},         // sub
+  {"\\*", '*'},         // mul
+  {"\\\\", '\\'},       // div
+  {"q", 'q'},           // quit
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -95,7 +100,15 @@ static bool make_token(char *e) {
          */
 
         switch (rules[i].token_type) {
-          default: TODO();
+                    case TK_NOTYPE:  printf("test space\n"); break;
+                    case TK_EQ:      printf("test == \n"); break;
+                    case '+':        printf("test +\n"); break;
+                    case '-':        printf("test -\n"); break;
+                    case '*':        printf("test *\n"); break;
+                    case '\\':       printf("test \\\n"); break;
+                    case 'q':        break;
+
+                    default: TODO();
         }
 
         break;
@@ -119,7 +132,7 @@ word_t expr(char *e, bool *success) {
   }
 
   /* TODO: Insert codes to evaluate the expression. */
-  TODO();
+  /*TODO();*/
 
   return 0;
 }
