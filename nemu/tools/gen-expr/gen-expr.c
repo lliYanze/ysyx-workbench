@@ -31,9 +31,41 @@ static char *code_format =
 "  return 0; "
 "}";
 
-static void gen_rand_expr() {
-  buf[0] = '\0';
+int buf_index = 0;
+
+static void gen_num() {
+    buf[buf_index++] = rand() % 10000;
 }
+
+static void gen_rand_op() {
+    switch(rand() % 5) {
+        case 0: buf[buf_index++] = '+';break;
+        case 1: buf[buf_index++] = '-';break;
+        case 2: buf[buf_index++] = '*';break;
+        case 3: buf[buf_index++] = '/';break;
+        default: buf[buf_index++] = ' ';break;
+    }
+
+}
+static void gen_paren() {
+    switch(rand() % 2) {
+        case 0 : buf[buf_index++] = '(';break;
+        default: buf[buf_index++] = ')';break;
+    }
+}
+
+
+static void gen_rand_expr() {
+    switch(rand() % 3) {
+        case 0 : gen_num();break;
+        case 1 : gen_paren(); gen_rand_expr(); gen_paren();break;
+        default: gen_rand_expr(); gen_rand_op(); gen_rand_expr();break;
+    }
+    
+
+  /*buf[0] = '\0';*/
+}
+
 
 int main(int argc, char *argv[]) {
   int seed = time(0);
@@ -45,6 +77,7 @@ int main(int argc, char *argv[]) {
   int i;
   for (i = 0; i < loop; i ++) {
     gen_rand_expr();
+    buf[buf_index] = '\0';
 
     sprintf(code_buf, code_format, buf);
 

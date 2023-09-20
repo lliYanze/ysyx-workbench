@@ -175,6 +175,7 @@ static int cmd_cal(char *args) {
         free(calculate_str);
         calculate_str = NULL;
       }
+    int result = -1;
 
     do {
         calculate_str = readline("calculate # ");
@@ -183,10 +184,11 @@ static int cmd_cal(char *args) {
         if (*calculate_str) {
           add_history(calculate_str);
         }
-        expr(calculate_str, &is_success);
+        result = expr(calculate_str, &is_success);
         if(!is_success)  {
             printf("get wrong token\n");
         }
+        printf("%s = %d\n",calculate_str, result);
     } while(strcmp(calculate_str, "q") != 0);
 
     return 0;
