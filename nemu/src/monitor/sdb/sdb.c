@@ -68,6 +68,8 @@ static int cmd_x(char *args);
 
 static int cmd_cal(char *args);
 
+static int cmd_cal_test(char *args);
+
 static struct {
   const char *name;
   const char *description;
@@ -82,6 +84,7 @@ static struct {
     { "info", "show reg info", cmd_info},
     { "x", "show data info ", cmd_x},
     { "cal", "calculate", cmd_cal},
+    { "cal_test", "calculate", cmd_cal_test},
 };
 
 #define NR_CMD ARRLEN(cmd_table)
@@ -242,4 +245,61 @@ void init_sdb() {
 
   /* Initialize the watchpoint pool. */
   init_wp_pool();
+}
+
+static int cmd_cal_test(char *args) {
+    FILE *fp = fopen("/home/alan/Project/ysyx/ysyx-workbench/nemu/tools/gen-expr/express.log", "r");
+    FILE *fpwrite = fopen("/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/write.log", "w");
+    FILE *fpwrong = fopen("/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/wrong.log", "w");
+    assert(fp != NULL && fpwrong != NULL && fpwrite != NULL);
+    char get_one_line[65536] = {};
+    unsigned result = 0;
+    int cal_result = 0;
+    char express[65535];
+    while(fgets(get_one_line, 65535, fp) != NULL) {
+        printf("get line %s\n", get_one_line);
+        bool express_flag = false;
+        int express_begin = 0;
+        
+        for(int i = 0; get_one_line[i] != '\n'; ++i) {
+            if(!express_flag) {
+                result *= 10;
+                result += get_one_line[i] - '0';
+                if(get_one_line[i+1] == ' ') {
+                    express_flag = true;
+                    express_begin = ++i;
+                }
+            } else {
+                Assert(i-express_begin-1 >= 0, "表达式识别错误\n");
+                express[i-express_begin-1] = get_one_line[i];
+                express[i-express_begin] = '\0';
+            }
+        }
+        printf("result is %u, express is %s\n", result, express);
+        bool *is_success = false;
+        assert(express != NULL);
+        cal_result = expr(express, is_success);
+        /*printf("cal_result is %d\n", cal_result);*/
+        /*printf("result is %d\n", result);*/
+        
+        /*if(!is_success)  {*/
+            /*printf("get wrong token\n");*/
+        /*}*/
+        if(cal_result == result) {
+            fprintf(fpwrite, "express is %s\n cal_result = %d, result is %d\n", express, cal_result, result);
+            fputs("=========\n", fpwrite);
+        }else {
+            fprintf(fpwrong, "express is %s\n cal_result = %d, result is %d\n", express, cal_result, result);
+            fputs("=========\n", fpwrong);
+            
+            /*printf("wrong, result is %d, cal_result is %d\n express is %s", result, cal_result, express);*/
+        }
+        result = 0;
+    }
+    fclose(fpwrite);
+    fclose(fpwrong);
+
+    fclose(fp);
+    return 0;
+    
 }

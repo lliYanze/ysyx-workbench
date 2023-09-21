@@ -49,6 +49,7 @@ static struct rule {
     {"[0-9]+", TK_NUM},         // numbers
     {"\\(", '('},               // (
     {"\\)", ')'},               // )
+    {"\n", TK_NOTYPE},               // )
     
     {"q", 'q'},           // quit
 };
@@ -74,12 +75,15 @@ void init_regex() {
   }
 }
 
+#define Token_Size 4000
+#define Token_Str_Size 32
+
 typedef struct token {
   int type ;
-  char str[32];
+  char str[Token_Str_Size];
 } Token;
 
-static Token tokens[32] __attribute__((used)) = {};
+static Token tokens[Token_Size] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
 static bool make_token(char *e) {
@@ -100,8 +104,8 @@ static bool make_token(char *e) {
             i, rules[i].regex, position, substr_len, substr_len, substr_start);
 
         position += substr_len;
-        Assert(nr_token <= 31, "tokens的个数大于31 接受的tokens溢出了");
-        Assert(substr_len <= 30, "token长度大于31 接受的token长度溢出了");
+        Assert(nr_token <= Token_Size, "tokens的个数大于接受的tokens溢出了");
+        Assert(substr_len <= Token_Size - 1, "token长度大于31 接受的token长度溢出了");
 
         /* TODO: Now a new token is recognized with rules[i]. Add codes
          * to record the token in the array `tokens'. For certain types
@@ -168,6 +172,9 @@ static bool make_token(char *e) {
 
 bool check_parentheses(int p, int q) {
     Assert(p < q, " 识别()时 表达式异常\n");
+    if(tokens[p].type != '(' || tokens[q].type != ')') {
+        return false;
+    }
     int nums = 0;
     bool wrong_flag = false;
     bool wait_wrong_flag = false;
@@ -193,7 +200,7 @@ bool check_parentheses(int p, int q) {
 
         }
     }
-    if(!wrong_flag && nums == 0 && true_flag) {
+    if(!wrong_flag && nums == 0 && true_flag ) {
         return  true;
     }
     if(nums > 0) {
@@ -240,6 +247,7 @@ word_t eval(int p, int q) {
      */
 
 
+
         return eval(p + 1, q - 1);
   }
   else {
@@ -255,10 +263,10 @@ word_t eval(int p, int q) {
                 token_type = 2;
             } else if(token_type == '(') {
                 flag++;
-                Assert(flag >= 0, ")没有匹配\n");
+                /*Assert(flag >= 0, ")没有匹配\n");*/
             } else if(token_type == ')') {
                 flag--;
-                Assert(flag >= 0, ")没有匹配\n");
+                /*Assert(flag >= 0, ")没有匹配\n");*/
             } else {
                 continue;
             }
@@ -293,9 +301,9 @@ word_t eval(int p, int q) {
 }
 
 void clear_tokens() {
-    for(int i = 0; i < 32 && tokens[i].type != 0; ++i) {
+    for(int i = 0; i < Token_Size; ++i) {
         tokens[i].type = 0;
-        for(int j = 0; j < 32 && tokens[i].str[j] != '\0'; ++j){
+        for(int j = 0; j < Token_Str_Size && tokens[i].str[j] != '\0'; ++j){
             tokens[i].str[j] = '\0';
         }
     }
@@ -316,8 +324,12 @@ word_t expr(char *e, bool *success) {
   /*TODO();*/
     int p = 0;
     int q = 0;
-    for(; q < 32 && tokens[q].type != 0; ++q);
-    Assert((--q)>0, "未识别到有效表达式\n");
+    for(; q < Token_Size && tokens[q].type != 0; ++q);
+    /*Assert((--q)>0, "未识别到有效表达式\n");*/
+    if(--q <= 0) {
+        Log_RED("未识别到有效的表达式\n");
+        goto exit;
+    }
     
 
     int ret = eval(p, q);
@@ -326,7 +338,7 @@ word_t expr(char *e, bool *success) {
 
 exit:
     exit_flag = false;
-    printf("退出");
+    printf("退出计算器模式\n");
     return 0;
 
 }
