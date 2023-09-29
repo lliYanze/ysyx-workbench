@@ -27,6 +27,10 @@ enum {
   /* TODO: Add more token types */
         TK_NUM,
         TK_HEXADDR,
+        TK_AND,
+        TK_NEQ,
+        TK_HEX,
+        TK_REG
 };
 
 static struct rule {
@@ -45,12 +49,15 @@ static struct rule {
     {"==", TK_EQ},              // equal
     {"\\-", '-'},               // sub
     {"\\*", '*'},               // mul
-    {"/", '/'},               // div
+    {"/", '/'},                 // div
     {"[0-9]+", TK_NUM},         // numbers
     {"\\(", '('},               // (
     {"\\)", ')'},               // )
-    {"\n", TK_NOTYPE},               // )
-    
+    {"\n", TK_NOTYPE},          // 
+    {"&&", TK_AND},             //与
+    {"!=", TK_NEQ},             //不等于
+    //{"0x[0-9]+", TK_HEX},       //十六进制数
+    //{"$[0-9]+", TK_REG},        //寄存器
     {"q", 'q'},           // quit
 };
 
@@ -114,7 +121,6 @@ static bool make_token(char *e) {
 
         switch (rules[i].token_type) {
                     case TK_NOTYPE: break;
-                    case TK_EQ:     printf("test == \n");        break;
                     case '+':       tokens[nr_token].type = '+';
                                     ++nr_token;
                                     printf("\n");
@@ -145,7 +151,18 @@ static bool make_token(char *e) {
                                     ++nr_token;
                                     printf("\n");
                                     break;
-
+                    case TK_AND:    tokens[nr_token].type = TK_AND;
+                                    ++nr_token;
+                                    printf("\n");
+                                    break;
+                    case TK_NEQ:    tokens[nr_token].type = TK_NEQ;
+                                    ++nr_token;
+                                    printf("\n");
+                                    break;
+                    case TK_EQ:    tokens[nr_token].type = TK_EQ;
+                                    ++nr_token;
+                                    printf("\n");
+                                    break;
                     case 'q':       exit_flag = true; break;
 
                     default: TODO();
@@ -257,7 +274,10 @@ word_t eval(int p, int q) {
         int flag = 0;
         for(int i = p; i <= q; ++i) {
             int token_type = tokens[i].type;
-            if(token_type == '+' || token_type == '-') {
+            if(token_type == TK_AND || token_type == TK_EQ || token_type == TK_NEQ) {
+                token_type = 0;
+            }
+            else if(token_type == '+' || token_type == '-') {
                 token_type = 1;
             } else if(token_type == '*' || token_type == '/') {
                 token_type = 2;
@@ -281,18 +301,28 @@ word_t eval(int p, int q) {
         int val2 = eval(op + 1, q);
 
         switch (tokens[op].type) {
-          case '+': 
+            case '+': 
                 Log("====%d + %d = %d====\n",val1, val2, val1 + val2); 
                 return val1 + val2;
-          case '-': 
+            case '-': 
                 Log("====%d - %d = %d====\n",val1, val2, val1 - val2); 
                 return val1 - val2;
-          case '*': 
+            case '*': 
                 Log("====%d * %d = %d====\n",val1, val2, val1 * val2); 
                 return val1 * val2;
-          case '/': 
+            case '/': 
                 Log("====%d / %d = %d====\n",val1, val2, val1 / val2); 
                 return val1 / val2;
+            case TK_AND:
+                Log("====%d and %d = %d =====\n", val1, val2, val1 && val2);
+                return val1 && val2;
+            case TK_EQ:
+                Log("====%d == %d ? %d =====\n", val1, val2, val1 == val2);
+                return val1 == val2;
+            case TK_NEQ:
+                Log("====%d != %d ? %d =====\n", val1, val2, val1 != val2);
+                return val1 != val2;
+         
           default: assert(0);
         }
   }
