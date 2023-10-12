@@ -17,6 +17,7 @@
 #include <cpu/cpu.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include "common.h"
 #include "sdb.h"
 #include <memory.h>
 #include <memory/paddr.h>
@@ -142,7 +143,7 @@ static int cmd_info(char *args) {
 static int cmd_x(char *args) {
     char *str = NULL;
     char *token = NULL;
-    char* get_param[2];
+    char* get_param[2] = {NULL, NULL};
     str = args;
     printf("str is %s \n", str);
     for(int i = 0; ;++i, str = NULL) {
@@ -159,10 +160,12 @@ static int cmd_x(char *args) {
     }
     if(get_param[0] == NULL || get_param[1] == NULL) {
         printf("too less param ,please give me two\n");
+        return 0;
     }
     int data_size = strtoimax(get_param[0], NULL, 0);
-    vaddr_t data_addr = (vaddr_t)strtoul(get_param[1], NULL, 16);
+    vaddr_t data_addr = (vaddr_t)strtoumax(get_param[1], NULL, 16);
     printf("data_size is %d\n", data_size);
+    printf("data_addr is %x\n", data_addr);
 
     for(int i = 0; i < data_size; ++i) {
         printf("0x%08x \n", vaddr_read(data_addr, 4));
@@ -178,7 +181,7 @@ static int cmd_cal(char *args) {
         free(calculate_str);
         calculate_str = NULL;
       }
-    int result = -1;
+    word_t result = 0;
 
     do {
         calculate_str = readline("calculate # ");
@@ -191,7 +194,7 @@ static int cmd_cal(char *args) {
         if(!is_success)  {
             printf("get wrong token\n");
         }
-        printf("%s = %d\n",calculate_str, result);
+        printf("%s = %u\n",calculate_str, result);
     } while(strcmp(calculate_str, "q") != 0);
 
     return 0;

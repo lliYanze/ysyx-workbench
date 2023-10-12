@@ -13,12 +13,17 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
+#include "common.h"
 #include <isa.h>
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
  */
 #include <regex.h>
+#include <stdio.h>
+#include <string.h>
+
+word_t vaddr_read(vaddr_t addr, int len);
 
 bool exit_flag = false;
 enum {
@@ -30,7 +35,7 @@ enum {
         TK_AND,
         TK_NEQ,
         TK_HEX,
-        TK_REG
+        TK_REG,
 };
 
 static struct rule {
@@ -43,7 +48,7 @@ static struct rule {
    */
     //正则表达式已经实现了 这里是正则表达式选择出来的 
     //比如 " +"是正则表达式中的空格重复至少1次 \\+是 \+ 所以正则不会将+当做正则中的元
-
+    {"0x[0-9]+", TK_HEXADDR},       //十六进制数
     {" +", TK_NOTYPE},          // spaces
     {"\\+", '+'},               // plus
     {"==", TK_EQ},              // equal
@@ -56,8 +61,7 @@ static struct rule {
     {"\n", TK_NOTYPE},          // 
     {"&&", TK_AND},             //与
     {"!=", TK_NEQ},             //不等于
-    //{"0x[0-9]+", TK_HEX},       //十六进制数
-    //{"$[0-9]+", TK_REG},        //寄存器
+    {"\\$+\\w+", TK_REG},        //寄存器
     {"q", 'q'},           // quit
 };
 
@@ -113,6 +117,8 @@ static bool make_token(char *e) {
         position += substr_len;
         Assert(nr_token <= Token_Size, "tokens的个数大于接受的tokens溢出了");
         Assert(substr_len <= Token_Size - 1, "token长度大于31 接受的token长度溢出了");
+        bool reg_success = false;
+        char char_num[Token_Str_Size];
 
         /* TODO: Now a new token is recognized with rules[i]. Add codes
          * to record the token in the array `tokens'. For certain types
@@ -120,52 +126,82 @@ static bool make_token(char *e) {
          */
 
         switch (rules[i].token_type) {
-                    case TK_NOTYPE: break;
-                    case '+':       tokens[nr_token].type = '+';
-                                    ++nr_token;
-                                    printf("\n");
-                                    break;
-                    case '-':       tokens[nr_token].type = '-';
-                                    ++nr_token;
-                                    printf("\n");
-                                    break;
-                    case '*':       tokens[nr_token].type = '*';
-                                    ++nr_token;
-                                    printf("\n");
-                                    break;
-                    case '/':      tokens[nr_token].type = '/';
-                                    ++nr_token;
-                                    printf("\n");
-                                    break;
-                    case ')':       tokens[nr_token].type = ')';
-                                    ++nr_token;
-                                    printf("\n");
-                                    break;
-                    case '(':       tokens[nr_token].type = '(';
-                                    ++nr_token;
-                                    printf("\n");
-                                    break;
-                    case TK_NUM:    strncat(tokens[nr_token].str, substr_start, substr_len) ;        
-                                    tokens[nr_token].str[substr_len] = '\0';
-                                    tokens[nr_token].type = TK_NUM;
-                                    ++nr_token;
-                                    printf("\n");
-                                    break;
-                    case TK_AND:    tokens[nr_token].type = TK_AND;
-                                    ++nr_token;
-                                    printf("\n");
-                                    break;
-                    case TK_NEQ:    tokens[nr_token].type = TK_NEQ;
-                                    ++nr_token;
-                                    printf("\n");
-                                    break;
-                    case TK_EQ:    tokens[nr_token].type = TK_EQ;
-                                    ++nr_token;
-                                    printf("\n");
-                                    break;
-                    case 'q':       exit_flag = true; break;
+            case TK_NOTYPE: break;
+            case '+':       tokens[nr_token].type = '+';
+                            ++nr_token;
+                            printf("\n");
+                            break;
+            case '-':       tokens[nr_token].type = '-';
+                            ++nr_token;
+                            printf("\n");
+                            break;
+            case '*':       tokens[nr_token].type = '*';
+                            ++nr_token;
+                            printf("\n");
+                            break;
+            case '/':      tokens[nr_token].type = '/';
+                            ++nr_token;
+                            printf("\n");
+                            break;
+            case ')':       tokens[nr_token].type = ')';
+                            ++nr_token;
+                            printf("\n");
+                            break;
+            case '(':       tokens[nr_token].type = '(';
+                            ++nr_token;
+                            printf("\n");
+                            break;
+            case TK_NUM:    strncat(tokens[nr_token].str, substr_start, substr_len) ;        
+                            tokens[nr_token].str[substr_len] = '\0';
+                            tokens[nr_token].type = TK_NUM;
+                            ++nr_token;
+                            printf("\n");
+                            break;
+            case TK_AND:    tokens[nr_token].type = TK_AND;
+                            ++nr_token;
+                            printf("\n");
+                            break;
+            case TK_NEQ:    tokens[nr_token].type = TK_NEQ;
+                            ++nr_token;
+                            printf("\n");
+                            break;
+            case TK_EQ:     tokens[nr_token].type = TK_EQ;
+                            ++nr_token;
+                            printf("\n");
+                            break;
+            case TK_HEXADDR:        
+                            strncat(tokens[nr_token].str, substr_start, substr_len) ;
+                            tokens[nr_token].str[substr_len] = '\0';
+                            tokens[nr_token].type = TK_HEXADDR;
+                            
+                            vaddr_t data_addr = (vaddr_t)strtoul(tokens[nr_token].str, NULL, 16);
+                            printf("0x%x\n", data_addr);
+                            word_t hex_nums = vaddr_read(data_addr, 4);
+                            printf("hex id %x\n", hex_nums);
+                            printf("hex id %u\n", hex_nums);
 
-                    default: TODO();
+                            snprintf(char_num, sizeof(char_num), "%u", hex_nums);
+                            strcpy(tokens[nr_token].str, char_num);
+                            ++nr_token;
+                            break;
+            case TK_REG:    strncat(tokens[nr_token].str, substr_start, substr_len) ;   
+                            tokens[nr_token].type = TK_REG;
+                            tokens[nr_token].str[substr_len] = '\0';
+                            word_t nums = isa_reg_str2val(tokens[nr_token].str+1, &reg_success);
+                            if(!reg_success) {
+                                printf("错误的寄存器1\n");
+                                exit_flag = true; break;
+                            }else {
+                                printf("%u\n", nums);
+                                snprintf(char_num, sizeof(char_num), "%u", nums);
+                                strcpy(tokens[nr_token].str, char_num);
+                            }
+                            ++nr_token;
+                            break;
+            
+            case 'q':       exit_flag = true; break;
+
+            default: TODO();
         }
 
         break;
@@ -228,16 +264,16 @@ bool check_parentheses(int p, int q) {
     return false;
 }
 
-int chartoint(char* change_char) {
+word_t chartounint(char* change_char) {
     Assert(*change_char != '\0', "没有转换成int的char");
-    int ret = *change_char - '0';
+    word_t ret = *change_char - '0';
     ++change_char;
         
     for(;*change_char != '\0'; ++change_char) {
         ret *= 10;
         ret += (*change_char - '0');
     }
-    Assert(ret >= 0, "char转换成int失败\n");
+    /*Assert(ret >= 0, "char转换成int失败\n");*/
     return ret;
 }
 
@@ -252,7 +288,7 @@ word_t eval(int p, int q) {
      * For now this token should be a number.
      * Return the value of the number.
      */
-        int num = chartoint(tokens[p].str);
+        word_t num = chartounint(tokens[p].str);
         if(num == 0) {
             printf("你输入了0么？\n");
         }
@@ -297,30 +333,30 @@ word_t eval(int p, int q) {
             }
         }
         Assert(op > 0, "主运算符位置不合理\n");
-        int val1 = eval(p, op - 1);
-        int val2 = eval(op + 1, q);
+        word_t  val1 = eval(p, op - 1);
+        word_t  val2 = eval(op + 1, q);
 
         switch (tokens[op].type) {
             case '+': 
-                Log("====%d + %d = %d====\n",val1, val2, val1 + val2); 
+                Log("====%u + %u = %u====\n",val1, val2, val1 + val2); 
                 return val1 + val2;
             case '-': 
-                Log("====%d - %d = %d====\n",val1, val2, val1 - val2); 
+                Log("====%u - %u = %u====\n",val1, val2, val1 - val2); 
                 return val1 - val2;
             case '*': 
-                Log("====%d * %d = %d====\n",val1, val2, val1 * val2); 
+                Log("====%u * %u = %u====\n",val1, val2, val1 * val2); 
                 return val1 * val2;
             case '/': 
-                Log("====%d / %d = %d====\n",val1, val2, val1 / val2); 
+                Log("====%u / %u = %u====\n",val1, val2, val1 / val2); 
                 return val1 / val2;
             case TK_AND:
-                Log("====%d and %d = %d =====\n", val1, val2, val1 && val2);
+                Log("====%u and %u = %u =====\n", val1, val2, val1 && val2);
                 return val1 && val2;
             case TK_EQ:
-                Log("====%d == %d ? %d =====\n", val1, val2, val1 == val2);
+                Log("====%u == %u ? %u =====\n", val1, val2, val1 == val2);
                 return val1 == val2;
             case TK_NEQ:
-                Log("====%d != %d ? %d =====\n", val1, val2, val1 != val2);
+                Log("====%u != %u ? %u =====\n", val1, val2, val1 != val2);
                 return val1 != val2;
          
           default: assert(0);

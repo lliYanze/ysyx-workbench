@@ -37,5 +37,17 @@ void isa_reg_display() {
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
-  return 0;
+    int reg_nums = sizeof(regs)/sizeof(regs[0]);
+    int ret = 0;
+    for(int i = 0;i < reg_nums; ++i) {
+        if(!strcmp(s, regs[check_reg_idx(i)])){
+            ret = R(i);
+            *success = true;
+        }
+    }
+    if(!strcmp(s, "pc")){
+        ret = cpu.pc;
+        *success = true;
+    }
+    return ret;
 }
