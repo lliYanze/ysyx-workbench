@@ -71,6 +71,10 @@ static int cmd_cal(char *args);
 
 static int cmd_cal_test(char *args);
 
+static int cmd_b(char *args);
+
+static int cmd_d(char *args);
+
 static struct {
   const char *name;
   const char *description;
@@ -86,6 +90,8 @@ static struct {
     { "x", "show data info ", cmd_x},
     { "cal", "calculate", cmd_cal},
     { "cal_test", "calculate", cmd_cal_test},
+    { "b", "add break points", cmd_b},
+    { "d", "delect break points", cmd_d},
 };
 
 #define NR_CMD ARRLEN(cmd_table)
@@ -135,6 +141,7 @@ static int cmd_info(char *args) {
     }
     switch (*regname) {
         case 'r' : isa_reg_display();break;
+        case 'b' : show_points();break;
         default: printf("please info the right reg\n");
     }
     return 0;
@@ -199,6 +206,43 @@ static int cmd_cal(char *args) {
 
     return 0;
 }
+
+static int cmd_b(char *args) {
+    char *get_express = args;
+    if(get_express == NULL) {
+        printf("please add the express\n");
+        return 0;
+    }
+    new_wp(get_express);
+    printf("add watchpoint success\n");
+
+    return 0;
+    
+}
+
+static int cmd_d(char *args) {
+    int delect_nums[NR_WP];
+    int counts = 0;
+    char *str = args;
+    for(int i = 0; ;++i, str = NULL) {
+        char *delect_num = strtok(str, " ");
+        if(delect_num == NULL) {
+            break;
+        }
+        int num = strtoimax(delect_num, NULL, 0);
+        if(num > NR_WP || num < 0) {
+            printf("delect num is wrong. 0<= num <= 31\n");
+            return -1;
+        }
+        delect_nums[i] = num;
+        counts++;
+    }
+    for(; counts > 0; --counts) {
+        free_wp(delect_nums[counts-1]);
+    }
+    return 0;
+}
+
 
 void sdb_set_batch_mode() {
   is_batch_mode = true;

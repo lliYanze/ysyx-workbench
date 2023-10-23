@@ -36,6 +36,7 @@ enum {
         TK_NEQ,
         TK_HEX,
         TK_REG,
+        TK_DEREF,
 };
 
 static struct rule {
@@ -177,9 +178,8 @@ static bool make_token(char *e) {
                             vaddr_t data_addr = (vaddr_t)strtoul(tokens[nr_token].str, NULL, 16);
                             printf("0x%x\n", data_addr);
                             word_t hex_nums = vaddr_read(data_addr, 4);
-                            printf("hex id %x\n", hex_nums);
-                            printf("hex id %u\n", hex_nums);
-
+                            /*printf("hex id %x\n", hex_nums);*/
+                            /*printf("hex id %u\n", hex_nums);*/
                             snprintf(char_num, sizeof(char_num), "%u", hex_nums);
                             strcpy(tokens[nr_token].str, char_num);
                             ++nr_token;
@@ -315,7 +315,7 @@ word_t eval(int p, int q) {
             }
             else if(token_type == '+' || token_type == '-') {
                 token_type = 1;
-            } else if(token_type == '*' || token_type == '/') {
+            } else if(token_type == '*' || token_type == '/' || token_type == TK_DEREF) {
                 token_type = 2;
             } else if(token_type == '(') {
                 flag++;
@@ -332,9 +332,16 @@ word_t eval(int p, int q) {
                 main_token = token_type;
             }
         }
-        Assert(op > 0, "主运算符位置不合理\n");
-        word_t  val1 = eval(p, op - 1);
-        word_t  val2 = eval(op + 1, q);
+        Assert(op >= 0, "主运算符位置不合理\n");
+
+        word_t  val1 ;
+        word_t  val2 ;
+        if (tokens[op].type != TK_DEREF) {
+            val1 = eval(p, op - 1);
+            val2 = eval(op + 1, q);
+        } else {
+            val2 = eval(op + 1, q);
+        }
 
         switch (tokens[op].type) {
             case '+': 
@@ -358,6 +365,9 @@ word_t eval(int p, int q) {
             case TK_NEQ:
                 Log("====%u != %u ? %u =====\n", val1, val2, val1 != val2);
                 return val1 != val2;
+            case TK_DEREF:
+                Log("====*%u = %u =====\n", val2, vaddr_read(val2, 4));
+                return vaddr_read(val2, 4);
          
           default: assert(0);
         }
@@ -377,14 +387,20 @@ void clear_tokens() {
 
 word_t expr(char *e, bool *success) {
     clear_tokens();
+
     
     
-  if (!make_token(e)) {
-    *success = false;
-    printf("无效表达式");
-    return 0;
-  }
+    if (!make_token(e)) {
+        *success = false;
+        printf("无效表达式");
+        return 0;
+    }
     if(exit_flag) goto exit;
+    for (int i = 0; i < nr_token; i ++) {
+        if (tokens[i].type == '*' && (i == 0 || tokens[i - 1].type != TK_NUM) ) {
+            tokens[i].type = TK_DEREF;
+        }
+    }
 
   /* TODO: Insert codes to evaluate the expression. */
   /*TODO();*/
