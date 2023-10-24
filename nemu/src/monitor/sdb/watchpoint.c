@@ -125,6 +125,8 @@ void show_points()
 
 }
 
+
+#ifdef CONFIG_WATCHPOINT
 word_t check_wp()
 {
     for(WP* temp = head; temp != NULL; temp = temp->pre){
@@ -145,5 +147,10 @@ word_t check_wp()
     return NOT_HIT;
 
 }
-
+#else 
+word_t check_wp()
+{
+    return NOT_HIT;
+}
+#endif
 
