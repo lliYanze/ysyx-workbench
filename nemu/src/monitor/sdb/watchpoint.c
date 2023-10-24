@@ -72,6 +72,12 @@ WP* new_wp(char *express)
         assert(0);
     }
     strcpy(temp->expr, express);
+    bool is_success = true;
+    temp->value = expr(temp->expr, &is_success);
+    if(!is_success) {
+        printf("function:%s get wrong token\n", __func__);
+        assert(0);
+    }
 
     return temp;
 }
@@ -119,5 +125,25 @@ void show_points()
 
 }
 
+word_t check_wp()
+{
+    for(WP* temp = head; temp != NULL; temp = temp->pre){
+        bool is_success = true;
+        word_t result = expr(temp->expr, &is_success);
+        if(!is_success) {
+            printf("function:%s get wrong token\n", __func__);
+            assert(0);
+        }
+        if(result != temp->value){
+            printf("watchpoint %d: %s\n", temp->NO, temp->expr);
+            printf("Old value = %u\n", temp->value);
+            printf("New value = %u\n", result);
+            temp->value = result;
+            return temp->NO;
+        }
+    }
+    return NOT_HIT;
+
+}
 
 

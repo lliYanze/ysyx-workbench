@@ -388,8 +388,6 @@ void clear_tokens() {
 word_t expr(char *e, bool *success) {
     clear_tokens();
 
-    
-    
     if (!make_token(e)) {
         *success = false;
         printf("无效表达式");
