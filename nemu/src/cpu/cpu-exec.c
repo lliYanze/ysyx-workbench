@@ -48,7 +48,7 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
         return;
     }
     else{
-        printf("Hit watchpoint %d at address 0x%ux\n", result, cpu.pc);
+        printf("Hit watchpoint %d at address 0x%x\n", result, cpu.pc);
         nemu_state.state = NEMU_STOP;
     }
     

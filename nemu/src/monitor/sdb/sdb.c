@@ -75,6 +75,10 @@ static int cmd_b(char *args);
 
 static int cmd_d(char *args);
 
+static int cmd_w(char *args);
+
+
+
 static struct {
   const char *name;
   const char *description;
@@ -92,6 +96,7 @@ static struct {
     { "cal_test", "calculate", cmd_cal_test},
     { "b", "add break points", cmd_b},
     { "d", "delect break points", cmd_d},
+    { "w", "set break point", cmd_w},
 };
 
 #define NR_CMD ARRLEN(cmd_table)
@@ -243,6 +248,18 @@ static int cmd_d(char *args) {
     return 0;
 }
 
+static int cmd_w(char *args) 
+{
+    char *get_express = args;
+    if(get_express == NULL) {
+        printf("please add the express\n");
+        return 0;
+    }
+    new_wp(get_express);
+    printf("add watchpoint success\n");
+
+    return 0;
+}
 
 void sdb_set_batch_mode() {
   is_batch_mode = true;
