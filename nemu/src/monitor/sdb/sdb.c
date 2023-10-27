@@ -175,9 +175,9 @@ static int cmd_x(char *args) {
   int data_size = strtoimax(get_param[0], NULL, 0);
   vaddr_t data_addr = (vaddr_t)strtoumax(get_param[1], NULL, 16);
   printf("data_size is %d\n", data_size);
-  printf("data_addr is %x\n", data_addr);
+  printf("data_addr is 0x%x\n", data_addr);
 
-  for (int i = 0; i < data_size; ++i) {
+  for (int i = 0; i < data_size*4; i = i +4) {
     printf("0x%08x \n", vaddr_read(data_addr, 4));
     data_addr += 4;
   }
@@ -315,11 +315,18 @@ static int cmd_cal_test(char *args) {
   FILE *fp = fopen(
       "/home/alan/Project/ysyx/ysyx-workbench/nemu/tools/gen-expr/express.log",
       "r");
+  assert(fp != NULL);
+    //清空log
   FILE *fpwrite = fopen(
       "/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/write.log", "w");
   FILE *fpwrong = fopen(
-      "/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/wrong.log", "w");
+          "/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/wrong.log", "w");
   assert(fp != NULL && fpwrong != NULL && fpwrite != NULL);
+  fputs("=========\n", fpwrite);
+  fputs("=========\n", fpwrong);
+  fclose(fpwrong);
+  fclose(fpwrite);
+
   char get_one_line[65536] = {};
   unsigned result = 0;
   int cal_result = 0;
@@ -329,6 +336,11 @@ static int cmd_cal_test(char *args) {
     bool express_flag = false;
     int express_begin = 0;
 
+      FILE *fpwrite = fopen(
+          "/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/write.log", "a");
+      FILE *fpwrong = fopen(
+          "/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/wrong.log", "a");
+      assert(fp != NULL && fpwrong != NULL && fpwrite != NULL);
     for (int i = 0; get_one_line[i] != '\n'; ++i) {
       if (!express_flag) {
         result *= 10;
@@ -347,12 +359,6 @@ static int cmd_cal_test(char *args) {
     bool *is_success = false;
     assert(express != NULL);
     cal_result = expr(express, is_success);
-    /*printf("cal_result is %d\n", cal_result);*/
-    /*printf("result is %d\n", result);*/
-
-    /*if(!is_success)  {*/
-    /*printf("get wrong token\n");*/
-    /*}*/
     if (cal_result == result) {
       fprintf(fpwrite, "express is %s\n cal_result = %d, result is %d\n",
               express, cal_result, result);
@@ -365,11 +371,11 @@ static int cmd_cal_test(char *args) {
       /*printf("wrong, result is %d, cal_result is %d\n express is %s", result,
        * cal_result, express);*/
     }
+      fclose(fpwrong);
+      fclose(fpwrite);
+
     result = 0;
   }
-  fclose(fpwrite);
-  fclose(fpwrong);
-
   fclose(fp);
   return 0;
 }
