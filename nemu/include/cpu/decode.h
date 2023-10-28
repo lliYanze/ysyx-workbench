@@ -62,9 +62,9 @@ finish:
   *key = __key >> __shift;
   *mask = __mask >> __shift;
   *shift = __shift;
-    printf("key is-%lx\n", *key);
-    printf("mask is-%lx\n",*mask);
-    printf("shift is-%lx\n", *shift);
+    //printf("key is-%lx\n", *key);
+    //printf("mask is-%lx\n",*mask);
+    //printf("shift is-%lx\n", *shift);
 }
 
 __attribute__((always_inline))
