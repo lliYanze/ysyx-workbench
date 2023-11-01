@@ -21,9 +21,11 @@
 #include <memory/paddr.h>
 #include <readline/history.h>
 #include <readline/readline.h>
+#include <utils.h>
 
 word_t vaddr_read(vaddr_t addr, int len);
 word_t paddr_read(vaddr_t addr, int len);
+extern NEMUState nemu_state;
 
 static int is_batch_mode = false;
 
@@ -54,7 +56,10 @@ static int cmd_c(char *args) {
   return 0;
 }
 
-static int cmd_q(char *args) { return -1; }
+static int cmd_q(char *args) { 
+    nemu_state.state = NEMU_QUIT;
+    return -1; 
+}
 
 static int cmd_help(char *args);
 
