@@ -138,8 +138,8 @@ word_t check_wp()
         }
         if(result != temp->value){
             printf("watchpoint %d: %s\n", temp->NO, temp->expr);
-            printf("Old value = %u\n", temp->value);
-            printf("New value = %u\n", result);
+            printf("Old value = 0x%x\n", temp->value);
+            printf("New value = 0x%x\n", result);
             temp->value = result;
             return temp->NO;
         }

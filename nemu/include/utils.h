@@ -67,11 +67,18 @@ uint64_t get_time();
   } while (0) \
 )
 
+#ifdef CONFIG_LOG_TO_FILE
+#define _Log(...) \
+  do { \
+    log_write(__VA_ARGS__); \
+  } while (0)
+#else
 #define _Log(...) \
   do { \
     printf(__VA_ARGS__); \
     log_write(__VA_ARGS__); \
   } while (0)
+#endif
 
 
 #endif

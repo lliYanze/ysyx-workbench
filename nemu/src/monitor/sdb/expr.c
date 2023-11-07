@@ -136,54 +136,54 @@ static bool make_token(char *e) {
         case '+':
           tokens[nr_token].type = '+';
           ++nr_token;
-          printf("\n");
+          /*printf("\n");*/
           break;
         case '-':
           tokens[nr_token].type = '-';
           ++nr_token;
-          printf("\n");
+          /*printf("\n");*/
           break;
         case '*':
           tokens[nr_token].type = '*';
           ++nr_token;
-          printf("\n");
+          /*printf("\n");*/
           break;
         case '/':
           tokens[nr_token].type = '/';
           ++nr_token;
-          printf("\n");
+          /*printf("\n");*/
           break;
         case ')':
           tokens[nr_token].type = ')';
           ++nr_token;
-          printf("\n");
+          /*printf("\n");*/
           break;
         case '(':
           tokens[nr_token].type = '(';
           ++nr_token;
-          printf("\n");
+          /*printf("\n");*/
           break;
         case TK_NUM:
           strncat(tokens[nr_token].str, substr_start, substr_len);
           tokens[nr_token].str[substr_len] = '\0';
           tokens[nr_token].type = TK_NUM;
           ++nr_token;
-          printf("\n");
+          /*printf("\n");*/
           break;
         case TK_AND:
           tokens[nr_token].type = TK_AND;
           ++nr_token;
-          printf("\n");
+          /*printf("\n");*/
           break;
         case TK_NEQ:
           tokens[nr_token].type = TK_NEQ;
           ++nr_token;
-          printf("\n");
+          /*printf("\n");*/
           break;
         case TK_EQ:
           tokens[nr_token].type = TK_EQ;
           ++nr_token;
-          printf("\n");
+          /*printf("\n");*/
           break;
         /*case TK_HEXADDR:
           strncat(tokens[nr_token].str, substr_start, substr_len);
@@ -218,7 +218,7 @@ static bool make_token(char *e) {
             exit_flag = true;
             break;
           } else {
-            printf("%u\n", nums);
+            /*printf("%u\n", nums);*/
             snprintf(char_num, sizeof(char_num), "%u", nums);
             strcpy(tokens[nr_token].str, char_num);
           }
@@ -314,9 +314,9 @@ word_t eval(int p, int q) {
      * Return the value of the number.
      */
     word_t num = chartounint(tokens[p].str);
-    if (num == 0) {
-      printf("你输入了0么？\n");
-    }
+    /*if (num == 0) {*/
+      /*printf("你输入了0么？\n");*/
+    /*}*/
     return num;
   } else if (check_parentheses(p, q) == true) {
     /* The expression is surrounded by a matched pair of parentheses.

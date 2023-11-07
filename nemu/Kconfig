@@ -218,3 +218,15 @@ config RT_CHECK
   default y
 
 endmenu
+
+menu "LOG"
+choice 
+    prompt "Log Show Position"
+    default LOG_TO_TERMINAL
+    config LOG_TO_TERMINAL
+    bool "log show in terminal and file"
+    config LOG_TO_FILE
+    bool "log show just in file "
+endchoice
+
+endmenu

@@ -42,7 +42,6 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
     IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 
 //TODO: scan watchpoint
-
     word_t result = check_wp();
     if(result == NOT_HIT){
         return;
