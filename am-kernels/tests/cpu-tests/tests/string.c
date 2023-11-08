@@ -13,6 +13,7 @@ char str1[] = "Hello";
 char str[20];
 
 int main() {
+    /*panic("hello");*/
 	check(strcmp(s[0], s[2]) == 0);
 	check(strcmp(s[0], s[1]) < 0);
 	check(strcmp(s[0] + 1, s[1] + 1) < 0);
