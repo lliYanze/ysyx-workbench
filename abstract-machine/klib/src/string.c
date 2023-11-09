@@ -23,6 +23,7 @@ char *strcpy(char *dst, const char *src) {
     return NULL;
   }
 
+    /*int len_src = 0;*/
   size_t len_src = strlen(src);
 
   for (int i = 0; i < len_src; ++i) {
@@ -30,7 +31,6 @@ char *strcpy(char *dst, const char *src) {
   }
   dst[len_src] = '\0';
   return dst;
-  /*panic("Not implemented");*/
 }
 /*
  * 在dst后添加src
@@ -53,7 +53,6 @@ char *strcat(char *dst, const char *src) {
     dst[len_dst + len_src] = '\0';
     return dst;
 
-    /*panic("Not implemented"); */
 }
 
 /*
@@ -84,10 +83,11 @@ int strcmp(const char *s1, const char *s2) {
 int strncmp(const char *s1, const char *s2, size_t n) {
   panic("Not implemented");
 }
+
 /*
  * DESCRIPTION
  *The memset() function fills the first n bytes of the memory area pointed to by s with the constant byte c.
- * ETURN VALUE
+ * RETURN VALUE
  *       The memset() function returns a pointer to the memory area s.
 */
 void *memset(void *s, int c, size_t n) { 

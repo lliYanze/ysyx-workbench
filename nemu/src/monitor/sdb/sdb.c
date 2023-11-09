@@ -209,7 +209,7 @@ static int cmd_cal(char *args) {
     if (!is_success) {
       printf("get wrong token\n");
     }
-    printf("%s = %u\n", calculate_str, result);
+    printf("%s = 0x%x\n", calculate_str, result);
   } while (strcmp(calculate_str, "q") != 0);
 
   return 0;
