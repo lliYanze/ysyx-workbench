@@ -56,15 +56,33 @@ void init_mem() {
   Log("physical memory area [" FMT_PADDR ", " FMT_PADDR "]", PMEM_LEFT, PMEM_RIGHT);
 }
 
+static inline bool is_in_mtrace_pmem(paddr_t addr) {
+  return MUXDEF(CONFIG_MTRACE, (addr >= CONFIG_MTRACE_START) &&
+         (addr <= CONFIG_MTRACE_START + CONFIG_MTRACE_LENGTH), false);
+}
+
 word_t paddr_read(paddr_t addr, int len) {
+#ifdef CONFIG_MTRACE_COND
+  if (MTRACE_COND && is_in_mtrace_pmem(addr)) {
+    log_write("读取地址 0x%x\n", addr);
+  }
+#endif
   if (likely(in_pmem(addr))) return pmem_read(addr, len);
   IFDEF(CONFIG_DEVICE, return mmio_read(addr, len));
   out_of_bound(addr);
+
+
   return 0;
 }
 
 void paddr_write(paddr_t addr, int len, word_t data) {
+#ifdef CONFIG_MTRACE_COND
+  if (MTRACE_COND && is_in_mtrace_pmem(addr)) {
+    log_write("写入地址 0x%x\n", addr);
+  }
+#endif
   if (likely(in_pmem(addr))) { pmem_write(addr, len, data); return; }
   IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
   out_of_bound(addr);
+
 }
