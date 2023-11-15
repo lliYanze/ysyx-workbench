@@ -16,13 +16,19 @@
 #include "common.h"
 #include "debug.h"
 #include "local-include/reg.h"
+#include "macro.h"
 #include <cpu/cpu.h>
 #include <cpu/ifetch.h>
 #include <cpu/decode.h>
 
+
 #define R(i) gpr(i)
 #define Mr vaddr_read
 #define Mw vaddr_write
+
+#ifdef CONFIG_FTRACE_COND
+static void ftrace(Decode *s , paddr_t dst_addr);
+#endif
 
 enum {
     TYPE_I, //短立即数和访存指令
@@ -108,7 +114,7 @@ static int decode_exec(Decode *s) {
     INSTPAT("??????? ????? ????? 100 ????? 00000 11", lbu    , I, R(rd) = Mr(src1 + imm, 1));
 
     /*-------------------*/
-    INSTPAT("??????? ????? ????? ??? ????? 11001 11", jalr   , I, R(rd) = s->pc + 4; s->dnpc = src1 + imm;);
+    INSTPAT("??????? ????? ????? ??? ????? 11001 11", jalr   , I, IFDEF(CONFIG_FTRACE, ftrace(s, s->pc+imm)); R(rd) = s->pc + 4; s->dnpc = src1 + imm;);
 
     INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , I, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
 
@@ -133,7 +139,7 @@ static int decode_exec(Decode *s) {
     /***********************************************/
     /******************** J ************************/
     /***********************************************/
-    INSTPAT("??????? ????? ????? ??? ????? 1011 11",  jal    , J, R(rd) = s->snpc ; s->dnpc = s->dnpc - 4 + imm);
+    INSTPAT("??????? ????? ????? ??? ????? 1011 11",  jal    , J, IFDEF(CONFIG_FTRACE, ftrace(s, s->pc+imm)); R(rd) = s->snpc ; s->dnpc = s->dnpc - 4 + imm);
 
     /***********************************************/
     /******************** U ************************/
@@ -157,3 +163,32 @@ int isa_exec_once(Decode *s) {
   s->isa.inst.val = inst_fetch(&s->snpc, 4);
   return decode_exec(s);
 }
+
+
+#ifdef CONFIG_FTRACE_COND
+static void ftrace(Decode *s , paddr_t dst_addr) {
+    uint32_t i = s->isa.inst.val;
+    static int space_num = 0;
+    int rd = BITS(i, 11, 7);
+    int rs1 = BITS(i, 19, 15);
+    elf_func_info cur_func = find_func_by_addr(s->pc);
+    elf_func_info dst_func = find_func_by_addr(dst_addr);
+    if(rd == 1) {
+        ftrace_log_write("0x%x: ", s->pc);
+        ftrace_log_write("%s\t", cur_func.name);
+        for(int i = 0; i < space_num; ++i) {
+            ftrace_log_write("  ");
+        }
+        ftrace_log_write("call--> %s @[0x%x]\n", dst_func.name, dst_addr);
+        space_num++;
+    } else if(rd == 0 && rs1 == 1) {
+        ftrace_log_write("0x%x: ", s->pc);
+        ftrace_log_write("%s\t", cur_func.name);
+        space_num--;
+        for(int i = 0; i < space_num; ++i) {
+            ftrace_log_write("  ");
+        }
+        ftrace_log_write("ret --> %s @[0x%x]\n", dst_func.name, dst_addr);
+    }
+}
+#endif

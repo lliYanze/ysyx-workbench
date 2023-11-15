@@ -17,6 +17,7 @@
 
 extern uint64_t g_nr_guest_inst;
 FILE *log_fp = NULL;
+FILE *ftrace_fp = NULL;
 
 void init_log(const char *log_file) {
   log_fp = stdout;
@@ -26,6 +27,16 @@ void init_log(const char *log_file) {
     log_fp = fp;
   }
   Log("Log is written to %s", log_file ? log_file : "stdout");
+}
+
+void init_ftrace_log(const char *ftrace_file) {
+  ftrace_fp = stdout;
+  if (ftrace_file != NULL) {
+    FILE *fp = fopen(ftrace_file, "w");
+    Assert(fp, "Can not open '%s'", ftrace_file);
+    ftrace_fp = fp;
+  }
+  Log("Log is written to %s", ftrace_file ? ftrace_file : "stdout");
 }
 
 bool log_enable() {
