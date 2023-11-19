@@ -103,7 +103,25 @@ void *memmove(void *dst, const void *src, size_t n) {
   panic("Not implemented");
 }
 
-void *memcpy(void *out, const void *in, size_t n) { panic("Not implemented"); }
+void *memcpy(void *out, const void *in, size_t n) { 
+    /*panic("Not implemented"); */
+    void *ret = out;
+    if(n == 0){
+        return ret;
+    }
+    if(out == NULL || in == NULL){
+        return NULL;
+    }
+    if(out == in){
+        return ret;
+    }
+    for(int i = 0; i < n; i++){
+        *(char *)ret = *(char *)in;
+        ret = (char *)ret + 1;
+        in = (char *)in + 1;
+    }
+    return out;
+}
 
 /*
  * 

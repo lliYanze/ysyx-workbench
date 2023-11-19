@@ -97,6 +97,7 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   if (g_print_step) {
     IFDEF(CONFIG_ITRACE, puts(_this->logbuf));
   } //一次执行过多指令就不会打印在终端上
+    printf("lyz dnpc:0x%08x\n",dnpc);
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 
   // TODO: scan watchpoint

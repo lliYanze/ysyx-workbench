@@ -70,57 +70,6 @@ long get_func_name(Elf32_Sym elfsym, FILE *fp, char *name) {
     return 0;
 }
 
-/*long get_func_info(Elf32_Ehdr *elf_header, FILE *fp) {
-    size_t sec_num = elf_header->e_shnum;
-    int sec_begin = elf_header->e_shoff;
-    fseek(fp, sec_begin, SEEK_SET);
-
-    Elf32_Shdr elfSec;
-    Elf32_Sym elfSym;
-    int func_index = 0;
-    {
-        char test[21];
-        int testi = 1;
-        printf("test = %s\n", test);
-        printf("testi = %d\n", testi);
-    }
-    for(int i = 0; i < sec_num; ++i) {
-        size_t result = fread(&elfSec, sizeof(Elf32_Shdr), 1, fp);
-        if(result != 1) {
-            printf("read elfSec error!\n");
-            return -1;
-        }
-        if(elfSec.sh_type == SHT_SYMTAB) {
-            size_t symtab_offset = elfSec.sh_offset;
-            size_t entries = elfSec.sh_size / elfSec.sh_entsize;
-            for(int j = 0; j < entries; ++j) {
-                fseek(fp, symtab_offset + j * sizeof(Elf32_Sym), SEEK_SET);
-                result = fread(&elfSym, sizeof(Elf32_Sym), 1, fp);
-                if(result != 1) {
-                    printf("read elfSym error!\n");
-                    return -1;
-                }
-
-                if(ELF32_ST_TYPE(elfSym.st_info) == STT_FUNC) {
-                    [>char *nametest = (char *)malloc(64); <]
-                    char nametest[64]; 
-                    get_func_name(elfSym, fp, nametest); 
-                    [>printf("nametest = %s\n", nametest); <]
-                    [>strcpy(funcs[func_index].name, name);<]
-                    elf_funcs[func_index].start = elfSym.st_value;
-                    elf_funcs[func_index].size = elfSym.st_size;
-                    func_index++;
-
-                }
-            }
-            elf_funcs[func_index].name[0] = '\0';
-            break;
-        }
-    }
-    printf("test\n");
-
-    return 0;
-}*/
 
 long get_func_info(Elf32_Ehdr *elf_header, FILE *fp) {
     size_t sec_num = elf_header->e_shnum;
