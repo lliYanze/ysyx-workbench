@@ -38,19 +38,35 @@ static int int_to_str(int num, char *str, int base) {
   return len;
 }
 
-int printf(const char *fmt, ...) { panic("Not implemented"); }
+int printf(const char *fmt, ...) { 
+    va_list ap;
+    va_start(ap, fmt);
+    char buf[1024] = {0};
+    int ret = vsprintf(buf, fmt, ap);
+    va_end(ap);
+    for(int i = 0; i < ret; i++) {
+        putch(buf[i]);
+    }
 
-int vsprintf(char *out, const char *fmt, va_list ap) {
-  panic("Not implemented");
+    return ret;
+
 }
 
 int sprintf(char *out, const char *fmt, ...) {
   va_list ap;
-  va_start(ap, fmt);
 
+  va_start(ap, fmt);
+   int ret = vsprintf(out, fmt, ap);
+  va_end(ap);
+    return ret;
+
+}
+
+int vsprintf(char *out, const char *fmt, va_list ap) {
   char *begin = out;
   int d;
   char *s;
+    char c;
 
   while (*fmt != '\0') {
     if (*fmt != '%') {
@@ -74,9 +90,53 @@ int sprintf(char *out, const char *fmt, ...) {
         ++fmt;
         break;
       case 'c': /* char */
-        /* need a cast here since va_arg only
-           takes fully promoted types */
-        /*c = (char)va_arg(ap, int);*/
+        c = va_arg(ap, int);
+        *begin = c;
+        begin += 1;
+        ++fmt;
+        break;
+      default:
+        break;
+      }
+    }
+  }
+  *begin = '\0';
+    return begin - out;
+}
+
+/*int sprintf(char *out, const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+
+  char *begin = out;
+  int d;
+  char *s;
+
+  while (*fmt != '\0') {
+    if (*fmt != '%') {
+      *begin++ = *fmt++;
+      continue;
+    } else {
+      switch (*(++fmt)) {
+      case '%':
+        *begin = *fmt;
+        ++begin;
+        break;
+      case 's': [> string <]
+        s = va_arg(ap, char *);
+        strcpy(begin, s);
+        begin += strlen(s);
+        ++fmt;
+        break;
+      case 'd': [> int <]
+        d = va_arg(ap, int);
+        begin += int_to_str(d, begin, 10);
+        ++fmt;
+        break;
+      case 'c': [> char <]
+        [> need a cast here since va_arg only
+           takes fully promoted types <]
+        [>c = (char)va_arg(ap, int);<]
         break;
       default:
         break;
@@ -86,7 +146,7 @@ int sprintf(char *out, const char *fmt, ...) {
   *begin = '\0';
   va_end(ap);
   return begin - out;
-}
+}*/
 
 int snprintf(char *out, size_t n, const char *fmt, ...) {
   panic("Not implemented");

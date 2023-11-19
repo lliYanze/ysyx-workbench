@@ -32,6 +32,7 @@ int main(const char *args) {
       for (int ch = 0; ch < 256; ch++) {
         if (tests[ch]) {
           printf("  %c: %s\n", ch, tests[ch]);
+          /*printf("  : %s\n", tests[ch]);*/
         }
       }
   }

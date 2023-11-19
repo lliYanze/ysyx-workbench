@@ -32,6 +32,7 @@ typedef struct watchpoint {
     word_t value;
 } WP;
 
+void iringbuf_pop();
 
 word_t expr(char *e, bool *success);
 
