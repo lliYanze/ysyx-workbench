@@ -1,5 +1,6 @@
 #include <am.h>
 #include <klib-macros.h>
+#include <stdio.h>
 
 bool __am_has_ioe = false;
 static bool ioe_init_done = false;
@@ -75,5 +76,8 @@ static void do_io(int reg, void *buf) {
   ((handler_t)lut[reg])(buf);
 }
 
-void ioe_read (int reg, void *buf) { do_io(reg, buf); }
+void ioe_read (int reg, void *buf) { 
+    do_io(reg, buf); 
+    /*printf("ioe_read: reg = %d \n", reg);*/
+}
 void ioe_write(int reg, void *buf) { do_io(reg, buf); }

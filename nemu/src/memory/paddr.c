@@ -13,9 +13,11 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
+#include "utils.h"
 #include <memory/host.h>
 #include <memory/paddr.h>
 #include <device/mmio.h>
+#include <device/map.h>
 #include <isa.h>
 
 #if   defined(CONFIG_PMEM_MALLOC)
@@ -67,6 +69,14 @@ word_t paddr_read(paddr_t addr, int len) {
     log_write("读取地址 0x%x\n", addr);
   }
 #endif
+/*printf("paddr_read: addr = 0x%x \n", addr);*/
+#ifdef CONFIG_DTRACE    
+if(addr >= PMEM_RIGHT) {
+    IOMap knock_map = get_mmio_map(addr);
+    log_write("read device name = %s \t addr = 0x%x \n", knock_map.name, addr);
+    }
+#endif
+
   if (likely(in_pmem(addr))) return pmem_read(addr, len);
   IFDEF(CONFIG_DEVICE, return mmio_read(addr, len));
   out_of_bound(addr);
@@ -80,6 +90,12 @@ void paddr_write(paddr_t addr, int len, word_t data) {
   if (MTRACE_COND && is_in_mtrace_pmem(addr)) {
     log_write("写入地址 0x%x\n", addr);
   }
+#endif
+#ifdef CONFIG_DTRACE    
+if(addr >= PMEM_RIGHT) {
+    IOMap knock_map = get_mmio_map(addr);
+    log_write("write device name = %s \t addr = 0x%x \n", knock_map.name, addr);
+    }
 #endif
   if (likely(in_pmem(addr))) { pmem_write(addr, len, data); return; }
   IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);

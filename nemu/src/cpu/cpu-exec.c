@@ -34,6 +34,7 @@ static char itrace_buf[IRING_BUF_SIZE][128] = {};
 static unsigned int idx = 0;
 
 void one_instruction_decode(vaddr_t pc) {
+#ifdef CONFIG_ITRACE
   char *p = itrace_buf[idx];
   uint32_t code = vaddr_ifetch(pc, 4);
   uint8_t *inst = (uint8_t *)&code;
@@ -54,9 +55,14 @@ void one_instruction_decode(vaddr_t pc) {
   memset(p, ' ', space_len);
   p += space_len;
 
+#ifndef CONFIG_ISA_loongarch32r
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
   disassemble(p, itrace_buf[idx] + sizeof(itrace_buf[idx]) - p, pc,
               (uint8_t *)&code, ilen);
+#else
+  p[0] = '\0'; // the upstream llvm does not support loongarch32r
+#endif
+#endif
 }
 
 void iringbuf_push(char *str) {
@@ -86,7 +92,9 @@ void device_update();
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 //放入循环缓冲区
-  iringbuf_push(_this->logbuf);
+#ifdef CONFIG_ITRACE_COND
+      iringbuf_push(_this->logbuf);
+#endif
 
 #ifdef CONFIG_ITRACE_COND
   if (ITRACE_COND) {

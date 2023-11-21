@@ -36,6 +36,8 @@ static inline bool map_inside(IOMap *map, paddr_t addr) {
 
 static inline int find_mapid_by_addr(IOMap *maps, int size, paddr_t addr) {
   int i;
+    static int cnt = 0;
+    cnt ++;
   for (i = 0; i < size; i ++) {
     if (map_inside(maps + i, addr)) {
       difftest_skip_ref();
@@ -52,5 +54,7 @@ void add_mmio_map(const char *name, paddr_t addr,
 
 word_t map_read(paddr_t addr, int len, IOMap *map);
 void map_write(paddr_t addr, int len, word_t data, IOMap *map);
+
+IOMap get_mmio_map(paddr_t addr);
 
 #endif

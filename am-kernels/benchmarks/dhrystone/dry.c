@@ -355,8 +355,10 @@
 #include <klib-macros.h>
 
 static uint32_t uptime_ms() { return io_read(AM_TIMER_UPTIME).us / 1000; }
-#define Start_Timer() Begin_Time = uptime_ms()
-#define Stop_Timer()  End_Time   = uptime_ms()
+#define Start_Timer() Begin_Time = uptime_ms(); printf("time is %d\n", Begin_Time)
+#define Stop_Timer()  End_Time   = uptime_ms(); printf("time is %d\n", Begin_Time)
+
+#define Print_Timer()  Print_Time   = uptime_ms(); printf("time is %d\n", Print_Time)
 
 #define NUMBER_OF_RUNS		500000 /* Default number of runs */
 #define PASS2
@@ -444,7 +446,8 @@ Boolean		Done;
 
 long            Begin_Time,
                 End_Time,
-                User_Time;
+                User_Time,
+                Print_Time;
 float           Microseconds,
                 Dhrystones_Per_Second;
 
@@ -798,7 +801,10 @@ int main ()
 
     for (Run_Index = 1; Run_Index <= Number_Of_Runs; ++Run_Index)
     {
+            /*if(Run_Index % 1000 == 0)*/
+            /*printf("Run %d\n", Run_Index);*/
 
+        Print_Timer();
       Proc_5();
       Proc_4();
 	/* Ch_1_Glob == 'A', Ch_2_Glob == 'B', Bool_Glob == true */
