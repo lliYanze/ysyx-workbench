@@ -26,7 +26,7 @@ typedef concat(__GUEST_ISA__, _ISADecodeInfo) ISADecodeInfo;
 
 //ftrace
 //
-#define ELF_FUNC_NUM 100
+#define ELF_FUNC_NUM 2048 
 #define ELF_FUNC_NAME_LEN 64
 typedef struct __Elf_Func_Info{
     char name[ELF_FUNC_NAME_LEN];

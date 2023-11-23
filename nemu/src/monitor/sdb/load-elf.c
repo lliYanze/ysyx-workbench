@@ -3,13 +3,8 @@
 extern char *elf_file;
 static Elf32_Off strtab_offset = 0;
 
-/*typedef struct {*/
-    /*char name[64];*/
-    /*uint32_t start;*/
-    /*uint32_t size;*/
-/*}elf_func_info;*/
 
-elf_func_info elf_funcs[100];
+elf_func_info elf_funcs[ELF_FUNC_NUM];
 
 
 
@@ -19,7 +14,6 @@ long read_elf_header(Elf32_Ehdr *elf_header, FILE *fp) {
     Log("No elf is given. Use the default build-in elf.");
         return -1;
   }
-  printf("elf_file = %s\n", elf_file);
   size_t size_of_elf = fread(elf_header, sizeof(Elf32_Ehdr), 1, fp);
     printf("size_of_elf = %ld\n", size_of_elf);
 
@@ -41,7 +35,7 @@ Elf32_Off get_elf_strtab_offset(Elf32_Ehdr *elf_header, FILE *fp) {
     fseek(fp, 0, SEEK_SET);
     //得到shstrtab的位置
     size_t offset_of_shdr = elf_header->e_shoff + elf_header->e_shentsize * elf_header->e_shstrndx;
-    printf("offset_of_shdr = %lx\n", offset_of_shdr);
+    /*printf("offset_of_shdr = %lx\n", offset_of_shdr);*/
 
     Elf32_Shdr strtab_shdr;
     fseek(fp, sec_begin, SEEK_SET);
@@ -62,7 +56,7 @@ Elf32_Off get_elf_strtab_offset(Elf32_Ehdr *elf_header, FILE *fp) {
 
 long get_func_name(Elf32_Sym elfsym, FILE *fp, char *name) {
     fseek(fp, strtab_offset + elfsym.st_name, SEEK_SET);
-    int ret = fscanf(fp, "%s\n", name);
+    int ret = fscanf(fp, "%s", name);
     if(ret < 0) {
         printf("read name error!\n");
         return -1;
@@ -102,12 +96,14 @@ long get_func_info(Elf32_Ehdr *elf_header, FILE *fp) {
                     elf_funcs[func_index].start = elfSym.st_value;
                     elf_funcs[func_index].size = elfSym.st_size;
                     func_index++;
+                    assert(func_index < ELF_FUNC_NUM);
                 }
             }
             elf_funcs[func_index].name[0] = '\0';
             break;
         }
     }
+printf("func_index = %d\n", func_index);
 
     return 0;
 }
@@ -122,6 +118,7 @@ long load_elf() {
         return -1;
     }
     strtab_offset = get_elf_strtab_offset(&elf_header, fp);
+    printf("strtab_offset = %x\n", strtab_offset);
     get_func_info(&elf_header, fp);
     printf("test\n");
 
@@ -140,6 +137,4 @@ void show_func_info() {
         i++;
     }
 }
-
-
 

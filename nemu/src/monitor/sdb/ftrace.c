@@ -13,12 +13,12 @@ ftrace_list *ftrace_list_head = NULL;
 
 
 elf_func_info find_func_by_addr(uint32_t addr) {
-    for(int i = 0; i < 100; ++i) {
+    for(int i = 0; i < ELF_FUNC_NUM; ++i) {
         if(elf_funcs[i].start <= addr && addr < elf_funcs[i].start + elf_funcs[i].size) {
             return elf_funcs[i];
         }
     }
-    printf("can not find func by addr!\n");
+    /*printf("can not find func by addr!\n");*/
 
     elf_func_info miss_func;
     char miss_name[64] = "?????????";

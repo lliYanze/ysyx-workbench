@@ -116,7 +116,7 @@ void fce_run() {
     if (upt - last > 1000) {
       last = upt;
       for (int i = 0; i < 80; i++) putch('\b');
-      printf("(System time: %ds) FPS = %d", upt / 1000, nr_draw);
+      printf("(System time: %ds) FPS = %d\n", upt / 1000, nr_draw);
       nr_draw = 0;
     }
   }
@@ -132,6 +132,7 @@ void fce_update_screen() {
   AM_GPU_CONFIG_T cfg = io_read(AM_GPU_CONFIG);
   int xpad = (cfg.width  - SCR_W) / 2;
   int ypad = (cfg.height - SCR_H) / 2;
+    printf("xpad = %d, ypad = %d , (xpad < 0 || ypad < 0) = %d\n", xpad, ypad, (xpad < 0 || ypad < 0));
   panic_on(xpad < 0 || ypad < 0, "screen too small");
 
   io_write(AM_GPU_FBDRAW, xpad, ypad, canvas, SCR_W, SCR_H, true);
