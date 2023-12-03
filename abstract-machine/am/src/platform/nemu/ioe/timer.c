@@ -2,14 +2,10 @@
 #include <nemu.h>
 
 void __am_timer_init() {
-    outl(RTC_ADDR, 0x00);
-    outl(RTC_ADDR+4, 0x00);
 }
 
 void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
-    uptime->us = 0;
-    uptime->us = inl(RTC_ADDR+4);
-    uptime->us = (uptime->us << 32) + inl(RTC_ADDR);
+  uptime->us = 0;
 }
 
 void __am_timer_rtc(AM_TIMER_RTC_T *rtc) {

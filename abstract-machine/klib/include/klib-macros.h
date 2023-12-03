@@ -1,10 +1,6 @@
 #ifndef KLIB_MACROS_H__
 #define KLIB_MACROS_H__
 
-#ifndef NULL
-#define NULL                ((void *)0)
-#endif
-
 #define ROUNDUP(a, sz)      ((((uintptr_t)a) + (sz) - 1) & ~((sz) - 1))
 #define ROUNDDOWN(a, sz)    ((((uintptr_t)a)) & ~((sz) - 1))
 #define LENGTH(arr)         (sizeof(arr) / sizeof((arr)[0]))
