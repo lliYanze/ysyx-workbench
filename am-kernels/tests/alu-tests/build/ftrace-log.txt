@@ -1,3 +1,0 @@
-0x8000000c: 	call--> _trm_init @[0x800ec8d4]
-0x800ec8e4: _trm_init	  call--> main @[0x80000010]
-0x800bb6e8: main	  ret --> main @[0x800bb6e8]
