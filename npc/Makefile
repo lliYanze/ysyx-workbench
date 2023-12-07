@@ -16,15 +16,19 @@ INC_PATH ?=
 VSRC_DIR = ./vsrc
 CSRC_DIR = ./csrc
 
+
 VERILATOR = verilator
-VERILATOR_CFLAGS += --cc --trace --exe --build -Wall
+# VERILATOR_CFLAGS += --cc --trace --exe --build -Wall
+VERILATOR_CFLAGS += --cc --trace --exe --build 
 
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
 
+MAKE = make
 
 $(shell mkdir -p $(BUILD_DIR))
 $(shell mkdir -p $(CSRC_DIR))
+$(shell mkdir -p $(VSRC_DIR))
 
 
 VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
@@ -42,7 +46,7 @@ $(BIN) : $(VSRCS) $(CSRCS)
 		$(addprefix -CFLAGS , $(CFLAGS)) \
 		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
 
-default: $(BIN)
+verilator: $(BIN)
 
 verilog: 
 	$(call git_commit, "generate verilog")
@@ -52,17 +56,19 @@ verilog:
 	cp -r $(OUTVERILOG_DIR)/*.v $(VSRC_DIR)/
 	
 
-sim: verilog default
+sim: 
+	@$(MAKE) verilog
+	@$(MAKE) verilator
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
+	./$(BIN)
 
-nbwave: default
+nbwave: verilator
 	./$(BIN)
 	gtkwave  $(LOG_FILE)
 
-wave: clean sim
-	./$(BIN)
+wave: clean sim 
 	gtkwave  $(LOG_FILE)
-
+	@echo "重新构建并仿真完成"
 
 include ../Makefile
 
@@ -87,4 +93,4 @@ test:
 clean:
 	-rm -rf $(BUILD_DIR) $(VSRC_DIR) 
 
-.PHONY: test help compile bsp reformat checkformat clean
+.PHONY: test help compile bsp reformat checkformat clean sim wave nbwave verilog
