@@ -5,8 +5,18 @@ import chisel3.util._
 import chisel3.util.BitPat
 import chisel3.util.experimental.decode._
 
+/*
+class EndNpc extends HasBlackBoxInline {
+  val io = IO(new Bundle {
+    val end = Input(Bool())
+  })
+
+}
+ */
+
 case class instructions() {
-  val addi: BitPat = BitPat("b???????_?????_?????_000_?????_0010011")
+  val addi:   BitPat = BitPat("b???????_?????_?????_000_?????_0010011")
+  val ebreak: BitPat = BitPat("b0000001_?????_?????_000_?????_1110011")
 }
 
 class FormatDecoder extends Module {
@@ -95,6 +105,7 @@ class Exu extends Module {
     val inst    = Input(UInt(32.W))
     val regw    = Output(Bool())
     val regdata = Output(UInt(32.W))
+    val end     = Output(Bool())
 
   })
   val formatdecoder = Module(new FormatDecoder)
@@ -115,6 +126,12 @@ class Exu extends Module {
   when(io.inst === instructions().addi) {
     io.regw    := true.B
     io.regdata := regfile.io.rs1out + immgen.io.out
+
+  }.elsewhen(io.inst === instructions().ebreak) {
+    io.end            := true.B
+    io.regw           := false.B
+    regfile.io.datain := 0.U
+    io.regdata        := 0.U
 
   }.otherwise {
     io.regw           := false.B
