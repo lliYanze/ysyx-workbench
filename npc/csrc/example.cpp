@@ -41,8 +41,11 @@ int main(int arg, char **argv) {
   /* assert(top->io_out == 0x80000000); */
   top->io_inst = 0xb0030413;
 
+  printf("top->pc = 0x%x, \n", top->io_pc);
   single_cycle();
+  printf("top->pc = 0x%x, \n", top->io_pc);
   single_cycle();
+  printf("top->pc = 0x%x, \n", top->io_pc);
   mytrace->close();
   delete top;
 }
