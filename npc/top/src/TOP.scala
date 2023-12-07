@@ -14,5 +14,5 @@ class TOP extends Module {
   pc          := pc + 4.U
   io.pc       := pc
   exu.io.inst := io.inst
-  io.out      := exu.io.regdata
+  io.out      := exu.io.out
 }

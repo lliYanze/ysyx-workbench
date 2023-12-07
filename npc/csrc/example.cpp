@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <svdpi.h>
 #include <verilated_vcd_c.h>
 
 VerilatedContext *contextp = new VerilatedContext;
@@ -16,7 +17,7 @@ VerilatedVcdC *mytrace = new VerilatedVcdC;
 #define NPC_QUIT 4
 
 static int times = 0;
-static npc_state = NPC_RUNNING;
+static int npc_state = NPC_RUNNING;
 
 void single_cycle() {
   top->clock = 0;
@@ -38,7 +39,7 @@ void reset(int n) {
 }
 
 void setnpcstate(int state) { npc_state = state; }
-void stopnpc() { setnpcstate(NPC_STOP); }
+extern "C" void stopnpc() { setnpcstate(NPC_STOP); }
 
 int main(int arg, char **argv) {
   contextp->commandArgs(arg, argv);
@@ -50,16 +51,19 @@ int main(int arg, char **argv) {
   reset(1);
   /* assert(top->io_out == 0x80000000); */
   top->io_inst = 0xb0030413;
-  top->io_inst = 0x00100073;
+  single_cycle();
+  printf("top->pc = 0x%x, \n", top->io_pc);
+  printf("top->out = 0x%x, \n", top->io_out);
+  printf("state is %d\n", npc_state);
 
-  printf("top->pc = 0x%x, \n", top->io_pc);
-  printf("top->end = 0x%x, \n", top->io_end);
-  single_cycle();
-  printf("top->pc = 0x%x, \n", top->io_pc);
-  printf("top->end = 0x%x, \n", top->io_end);
-  single_cycle();
-  printf("top->pc = 0x%x, \n", top->io_pc);
-  printf("top->end = 0x%x, \n", top->io_end);
+  while (NPC_RUNNING == npc_state) {
+    top->io_inst = 0x00100073;
+
+    single_cycle();
+    printf("top->pc = 0x%x, \n", top->io_pc);
+    printf("top->out = 0x%x, \n", top->io_out);
+    printf("state is %d\n", npc_state);
+  }
   mytrace->close();
   delete top;
 }
