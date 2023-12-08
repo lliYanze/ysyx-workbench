@@ -46,7 +46,12 @@ $(BIN) : $(VSRCS) $(CSRCS)
 		$(addprefix -CFLAGS , $(CFLAGS)) \
 		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
 
+
+IMG ?=
+
 verilator: $(BIN)
+
+NPC_EXE:= $(BIN) $(ARGS) $(IMG)
 
 verilog: 
 	$(call git_commit, "generate verilog")
@@ -63,7 +68,7 @@ sim:
 	./$(BIN)
 
 nbwave: verilator
-	./$(BIN)
+	$(NPC_EXE)
 	gtkwave  $(LOG_FILE)
 
 wave: clean sim 
