@@ -135,21 +135,20 @@ int main(int arg, char **argv) {
   mytrace->open("./build/logs/top.vcd");
 
   reset(1);
-
-  /* while (NPC_RUNNING == npc_state) { */
+  npc_state = NPC_RUNNING;
 
   parse_args(arg, argv);
   long size = load_img();
   printf("size = %ld\n", size);
   printf("top->pc = 0x%x, \n", top->io_pc);
-  top->io_inst = pmem_read(top->io_pc, 4);
-  printf("inst = 0x%x\n", top->io_inst);
-  single_cycle();
+  printf("state is %d\n", npc_state);
 
-  /* printf("top->pc = 0x%x, \n", top->io_pc); */
-  /* printf("top->out = 0x%x, \n", top->io_out); */
-  /* printf("state is %d\n", npc_state); */
-  /* } */
+  while (NPC_RUNNING == npc_state) {
+
+    top->io_inst = pmem_read(top->io_pc, 4);
+    printf("inst = 0x%x\n", top->io_inst);
+    single_cycle();
+  }
   mytrace->close();
   delete top;
 }

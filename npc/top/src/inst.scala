@@ -23,12 +23,81 @@ class EndNpc extends BlackBox with HasBlackBoxInline {
        |endmodule
        |""".stripMargin
   )
+}
 
+case object TYPE {
+  val U = 0.U(3.W)
+  val I = 1.U(3.W)
+  val S = 2.U(3.W)
+  val B = 3.U(3.W)
+  val R = 4.U(3.W)
+  val J = 5.U(3.W)
+  val E = 6.U(3.W)
+}
+
+case object OP {
+  val ADD = 0.U(5.W)
+  val SUB = 1.U(5.W)
+
+  val NOP = "b11110".U(5.W)
+
+  val END = "b11111".U(5.W)
 }
 
 case class instructions() {
-  val addi:   BitPat = BitPat("b???????_?????_?????_000_?????_0010011")
+
+  /** ****************************
+    */
+  /** ************R***************
+    */
+  /** ****************************
+    */
+
+  /** ****************************
+    */
+  /** ************I***************
+    */
+  /** ****************************
+    */
+  val addi: BitPat = BitPat("b???????_?????_?????_000_?????_0010011")
+
   val ebreak: BitPat = BitPat("b0000000_00001_?????_000_?????_1110011")
+
+  val jalr: BitPat = BitPat("b???????_?????_?????_000_?????_1100111")
+
+  /** ****************************
+    */
+  /** ************S***************
+    */
+  /** ****************************
+    */
+
+  val sw: BitPat = BitPat("b???????_?????_?????_010_?????_0100011")
+
+  /** ****************************
+    */
+  /** ************B***************
+    */
+  /** ****************************
+    */
+
+  /** ****************************
+    */
+  /** ************U***************
+    */
+  /** ****************************
+    */
+
+  val auipc: BitPat = BitPat("b???????_?????_?????_???_?????_0010111")
+
+  /** ****************************
+    */
+  /** ************J***************
+    */
+  /** ****************************
+    */
+  val jal: BitPat = BitPat("b???????_?????_?????_???_?????_1101111")
+
 }
 /*
 class TypeDecoder extends Module {
@@ -96,14 +165,19 @@ class Alu extends Module {
 
   io.end := false.B
 
-  when(io.op === "b00000".U) {
+  when(io.op === OP.ADD) {
     io.out := io.s1 + io.s2
     io.rw  := true.B
-  }.elsewhen(io.op === "b00001".U) {
+    printf("add\n")
+  }.elsewhen(io.op === OP.END) {
     io.out := 0.U
     io.rw  := false.B
     io.end := true.B
     printf("ebreak!\n")
+  }.elsewhen(io.op === OP.NOP) {
+    io.out := 0.U
+    io.rw  := false.B
+    printf("instruction nop!\n")
   }.otherwise {
     io.out := 0.U
     io.rw  := false.B
@@ -123,20 +197,36 @@ class SourceDecoder extends Module {
   })
 
   when(io.inst === instructions().addi) {
-    io.format := "b001".U
+    // io.format := "b001".U
+    io.format := TYPE.I
     // io.s1type := true.B
     // io.s2type := true.B
     // io.dtype  := true.B
-    io.op := "b00000".U
+    io.op := OP.ADD
   }.elsewhen(io.inst === instructions().ebreak) {
-    io.format := "b001".U
-    io.op     := "b00001".U
+    io.format := TYPE.I
+    io.op     := OP.END
+  }.elsewhen(io.inst === instructions().jal) {
+    io.format := TYPE.I
+    io.op     := OP.NOP
+
+  }.elsewhen(io.inst === instructions().jalr) {
+    io.format := TYPE.I
+    io.op     := OP.NOP
+
+  }.elsewhen(io.inst === instructions().sw) {
+    io.format := TYPE.I
+    io.op     := OP.NOP
+
+  }.elsewhen(io.inst === instructions().auipc) {
+    io.format := TYPE.I
+    io.op     := OP.NOP
   }.otherwise {
-    io.format := "b000".U
+    io.format := TYPE.E
     // io.s1type := DontCare
     // io.s2type := DontCare
     // io.dtype  := DontCare
-    io.op := "b11111".U
+    io.op := OP.END
     printf("Error: Unknown instruction!\n")
   }
 
@@ -149,7 +239,7 @@ class ImmGen extends Module {
     val out    = Output(UInt(32.W))
   })
 
-  when(io.format === "b001".U) {
+  when(io.format === TYPE.I) {
     io.out := Cat(Fill(20, 0.U(1.W)), io.inst(31, 20))
   }.otherwise {
     io.out := 2.U
