@@ -41,8 +41,8 @@ static void welcome() {
 }
 
 #ifndef CONFIG_TARGET_AM
-#include <elf.h>
 #include "sdb/load-elf.h"
+#include <elf.h>
 #include <getopt.h>
 
 void sdb_set_batch_mode();
@@ -53,7 +53,6 @@ static char *img_file = NULL;
 static int difftest_port = 1234;
 char *elf_file = NULL;
 char *ftrace_file = NULL;
-
 
 static long load_img() {
   if (img_file == NULL) {
