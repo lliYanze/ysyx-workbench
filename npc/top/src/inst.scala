@@ -8,17 +8,19 @@ import chisel3.util.experimental.decode._
 class EndNpc extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle {
     val endflag = Input(Bool())
+    val state   = Input(UInt(32.W))
   })
 
   setInline(
     "EndNpc.v",
     s"""
-       | import "DPI-C" function void stopnpc();
+       | import "DPI-C" function void stopnpc(input int state);
        |module EndNpc(
-       |    input endflag
+       |    input endflag,
+       |  input wire [31:0] state
        |);
        | always @(*) 
-       |    if (endflag) stopnpc();
+       |    if (endflag) stopnpc(state);
        |
        |endmodule
        |""".stripMargin
@@ -101,22 +103,6 @@ case class instructions() {
   val jal: BitPat = BitPat("b???????_?????_?????_???_?????_1101111")
 
 }
-/*
-class TypeDecoder extends Module {
-  val io = IO(new Bundle {
-    val inst   = Input(UInt(32.W))
-    val format = Output(UInt(3.W))
-  })
-  val format_table = TruthTable(
-    Map(
-      BitPat("b0010011".U) -> BitPat("b1".U(3.W)),
-      BitPat("b1110011".U) -> BitPat("b1".U(3.W))
-    ),
-    BitPat("b0".U(3.W))
-  )
-  io.format := decoder(io.inst(6, 0), format_table)
-}
- */
 
 class R1mux extends Module {
   val io = IO(new Bundle {
@@ -316,11 +302,15 @@ class RegFile extends Module {
     val wr     = Input(Bool())
     val datain = Input(UInt(32.W))
 
-    val rs1out = Output(UInt(32.W))
-    val rs2out = Output(UInt(32.W))
+    val rs1out    = Output(UInt(32.W))
+    val rs2out    = Output(UInt(32.W))
+    val end_state = Output(UInt(32.W))
+
   })
+
   val regfile = RegInit(VecInit(Seq.fill(32)(0.U(32.W))))
-  val datain  = Wire(UInt(32.W))
+  io.end_state := regfile(10.U)
+  val datain = Wire(UInt(32.W))
   datain := io.datain
   // val regin   = RegNext(io.datain)
   // val regfile = RegNext(VecInit(Seq.fill(32)(0.U(32.W))))
@@ -379,6 +369,7 @@ class Exu extends Module {
   immgen.io.inst   := io.inst(31, 12)
 
   endnpc.io.endflag := alu.io.end
+  endnpc.io.state   := regfile.io.end_state
 
   r1mux.io.r1type := source_decoder.io.s1type
   r1mux.io.pc     := pc.io.pc

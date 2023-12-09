@@ -16,8 +16,24 @@ VerilatedVcdC *mytrace = new VerilatedVcdC;
 #define NPC_ABORT 3
 #define NPC_QUIT 4
 
+typedef __uint8_t uint8_t;
+typedef __uint16_t uint16_t;
+typedef __uint32_t uint32_t;
+typedef __uint64_t uint64_t;
+
+typedef uint32_t paddr_t;
+typedef uint32_t vaddr_t;
+
+typedef uint32_t word_t;
+
+typedef struct {
+  int state;
+  vaddr_t halt_pc;
+  uint32_t halt_ret;
+} NPCstate;
+
 static int times = 0;
-static int npc_state = NPC_RUNNING;
+static NPCstate npc_state = {NPC_RUNNING, 0, 0};
 
 void single_exe();
 
@@ -52,8 +68,12 @@ void reset(int n) {
   top->reset = 0;
 }
 
-void setnpcstate(int state) { npc_state = state; }
-extern "C" void stopnpc() { setnpcstate(NPC_STOP); }
+void setnpcstate(int state) {
+  npc_state.state = NPC_STOP;
+  npc_state.halt_pc = top->io_pc;
+  npc_state.halt_ret = state;
+}
+extern "C" void stopnpc(int state) { setnpcstate(state); }
 
 #include <getopt.h>
 #include <unistd.h>
@@ -80,17 +100,9 @@ static int parse_args(int argc, char *argv[]) {
   return 0;
 }
 
-typedef __uint8_t uint8_t;
-typedef __uint16_t uint16_t;
-typedef __uint32_t uint32_t;
-typedef __uint64_t uint64_t;
 #define PG_ALIGN __attribute((aligned(4096))) // 4kb 对齐
 
 static uint8_t pmem[0x8000000] PG_ALIGN = {};
-
-typedef uint32_t paddr_t;
-
-typedef uint32_t word_t;
 
 uint8_t *guest_to_host(paddr_t paddr) { return pmem + paddr - 0x80000000; }
 
@@ -137,9 +149,17 @@ long load_img() {
 
 void single_exe() {
   printf("pc = 0x%x\n", top->io_pc);
-  printf("npc_state = %d\n", npc_state);
+  printf("npc_state = %d\n", npc_state.state);
   top->io_inst = pmem_read(top->io_pc, 4);
   /* printf("inst = 0x%x\n", top->io_inst); */
+}
+
+void test_trap() {
+
+  printf("nemu: %s at pc = "
+         "0x%08x",
+         (npc_state.halt_ret == 0 ? "HIT GOOD TRAP" : "HIT BAD TRAP"),
+         npc_state.halt_pc);
 }
 
 int main(int arg, char **argv) {
@@ -151,14 +171,16 @@ int main(int arg, char **argv) {
 
   parse_args(arg, argv);
   long size = load_img();
-  npc_state = NPC_RUNNING;
+  npc_state.state = NPC_RUNNING;
 
   reset(1);
-  printf("npc_state = %d\n", npc_state);
+  printf("npc_state = %d\n", npc_state.state);
 
-  while (NPC_RUNNING == npc_state) {
+  while (NPC_RUNNING == npc_state.state) {
     single_cycle();
   }
+  test_trap();
+  printf("\n");
   mytrace->close();
   delete top;
 }
