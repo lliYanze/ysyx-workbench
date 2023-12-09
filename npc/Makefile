@@ -18,8 +18,8 @@ CSRC_DIR = ./csrc
 
 
 VERILATOR = verilator
-# VERILATOR_CFLAGS += --cc --trace --exe --build -Wall
-VERILATOR_CFLAGS += --cc --trace --exe --build 
+# VERILATOR_CFLAGS += --cc --trace --exe --build -Wall 
+VERILATOR_CFLAGS += --cc --trace --exe --build
 
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
@@ -41,7 +41,7 @@ CFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 
 $(BIN) : $(VSRCS) $(CSRCS)
 	@rm -rf $(OBJ_DIR)
-	$(VERILATOR) $(VERILATOR_CFLAGS) \
+	$(VERILATOR) $(VERILATOR_CFLAGS)  \
 		--top-module $(TOPNAME) $^ \
 		$(addprefix -CFLAGS , $(CFLAGS)) \
 		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
@@ -51,7 +51,7 @@ IMG ?=
 
 verilator: $(BIN)
 
-NPC_EXE:= $(BIN) $(ARGS) $(IMG)
+NPC_EXE:= $(BIN) $(ARGS)  $(IMG)
 
 verilog: 
 	$(call git_commit, "generate verilog")

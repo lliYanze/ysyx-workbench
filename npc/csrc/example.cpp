@@ -19,11 +19,16 @@ VerilatedVcdC *mytrace = new VerilatedVcdC;
 static int times = 0;
 static int npc_state = NPC_RUNNING;
 
+void single_exe();
+
 void single_cycle() {
+
   top->clock = 0;
   top->eval();
   mytrace->dump(times);
   ++times;
+
+  single_exe();
 
   top->clock = 1;
   top->eval();
@@ -33,8 +38,17 @@ void single_cycle() {
 
 void reset(int n) {
   top->reset = 1;
-  while (n-- > 0)
-    single_cycle();
+  while (n-- > 0) {
+    top->clock = 0;
+    top->eval();
+    mytrace->dump(times);
+    ++times;
+
+    top->clock = 1;
+    top->eval();
+    mytrace->dump(times);
+    ++times;
+  }
   top->reset = 0;
 }
 
@@ -51,16 +65,11 @@ static int parse_args(int argc, char *argv[]) {
       {0, 0, NULL, 0},
   };
   int o;
-  printf("argc = %d\n", argc);
-  printf("argv[0] = %s\n", argv[0]);
-  printf("argv[1] = %s\n", argv[1]);
 
   while ((o = getopt_long(argc, argv, "-b:", table, NULL)) != -1) {
-    printf("optind = %d\n", o);
     switch (o) {
     case 1:
       img_file = optarg;
-      printf("img_file = %s\n", img_file);
       return 0;
     default:
       printf("Usage: %s [OPTION...] IMAGE [args]\n\n", argv[0]);
@@ -118,13 +127,19 @@ long load_img() {
   long size = ftell(fp);
 
   printf("Image '%s' size = %ld\n", img_file, size);
-
   fseek(fp, 0, SEEK_SET);
   int ret = fread(guest_to_host(0x80000000), size, 1, fp);
   assert(ret == 1);
 
   fclose(fp);
   return size;
+}
+
+void single_exe() {
+  printf("pc = 0x%x\n", top->io_pc);
+  printf("npc_state = %d\n", npc_state);
+  top->io_inst = pmem_read(top->io_pc, 4);
+  /* printf("inst = 0x%x\n", top->io_inst); */
 }
 
 int main(int arg, char **argv) {
@@ -134,19 +149,14 @@ int main(int arg, char **argv) {
   top->trace(mytrace, 5);
   mytrace->open("./build/logs/top.vcd");
 
-  reset(1);
-  npc_state = NPC_RUNNING;
-
   parse_args(arg, argv);
   long size = load_img();
-  printf("size = %ld\n", size);
-  printf("top->pc = 0x%x, \n", top->io_pc);
-  printf("state is %d\n", npc_state);
+  npc_state = NPC_RUNNING;
+
+  reset(1);
+  printf("npc_state = %d\n", npc_state);
 
   while (NPC_RUNNING == npc_state) {
-
-    top->io_inst = pmem_read(top->io_pc, 4);
-    printf("inst = 0x%x\n", top->io_inst);
     single_cycle();
   }
   mytrace->close();
