@@ -1,7 +1,7 @@
 import chisel3._
 import chisel3.util._
 
-import inst._
+import singlecpu._
 
 class TOP extends Module {
   val io = IO(new Bundle {
