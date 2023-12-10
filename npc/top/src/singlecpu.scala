@@ -256,20 +256,18 @@ class Exu extends Module {
 
   })
 
+  val nextpc         = Module(new NextPc)
   val pc             = Module(new PC)
   val source_decoder = Module(new SourceDecoder)
   val immgen         = Module(new ImmGen)
   val regfile        = Module(new RegFile)
   val r1mux          = Module(new R1mux)
   val r2mux          = Module(new R2mux)
-  // val dmux           = Module(new Dmux)
-  val alu = Module(new Alu)
-
-  val nextpc = Module(new NextPc)
+  val alu            = Module(new Alu)
 
   val endnpc = Module(new EndNpc)
-
   val rdaddr = Reg(UInt(32.W))
+
   rdaddr := nextpc.io.nextpc
 
   nextpc.io.imm   := immgen.io.out
@@ -286,7 +284,7 @@ class Exu extends Module {
   regfile.io.rs1 := io.inst(19, 15)
   regfile.io.rs2 := io.inst(24, 20)
   regfile.io.rd  := io.inst(11, 7)
-  // regfile.io.wr     := dmux.io.regwrite
+
   regfile.io.datain := alu.io.out
   regfile.io.wr     := alu.io.rw
 
@@ -303,10 +301,6 @@ class Exu extends Module {
   r2mux.io.r2type := source_decoder.io.s2type
   r2mux.io.imm    := immgen.io.out
   r2mux.io.rs2    := regfile.io.rs2out
-
-  /*
-  dmux.io.dtype := source_decoder.io.dtype
-   */
 
   alu.io.op := source_decoder.io.op
   alu.io.s1 := r1mux.io.r1out

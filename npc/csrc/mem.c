@@ -5,7 +5,6 @@
 
 extern NPCstate npc_state;
 
-
 static uint8_t pmem[0x8000000] PG_ALIGN = {};
 
 uint8_t *guest_to_host(paddr_t paddr) { return pmem + paddr - 0x80000000; }
@@ -27,6 +26,13 @@ word_t pmem_read(paddr_t addr, int len) {
   return ret;
 }
 
+void show_mem(paddr_t addr, int len) {
+  while (len-- > 0) {
+    printf("0x%02x ", pmem_read(addr, 4));
+    addr++;
+    printf("\n");
+  }
+}
 
 void test_trap() {
 
@@ -36,11 +42,10 @@ void test_trap() {
          npc_state.halt_pc);
 }
 
-
-
 //***************************读入img文件
 
 char *img_file = NULL;
+extern bool batch_mode;
 int parse_args(int argc, char *argv[]) {
   const struct option table[] = {
       {"batch", no_argument, NULL, 'b'},
@@ -50,6 +55,9 @@ int parse_args(int argc, char *argv[]) {
 
   while ((o = getopt_long(argc, argv, "-b:", table, NULL)) != -1) {
     switch (o) {
+    case 'b':
+      batch_mode = true;
+      return 0;
     case 1:
       img_file = optarg;
       return 0;
@@ -61,7 +69,6 @@ int parse_args(int argc, char *argv[]) {
   }
   return 0;
 }
-
 
 long load_img() {
   if (img_file == NULL) {
@@ -86,5 +93,3 @@ long load_img() {
   fclose(fp);
   return size;
 }
-
-

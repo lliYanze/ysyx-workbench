@@ -61,19 +61,21 @@ verilog:
 	cp -r $(OUTVERILOG_DIR)/*.v $(VSRC_DIR)/
 	
 
-sim: 
+sim: clean
 	@$(MAKE) verilog
 	@$(MAKE) verilator
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	./$(BIN)
 
-nbwave: verilator
+
+run: verilator
 	$(NPC_EXE)
+
+wave: run
 	gtkwave  $(LOG_FILE)
 
-wave: clean sim 
-	gtkwave  $(LOG_FILE)
-	@echo "重新构建并仿真完成"
+count: 
+	@echo "Total lines of code:"
+	@find . -name Makefile  -o -wholename "./csrc/*.[ch]" -o -wholename "./top/*.scala" | xargs egrep -v '^$$' | wc -l
 
 include ../Makefile
 

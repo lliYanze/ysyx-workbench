@@ -9,14 +9,13 @@ static inline word_t host_read(void *addr, int len);
 
 word_t pmem_read(paddr_t addr, int len);
 
-
-
+#include <assert.h>
 #include <getopt.h>
 #include <unistd.h>
-#include <assert.h>
 
 int parse_args(int argc, char *argv[]);
 long load_img();
 
+void show_mem(paddr_t addr, int len);
 
 #endif // MEM_H

@@ -25,4 +25,9 @@ image: $(IMAGE).elf
 
 
 run: image
-	$(MAKE)  -C $(NPC_HOME) ISA=$(ISA) nbwave ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin
+	$(MAKE)  -C $(NPC_HOME) ISA=$(ISA) run ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin
+
+
+
+wave: image
+	$(MAKE)  -C $(NPC_HOME) ISA=$(ISA) wave ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin
