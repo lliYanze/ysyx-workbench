@@ -20,6 +20,7 @@ typedef struct {
   vaddr_t halt_pc;
   uint32_t halt_ret;
 } NPCstate;
+extern NPCstate npc_state;
 
 // macro testing
 #define CHOOSE2nd(a, b, ...) b

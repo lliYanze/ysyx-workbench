@@ -56,9 +56,9 @@ static int cmd_c(char *args) {
   return 0;
 }
 
-static int cmd_q(char *args) { 
-    nemu_state.state = NEMU_QUIT;
-    return -1; 
+static int cmd_q(char *args) {
+  nemu_state.state = NEMU_QUIT;
+  return -1;
 }
 
 static int cmd_help(char *args);
@@ -123,7 +123,7 @@ static int cmd_help(char *args) {
   return 0;
 }
 
-//单步调试
+// 单步调试
 static int cmd_si(char *args) {
   /*printf("this test si\n");*/
   /*printf("get line : %s\n", args);*/
@@ -182,7 +182,7 @@ static int cmd_x(char *args) {
   printf("data_size is %d\n", data_size);
   printf("data_addr is 0x%x\n", data_addr);
 
-  for (int i = 0; i < data_size*4; i = i +4) {
+  for (int i = 0; i < data_size * 4; i = i + 4) {
     printf("0x%08x \n", vaddr_read(data_addr, 4));
     data_addr += 4;
   }
@@ -321,11 +321,11 @@ static int cmd_cal_test(char *args) {
       "/home/alan/Project/ysyx/ysyx-workbench/nemu/tools/gen-expr/express.log",
       "r");
   assert(fp != NULL);
-    //清空log
+  // 清空log
   FILE *fpwrite = fopen(
       "/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/write.log", "w");
   FILE *fpwrong = fopen(
-          "/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/wrong.log", "w");
+      "/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/wrong.log", "w");
   assert(fp != NULL && fpwrong != NULL && fpwrite != NULL);
   fputs("=========\n", fpwrite);
   fputs("=========\n", fpwrong);
@@ -341,11 +341,13 @@ static int cmd_cal_test(char *args) {
     bool express_flag = false;
     int express_begin = 0;
 
-      FILE *fpwrite = fopen(
-          "/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/write.log", "a");
-      FILE *fpwrong = fopen(
-          "/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/wrong.log", "a");
-      assert(fp != NULL && fpwrong != NULL && fpwrite != NULL);
+    FILE *fpwrite = fopen(
+        "/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/write.log",
+        "a");
+    FILE *fpwrong = fopen(
+        "/home/alan/Project/ysyx/ysyx-workbench/nemu/log/cal_log/wrong.log",
+        "a");
+    assert(fp != NULL && fpwrong != NULL && fpwrite != NULL);
     for (int i = 0; get_one_line[i] != '\n'; ++i) {
       if (!express_flag) {
         result *= 10;
@@ -376,8 +378,8 @@ static int cmd_cal_test(char *args) {
       /*printf("wrong, result is %d, cal_result is %d\n express is %s", result,
        * cal_result, express);*/
     }
-      fclose(fpwrong);
-      fclose(fpwrite);
+    fclose(fpwrong);
+    fclose(fpwrite);
 
     result = 0;
   }
