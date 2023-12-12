@@ -11,7 +11,7 @@ OUTVERILOG_DIR = $(BUILD_DIR)/verilog
 LOG_PATH = $(BUILD_DIR)/logs
 LOG_FILE = $(LOG_PATH)/$(TOP).vcd
 
-INC_PATH ?=
+INC_PATH ?= $(BUILD_DIR)/csrc
 
 VSRC_DIR = ./vsrc
 CSRC_DIR = ./csrc
@@ -38,12 +38,17 @@ CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*
 INCFLAGS = $(addprefix -I, $(INC_PATH))
 CFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 
+CFLAGS += $(shell llvm-config --cxxflags) 
+CFLAGS += -fPIE
+LDFLAGS += $(shell llvm-config --libs)
+CFLAGS += -Wall -Werror
 
 $(BIN) : $(VSRCS) $(CSRCS)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS)  \
 		--top-module $(TOPNAME) $^ \
 		$(addprefix -CFLAGS , $(CFLAGS)) \
+		$(addprefix -LDFLAGS , $(LDFLAGS)) \
 		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
 
 
@@ -51,7 +56,7 @@ IMG ?=
 
 verilator: $(BIN)
 
-NPC_EXE:= $(BIN) $(ARGS)  $(IMG)
+NPC_EXE:= $(BIN) $(ARGS) $(IMG)
 
 verilog: 
 	$(call git_commit, "generate verilog")

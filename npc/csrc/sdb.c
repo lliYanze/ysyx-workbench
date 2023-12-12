@@ -1,8 +1,9 @@
-#include "/home/alan/Project/ysyx/ysyx-workbench/npc/csrc/sdb.h"
+#include "sdb.h"
 #include "./VTOP___024root.h"
-#include "/home/alan/Project/ysyx/ysyx-workbench/npc/csrc/mem.h"
+#include "mem.h"
 #include <verilated_vcd_c.h>
 
+#include <VTOP.h>
 #include <iostream>
 #include <stdio.h>
 #include <string>
@@ -13,6 +14,7 @@ extern NPCstate npc_state;
 extern VerilatedVcdC *mytrace;
 
 // 寄存器名字为TOP__DOT__exu__DOT__regfile__DOT__regfile_0
+//
 
 #define R(index) &top->rootp->TOP__DOT__exu__DOT__regfile__DOT__regfile_##index
 
@@ -66,6 +68,7 @@ void show_regs() {
   }
 }
 
+static int times = 0;
 void single_exe() { top->io_inst = pmem_read(top->io_pc, 4); }
 
 void single_cycle() {
@@ -99,7 +102,6 @@ void reset(int n) {
 }
 
 extern bool batch_mode;
-static int times = 0;
 
 void sdb_mainloop() {
 
@@ -133,10 +135,6 @@ void sdb_mainloop() {
         split.push_back(*begin);
       }
 
-      for (auto i : cmdlist) {
-        std::cout << i << std::endl;
-      }
-
       switch (cmdlist[0][0]) {
       case 'c':
         single_cycle();
@@ -161,6 +159,12 @@ void sdb_mainloop() {
       case 'q':
         npc_state.state = NPC_QUIT;
         break;
+      case 's':
+        while (NPC_RUNNING == npc_state.state) {
+          single_cycle();
+        }
+        npc_state.state = NPC_QUIT;
+        break;
       default:
         printf("Usege: \n \
                 c: cycle\n \
@@ -172,3 +176,5 @@ void sdb_mainloop() {
     }
   }
 }
+
+void ftrace_init() {}

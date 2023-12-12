@@ -28,7 +28,7 @@
  */
 #define MAX_INST_TO_PRINT 10
 
-//环形缓冲区
+// 环形缓冲区
 #define IRING_BUF_SIZE 20
 static char itrace_buf[IRING_BUF_SIZE][128] = {};
 static unsigned int idx = 0;
@@ -91,9 +91,9 @@ static bool g_print_step = false;
 void device_update();
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
-//放入循环缓冲区
+// 放入循环缓冲区
 #ifdef CONFIG_ITRACE_COND
-      iringbuf_push(_this->logbuf);
+  iringbuf_push(_this->logbuf);
 #endif
 
 #ifdef CONFIG_ITRACE_COND
@@ -104,7 +104,7 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 
   if (g_print_step) {
     IFDEF(CONFIG_ITRACE, puts(_this->logbuf));
-  } //一次执行过多指令就不会打印在终端上
+  } // 一次执行过多指令就不会打印在终端上
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 
   // TODO: scan watchpoint
@@ -141,6 +141,8 @@ static void exec_once(Decode *s, vaddr_t pc) {
 
 #ifndef CONFIG_ISA_loongarch32r
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
+  printf("ilength = %d\n", ilen);
+  printf("size of logbuf = %ld\n", s->logbuf + sizeof(s->logbuf) - p);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
               MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc),
               (uint8_t *)&s->isa.inst.val, ilen);
@@ -184,7 +186,7 @@ void assert_fail_msg() {
 /* Simulate how the CPU works. */
 void cpu_exec(uint64_t n) {
   g_print_step =
-      (n < MAX_INST_TO_PRINT); //一次执行多余MAX_INST_TO_PRINT的指令就不会打印
+      (n < MAX_INST_TO_PRINT); // 一次执行多余MAX_INST_TO_PRINT的指令就不会打印
   switch (nemu_state.state) {
   case NEMU_END:
   case NEMU_ABORT:

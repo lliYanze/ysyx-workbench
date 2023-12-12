@@ -1,10 +1,6 @@
-#include "/home/alan/Project/ysyx/ysyx-workbench/npc/csrc/dpic.h"
-#include "/home/alan/Project/ysyx/ysyx-workbench/npc/csrc/macro.h"
-#include "/home/alan/Project/ysyx/ysyx-workbench/npc/csrc/mem.h"
-#include "/home/alan/Project/ysyx/ysyx-workbench/npc/csrc/sdb.h"
-#include "verilated.h"
+#include "mem.h"
+#include "sdb.h"
 #include <VTOP.h>
-
 #include <verilated_vcd_c.h>
 
 VerilatedContext *contextp = new VerilatedContext;
@@ -24,6 +20,7 @@ int main(int arg, char **argv) {
 
   parse_args(arg, argv);
   long size = load_img();
+  log_init();
   npc_state.state = NPC_RUNNING;
 
   reset(1);

@@ -13,7 +13,8 @@ LDFLAGS   += -T $(AM_HOME)/scripts/linker.ld \
 						 --defsym=_pmem_start=0x80000000 --defsym=_entry_offset=0x0
 LDFLAGS   += --gc-sections -e _start
 
-# NPCFLAGS += -b
+NPCFLAGS += -b
+NPCFLAGS += -l $(shell dirname $(IMAGE).elf)/npc-log.txt
 
 CFLAGS += -DMAINARGS=\"$(mainargs)\"
 .PHONY: $(AM_HOME)/am/src/riscv/npc/trm.c
@@ -26,7 +27,6 @@ image: $(IMAGE).elf
 
 run: image
 	$(MAKE)  -C $(NPC_HOME) ISA=$(ISA) run ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin
-
 
 
 wave: image

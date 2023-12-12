@@ -1,5 +1,5 @@
-#include "/home/alan/Project/ysyx/ysyx-workbench/npc/csrc/mem.h"
-#include "/home/alan/Project/ysyx/ysyx-workbench/npc/csrc/macro.h"
+#include "mem.h"
+#include "macro.h"
 
 #include <stdio.h>
 
@@ -45,19 +45,28 @@ void test_trap() {
 //***************************读入img文件
 
 char *img_file = NULL;
+char *log_file = NULL;
 extern bool batch_mode;
 int parse_args(int argc, char *argv[]) {
   const struct option table[] = {
       {"batch", no_argument, NULL, 'b'},
+      {"l", required_argument, NULL, 'f'},
       {0, 0, NULL, 0},
   };
   int o;
+  int time = argc;
+  while (time--) {
+    printf("%s\n", argv[time]);
+  }
 
-  while ((o = getopt_long(argc, argv, "-b:", table, NULL)) != -1) {
+  while ((o = getopt_long(argc, argv, "-bl:", table, NULL)) != -1) {
     switch (o) {
     case 'b':
       batch_mode = true;
-      return 0;
+      break;
+    case 'l':
+      log_file = optarg;
+      break;
     case 1:
       img_file = optarg;
       return 0;
@@ -92,4 +101,19 @@ long load_img() {
 
   fclose(fp);
   return size;
+}
+
+FILE *log_fp = NULL;
+
+void log_init() {
+  log_fp = stdout;
+  if (log_file != NULL) {
+    FILE *fp = fopen(log_file, "w");
+    if (fp == NULL) {
+      printf("Can not open '%s'\n", log_file);
+      assert(0);
+    }
+    log_fp = fp;
+  }
+  printf("Log is written to %s\n", log_file ? log_file : "stdout");
 }

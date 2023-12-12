@@ -17,6 +17,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
+#include <iostream>
 
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -96,10 +97,12 @@ extern "C" void init_disasm(const char *triple) {
 
 extern "C" void disassemble(char *str, int size, uint64_t pc, uint8_t *code,
                             int nbyte) {
+
   MCInst inst;
   llvm::ArrayRef<uint8_t> arr(code, nbyte);
   uint64_t dummy_size = 0;
   gDisassembler->getInstruction(inst, dummy_size, arr, pc, llvm::nulls());
+  printf("\ndown\n");
 
   std::string s;
   raw_string_ostream os(s);

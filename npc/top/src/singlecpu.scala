@@ -29,6 +29,30 @@ class EndNpc extends BlackBox with HasBlackBoxInline {
   )
 }
 
+class InstTrace extends BlackBox with HasBlackBoxInline {
+  val io = IO(new Bundle {
+    val inst  = Input(UInt(32.W))
+    val pc    = Input(UInt(32.W))
+    val clock = Input(Clock())
+  })
+
+  setInline(
+    "InstTrace.v",
+    s"""
+       | import "DPI-C" function void insttrace(input int pc, input int inst);
+       |module InstTrace(
+       |    input wire [31:0] inst,
+       |    input wire [31:0] pc,
+       |    input wire clock
+       |);
+       | always @(posedge clock) 
+       |    insttrace(pc, inst);
+       |
+       |endmodule
+       |""".stripMargin
+  )
+}
+
 class R1mux extends Module {
   val io = IO(new Bundle {
     val r1type = Input(Bool())
@@ -38,8 +62,6 @@ class R1mux extends Module {
   })
 
   io.r1out := Mux(io.r1type, io.rs1, io.pc)
-  // printf("r1out: 0x%x\n", io.r1out)
-  // printf("R1pc: 0x%x\n", io.pc)
 }
 
 class R2mux extends Module {
@@ -268,6 +290,8 @@ class Exu extends Module {
   val endnpc = Module(new EndNpc)
   val rdaddr = Reg(UInt(32.W))
 
+  val insttrace = Module(new InstTrace)
+
   rdaddr := nextpc.io.nextpc
 
   nextpc.io.imm   := immgen.io.out
@@ -305,6 +329,10 @@ class Exu extends Module {
   alu.io.op := source_decoder.io.op
   alu.io.s1 := r1mux.io.r1out
   alu.io.s2 := r2mux.io.r2out
+
+  insttrace.io.inst  := source_decoder.io.inst
+  insttrace.io.pc    := pc.io.pc
+  insttrace.io.clock := clock
 
   io.out := alu.io.out
 

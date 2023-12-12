@@ -1,6 +1,6 @@
 #ifndef MEM_H
 #define MEM_H
-#include "/home/alan/Project/ysyx/ysyx-workbench/npc/csrc/macro.h"
+#include "macro.h"
 
 void test_trap();
 uint8_t *guest_to_host(paddr_t paddr);
@@ -15,6 +15,7 @@ word_t pmem_read(paddr_t addr, int len);
 
 int parse_args(int argc, char *argv[]);
 long load_img();
+void log_init();
 
 void show_mem(paddr_t addr, int len);
 

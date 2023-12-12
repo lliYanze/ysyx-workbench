@@ -2,17 +2,13 @@
 #define __MACRO_H__
 
 // npc状态
+#include <inttypes.h>
 #include <stdlib.h>
 #define NPC_RUNNING 0
 #define NPC_STOP 1
 #define NPC_END 2
 #define NPC_ABORT 3
 #define NPC_QUIT 4
-
-typedef __uint8_t uint8_t;
-typedef __uint16_t uint16_t;
-typedef __uint32_t uint32_t;
-typedef __uint64_t uint64_t;
 
 typedef uint32_t paddr_t;
 typedef uint32_t vaddr_t;
@@ -67,10 +63,13 @@ typedef struct {
 
 #define ANSI_FMT(str, fmt) fmt str ANSI_NONE
 
-
-
-
 #define PG_ALIGN __attribute((aligned(4096))) // 4kb 对齐
 
+#define log_write(...)                                                         \
+  do {                                                                         \
+    extern FILE *log_fp;                                                       \
+    fprintf(log_fp, __VA_ARGS__);                                              \
+    fflush(log_fp);                                                            \
+  } while (0)
 
 #endif // MACRO_H

@@ -1,11 +1,11 @@
 #ifndef DPIC_H
 #define DPIC_H
 
-#include "/home/alan/Project/ysyx/ysyx-workbench/npc/csrc/macro.h"
-#include <VTOP.h>
-#include <svdpi.h>
+#include "macro.h"
 
 void setnpcstate(int state);
 extern "C" void stopnpc(int state);
+
+extern "C" void insttrace(uint32_t pc, uint32_t inst);
 
 #endif // DPIC_H
