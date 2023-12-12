@@ -1,3 +1,4 @@
+#include "macro.h"
 #include <VTOP.h>
 #include <verilated_vcd_c.h>
 
