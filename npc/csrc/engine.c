@@ -3,12 +3,16 @@
 #include "top.h"
 #include <svdpi.h>
 
-void wave_init(int arg, char **argv) {
+static void wave_init(int arg, char **argv) {
   contextp->commandArgs(arg, argv);
   Verilated::mkdir("./build/logs");
   Verilated::traceEverOn(true);
   top->trace(mytrace, 5);
   mytrace->open("./build/logs/top.vcd");
+}
+static void wave_close() {
+  mytrace->close();
+  delete top;
 }
 
 #include <getopt.h>
@@ -19,7 +23,7 @@ char *log_file = NULL;
 char *elf_file = NULL;
 char *ftrace_file = NULL;
 bool batch_mode = false;
-int parse_args(int argc, char *argv[]) {
+static int parse_args(int argc, char *argv[]) {
   const struct option table[] = {
       {"batch", no_argument, NULL, 'b'},
       {"log-file", required_argument, NULL, 'l'},
@@ -57,7 +61,7 @@ int parse_args(int argc, char *argv[]) {
 }
 
 #include <assert.h>
-long load_img() {
+static long load_img() {
   if (img_file == NULL) {
     printf("No image file specified\n");
     exit(1);
@@ -83,7 +87,7 @@ long load_img() {
 
 FILE *log_fp = NULL;
 
-void log_init() {
+static void log_init() {
   log_fp = stdout;
   if (log_file != NULL) {
     FILE *fp = fopen(log_file, "w");
@@ -98,7 +102,7 @@ void log_init() {
 
 FILE *ftrace_fp = NULL;
 
-void ftrace_init() {
+static void ftrace_init() {
   ftrace_fp = stdout;
   if (ftrace_file != NULL) {
     FILE *fp = fopen(ftrace_file, "w");
@@ -125,4 +129,10 @@ void engine_init(int arg, char **argv) {
               "-pc-linux-gnu");
   load_elf();
   ftrace_init();
+}
+
+int is_exit_status_bad();
+int engine_close() {
+  wave_close();
+  return is_exit_status_bad();
 }

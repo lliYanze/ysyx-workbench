@@ -7,3 +7,4 @@ extern VTOP *top;
 extern VerilatedVcdC *mytrace;
 
 void engine_init(int arg, char **argv);
+int engine_close();

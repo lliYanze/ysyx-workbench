@@ -119,12 +119,12 @@ class Alu extends Module {
   when(io.op === OP.ADD) {
     io.out := io.s1 + io.s2
     io.rw  := true.B
-    printf("add\n")
+    // printf("add\n")
   }.elsewhen(io.op === OP.END) {
     io.out := 0.U
     io.rw  := false.B
     io.end := true.B
-    printf("ebreak!\n")
+    // printf("ebreak!\n")
   }.elsewhen(io.op === OP.NOP) {
     io.out := 0.U
     io.rw  := false.B
@@ -132,7 +132,7 @@ class Alu extends Module {
   }.elsewhen(io.op === OP.JRET) {
     io.out := io.s1 + 4.U
     io.rw  := true.B
-    printf("jump ret \n");
+    // printf("jump ret \n");
 
   }.otherwise {
     io.out := 0.U
@@ -159,59 +159,82 @@ class SourceDecoder extends Module {
 
   val start = RegInit(0.U) //INFO:为了排除最开始时指令为0的情况
 
-  when(io.inst === instructions().addi) {
+  def set_R: Unit = {
+    io.format := TYPE.R
+    io.s1type := true.B
+    io.s2type := true.B
+    io.ftrace := false.B
+  }
+
+  def set_I(is_jarl: Bool): Unit = {
     io.format := TYPE.I
-    io.op     := OP.ADD
     io.s1type := true.B
     io.s2type := false.B
-    io.pclj   := false.B
-    io.pcrs1  := false.B
+    io.ftrace := Mux(is_jarl, true.B, false.B)
+  }
+
+  def set_S: Unit = {
+    io.format := TYPE.S
+    io.s1type := true.B
+    io.s2type := true.B
     io.ftrace := false.B
+  }
+
+  def set_B: Unit = {
+    io.format := TYPE.B
+    io.s1type := true.B
+    io.s2type := true.B
+    io.ftrace := false.B
+  }
+
+  def set_U: Unit = {
+    io.format := TYPE.U
+    io.s1type := false.B
+    io.s2type := false.B
+    io.ftrace := false.B
+  }
+  def set_J: Unit = {
+    io.format := TYPE.J
+    io.s1type := false.B
+    io.s2type := false.B
+    io.ftrace := true.B
+  }
+
+  when(io.inst === instructions().addi) {
+    io.op := OP.ADD
+    set_I(false.B)
+    io.pclj  := false.B
+    io.pcrs1 := false.B
 
   }.elsewhen(io.inst === instructions().ebreak) {
-    io.format := TYPE.U
-    io.op     := OP.END
-    io.s1type := false.B
-    io.s2type := false.B
-    io.pclj   := false.B
-    io.pcrs1  := false.B
-    io.ftrace := false.B
+    set_U
+    io.op    := OP.END
+    io.pclj  := false.B
+    io.pcrs1 := false.B
 
   }.elsewhen(io.inst === instructions().jal) {
-    io.format := TYPE.J
-    io.op     := OP.JRET
-    io.s1type := false.B
-    io.s2type := false.B
-    io.pclj   := true.B
-    io.pcrs1  := false.B
-    io.ftrace := true.B
+    set_J
+    io.op    := OP.JRET
+    io.pclj  := true.B
+    io.pcrs1 := false.B
 
   }.elsewhen(io.inst === instructions().jalr) {
-    io.format := TYPE.I
-    io.op     := OP.JRET
-    io.s1type := false.B
-    io.s2type := false.B
-    io.pclj   := true.B
-    io.pcrs1  := true.B
-    io.ftrace := true.B
+    set_I(true.B)
+    io.op    := OP.JRET
+    io.pclj  := true.B
+    io.pcrs1 := true.B
 
   }.elsewhen(io.inst === instructions().sw) {
-    io.format := TYPE.I
-    io.op     := OP.NOP
-    io.s1type := false.B
-    io.s2type := false.B
-    io.pclj   := false.B
-    io.pcrs1  := false.B
-    io.ftrace := false.B
+    set_I(false.B)
+    io.op    := OP.NOP
+    io.pclj  := false.B
+    io.pcrs1 := false.B
 
   }.elsewhen(io.inst === instructions().auipc) {
-    io.format := TYPE.U
-    io.op     := OP.ADD
-    io.s1type := false.B
-    io.s2type := false.B
-    io.pclj   := false.B
-    io.pcrs1  := false.B
-    io.ftrace := false.B
+    set_U
+    io.op    := OP.ADD
+    io.pclj  := false.B
+    io.pcrs1 := false.B
 
   }.otherwise {
     io.format := TYPE.E
@@ -225,7 +248,6 @@ class SourceDecoder extends Module {
     io.ftrace := false.B
     printf("Error: Unknown instruction!\n")
   }
-  // printf("inst: 0x%x\n", io.inst)
 
 }
 
