@@ -5,6 +5,7 @@ TOP = top
 #这里是顶层模块名
 TOPNAME = TOP
 
+
 BUILD_DIR = ./build
 OUTVERILOG_DIR = $(BUILD_DIR)/verilog
 
@@ -12,6 +13,7 @@ LOG_PATH = $(BUILD_DIR)/logs
 LOG_FILE = $(LOG_PATH)/$(TOP).vcd
 
 INC_PATH ?= $(BUILD_DIR)/csrc
+
 
 VSRC_DIR = ./vsrc
 CSRC_DIR = ./csrc
@@ -44,9 +46,13 @@ CFLAGS += -fPIE
 LDFLAGS += $(shell llvm-config --libs)
 CFLAGS += -Wall -Werror
 
+# CFLAGS += -I$(NEMU_HOME)/include
+LDFLAGS += -L$(NPC_HOME)/lib
+LDFLAGS += -lriscv32-nemu-interpreter-so
+LDFLAGS += -Wl,-rpath=$(NPC_HOME)/lib
+
+
 #for debug
-
-
 # CFLAGS += -ggdb
 # CFLAGS += -DVL_DEBUG=1
 # CFLAGS += -D_GLIBCXX_DEBUG
