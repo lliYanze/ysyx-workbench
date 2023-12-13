@@ -141,7 +141,6 @@ class Alu extends Module {
     printf("Error: Unknown instruction!\n")
   }
 
-  // printf("s1: 0x%x\t, s2: 0x%x \t, out:0x%x\n", io.s1, io.s2, io.out)
 }
 
 class SourceDecoder extends Module {

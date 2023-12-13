@@ -1,6 +1,8 @@
+#include "macro.h"
 #include "pmem.h"
 #include "reg.h"
 #include "top.h"
+#include <stdio.h>
 #include <svdpi.h>
 
 static void wave_init(int arg, char **argv) {
@@ -78,7 +80,8 @@ static long load_img() {
 
   printf("Image '%s' size = %ld\n", img_file, size);
   fseek(fp, 0, SEEK_SET);
-  int ret = fread(guest_to_host(0x80000000), size, 1, fp);
+  int ret = fread(guest_to_host(CONFIG_MBASE), size, 1, fp);
+
   assert(ret == 1);
 
   fclose(fp);
@@ -119,11 +122,14 @@ static void ftrace_init() {
 #include "trace.h"
 
 extern "C" void init_disasm(const char *triple);
+void init_mem();
 void engine_init(int arg, char **argv) {
-  wave_init(arg, argv);
   parse_args(arg, argv);
-  load_img();
+  wave_init(arg, argv);
   log_init();
+  init_mem();
+  load_img();
+
   preg_init();
   init_disasm("riscv32"
               "-pc-linux-gnu");
