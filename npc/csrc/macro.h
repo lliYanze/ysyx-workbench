@@ -12,6 +12,11 @@
 
 #define CONFIG_ISA_riscv32
 
+// BITS
+#define BITMASK(bits) ((1ull << (bits)) - 1)
+#define BITS(x, hi, lo)                                                        \
+  (((x) >> (lo)) & BITMASK((hi) - (lo) + 1)) // similar to x[hi:lo] in verilog
+
 // macro testing
 #define CHOOSE2nd(a, b, ...) b
 #define MUX_WITH_COMMA(contain_comma, a, b) CHOOSE2nd(contain_comma a, b)
@@ -74,6 +79,16 @@ extern NPCstate npc_state;
     extern FILE *log_fp;                                                       \
     fprintf(log_fp, __VA_ARGS__);                                              \
     fflush(log_fp);                                                            \
+  } while (0)
+
+//
+//
+//
+#define ftrace_log_write(...)                                                  \
+  do {                                                                         \
+    extern FILE *ftrace_fp;                                                    \
+    fprintf(ftrace_fp, __VA_ARGS__);                                           \
+    fflush(ftrace_fp);                                                         \
   } while (0)
 
 #endif // MACRO_H

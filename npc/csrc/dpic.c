@@ -53,3 +53,31 @@ extern "C" void insttrace(uint32_t pc, uint32_t inst) {
 
   log_write("0x%08x: %s\n", pc, p);
 }
+
+#include "trace.h"
+
+extern "C" void ftrace(uint32_t pc, uint32_t inst, uint32_t dst_addr) {
+  uint32_t i = inst;
+  static int space_num = 0;
+  int rd = BITS(i, 11, 7);
+  int rs1 = BITS(i, 19, 15);
+  elf_func_info cur_func = find_func_by_addr(pc);
+  elf_func_info dst_func = find_func_by_addr(dst_addr);
+  if (rd == 1) {
+    ftrace_log_write("0x%x: ", pc);
+    ftrace_log_write("%s\t", cur_func.name);
+    for (int i = 0; i < space_num; ++i) {
+      ftrace_log_write("  ");
+    }
+    ftrace_log_write("call--> %s @[0x%x]\n", dst_func.name, dst_addr);
+    space_num++;
+  } else if (rd == 0 && rs1 == 1) {
+    ftrace_log_write("0x%x: ", pc);
+    ftrace_log_write("%s\t", cur_func.name);
+    space_num--;
+    for (int i = 0; i < space_num; ++i) {
+      ftrace_log_write("  ");
+    }
+    ftrace_log_write("ret --> %s @[0x%x]\n", dst_func.name, dst_addr);
+  }
+}

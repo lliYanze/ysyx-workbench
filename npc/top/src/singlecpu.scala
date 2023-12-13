@@ -45,8 +45,36 @@ class InstTrace extends BlackBox with HasBlackBoxInline {
        |    input wire [31:0] pc,
        |    input wire clock
        |);
-       | always @(posedge clock) 
+       | always @(posedge clock)
        |    insttrace(pc, inst);
+       |
+       |endmodule
+       |""".stripMargin
+  )
+}
+
+class Ftrace extends BlackBox with HasBlackBoxInline {
+  val io = IO(new Bundle {
+    val inst   = Input(UInt(32.W))
+    val pc     = Input(UInt(32.W))
+    val nextpc = Input(UInt(32.W))
+    val jump   = Input(Bool())
+    val clock  = Input(Clock())
+  })
+
+  setInline(
+    "Ftrace.v",
+    s"""
+       | import "DPI-C" function void ftrace(input int pc, input int inst, input int nextpc);
+       |module Ftrace(
+       |    input wire [31:0] inst,
+       |    input wire [31:0] pc,
+       |    input wire [31:0] nextpc,
+       |    input wire  jump,
+       |    input wire clock
+       |);
+       | always @(posedge clock)
+       |    if(jump) ftrace(pc, inst, nextpc);
        |
        |endmodule
        |""".stripMargin
@@ -126,6 +154,7 @@ class SourceDecoder extends Module {
     val pclj   = Output(Bool()) //ture : imm, false : +4
     val pcrs1  = Output(Bool()) //ture : rs1, false : PC
     val op     = Output(UInt(5.W))
+    val ftrace = Output(Bool())
   })
 
   val start = RegInit(0.U) //INFO:为了排除最开始时指令为0的情况
@@ -137,6 +166,7 @@ class SourceDecoder extends Module {
     io.s2type := false.B
     io.pclj   := false.B
     io.pcrs1  := false.B
+    io.ftrace := false.B
 
   }.elsewhen(io.inst === instructions().ebreak) {
     io.format := TYPE.U
@@ -145,6 +175,8 @@ class SourceDecoder extends Module {
     io.s2type := false.B
     io.pclj   := false.B
     io.pcrs1  := false.B
+    io.ftrace := false.B
+
   }.elsewhen(io.inst === instructions().jal) {
     io.format := TYPE.J
     io.op     := OP.JRET
@@ -152,6 +184,7 @@ class SourceDecoder extends Module {
     io.s2type := false.B
     io.pclj   := true.B
     io.pcrs1  := false.B
+    io.ftrace := true.B
 
   }.elsewhen(io.inst === instructions().jalr) {
     io.format := TYPE.I
@@ -160,6 +193,7 @@ class SourceDecoder extends Module {
     io.s2type := false.B
     io.pclj   := true.B
     io.pcrs1  := true.B
+    io.ftrace := true.B
 
   }.elsewhen(io.inst === instructions().sw) {
     io.format := TYPE.I
@@ -168,6 +202,7 @@ class SourceDecoder extends Module {
     io.s2type := false.B
     io.pclj   := false.B
     io.pcrs1  := false.B
+    io.ftrace := false.B
 
   }.elsewhen(io.inst === instructions().auipc) {
     io.format := TYPE.U
@@ -176,6 +211,8 @@ class SourceDecoder extends Module {
     io.s2type := false.B
     io.pclj   := false.B
     io.pcrs1  := false.B
+    io.ftrace := false.B
+
   }.otherwise {
     io.format := TYPE.E
     io.op     := Mux(start === 1.U, OP.END, OP.NOP)
@@ -185,6 +222,7 @@ class SourceDecoder extends Module {
     io.s2type := false.B
     io.pclj   := false.B
     io.pcrs1  := false.B
+    io.ftrace := false.B
     printf("Error: Unknown instruction!\n")
   }
   // printf("inst: 0x%x\n", io.inst)
@@ -291,6 +329,7 @@ class Exu extends Module {
   val rdaddr = Reg(UInt(32.W))
 
   val insttrace = Module(new InstTrace)
+  val ftrace    = Module(new Ftrace)
 
   rdaddr := nextpc.io.nextpc
 
@@ -333,6 +372,12 @@ class Exu extends Module {
   insttrace.io.inst  := source_decoder.io.inst
   insttrace.io.pc    := pc.io.pc
   insttrace.io.clock := clock
+
+  ftrace.io.inst   := source_decoder.io.inst
+  ftrace.io.pc     := pc.io.pc
+  ftrace.io.nextpc := alu.io.out
+  ftrace.io.clock  := clock
+  ftrace.io.jump   := source_decoder.io.ftrace
 
   io.out := alu.io.out
 

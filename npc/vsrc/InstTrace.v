@@ -5,7 +5,7 @@ module InstTrace(
     input wire [31:0] pc,
     input wire clock
 );
- always @(posedge clock) 
+ always @(posedge clock)
     insttrace(pc, inst);
 
 endmodule

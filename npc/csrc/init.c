@@ -16,23 +16,33 @@ void wave_init(int arg, char **argv) {
 
 char *img_file = NULL;
 char *log_file = NULL;
+char *elf_file = NULL;
+char *ftrace_file = NULL;
 bool batch_mode = false;
 int parse_args(int argc, char *argv[]) {
   const struct option table[] = {
       {"batch", no_argument, NULL, 'b'},
-      {"l", required_argument, NULL, 'f'},
+      {"log-file", required_argument, NULL, 'l'},
+      {"elf-file", required_argument, NULL, 'e'},
+      {"ftrace-file", required_argument, NULL, 'f'},
       {0, 0, NULL, 0},
   };
   int o;
   int time = argc;
 
-  while ((o = getopt_long(argc, argv, "-bl:", table, NULL)) != -1) {
+  while ((o = getopt_long(argc, argv, "-bl:e:f:", table, NULL)) != -1) {
     switch (o) {
     case 'b':
       batch_mode = true;
       break;
     case 'l':
       log_file = optarg;
+      break;
+    case 'e':
+      elf_file = optarg;
+      break;
+    case 'f':
+      ftrace_file = optarg;
       break;
     case 1:
       img_file = optarg;
@@ -83,8 +93,26 @@ void log_init() {
     }
     log_fp = fp;
   }
-  printf("Log is written  to %s\n", log_file ? log_file : "stdout");
+  printf("Trace Log is written  to %s\n", log_file ? log_file : "stdout");
 }
+
+FILE *ftrace_fp = NULL;
+
+void ftrace_init() {
+  ftrace_fp = stdout;
+  if (ftrace_file != NULL) {
+    FILE *fp = fopen(ftrace_file, "w");
+    if (fp == NULL) {
+      printf("Can not open '%s'\n", ftrace_file);
+      assert(0);
+    }
+    ftrace_fp = fp;
+  }
+  printf("Ftrace Log is written  to %s\n",
+         ftrace_file ? ftrace_file : "stdout");
+}
+
+#include "trace.h"
 
 extern "C" void init_disasm(const char *triple);
 void engine_init(int arg, char **argv) {
@@ -95,4 +123,6 @@ void engine_init(int arg, char **argv) {
   preg_init();
   init_disasm("riscv32"
               "-pc-linux-gnu");
+  load_elf();
+  ftrace_init();
 }
