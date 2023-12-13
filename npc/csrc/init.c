@@ -1,6 +1,7 @@
 #include "pmem.h"
 #include "reg.h"
 #include "top.h"
+#include <svdpi.h>
 
 void wave_init(int arg, char **argv) {
   contextp->commandArgs(arg, argv);
@@ -82,13 +83,16 @@ void log_init() {
     }
     log_fp = fp;
   }
-  printf("Log is written to %s\n", log_file ? log_file : "stdout");
+  printf("Log is written  to %s\n", log_file ? log_file : "stdout");
 }
 
+extern "C" void init_disasm(const char *triple);
 void engine_init(int arg, char **argv) {
   wave_init(arg, argv);
   parse_args(arg, argv);
   load_img();
   log_init();
   preg_init();
+  init_disasm("riscv32"
+              "-pc-linux-gnu");
 }

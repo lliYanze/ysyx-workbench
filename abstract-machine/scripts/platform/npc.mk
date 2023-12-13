@@ -31,3 +31,7 @@ run: image
 
 wave: image
 	$(MAKE)  -C $(NPC_HOME) ISA=$(ISA) wave ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin
+
+
+gdb: image
+	$(MAKE) -C $(NPC_HOME) ISA=$(ISA) gdb ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin

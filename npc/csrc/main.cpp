@@ -8,6 +8,7 @@ int main(int arg, char **argv) {
   /* top->trace(mytrace, 5); */
   /* mytrace->open("./build/logs/top.vcd"); */
   engine_init(arg, argv);
+  printf("test\n");
 
   /* parse_args(arg, argv); */
   /* long size = load_img(); */

@@ -19,7 +19,8 @@ CSRC_DIR = ./csrc
 
 VERILATOR = verilator
 # VERILATOR_CFLAGS += --cc --trace --exe --build -Wall 
-VERILATOR_CFLAGS += --cc --trace --exe --build
+VERILATOR_CFLAGS += --cc --trace --exe --build  
+
 
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
@@ -38,10 +39,19 @@ CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*
 INCFLAGS = $(addprefix -I, $(INC_PATH))
 CFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 
-# CFLAGS += $(shell llvm-config --cxxflags) 
-# CFLAGS += -fPIE
-# LDFLAGS += $(shell llvm-config --libs)
+CFLAGS += -I/usr/lib/llvm-14/include -std=c++14   -fno-exceptions -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
+CFLAGS += -fPIE
+LDFLAGS += $(shell llvm-config --libs)
 # CFLAGS += -Wall -Werror
+
+#for debug
+
+
+# CFLAGS += -ggdb
+# CFLAGS += -DVL_DEBUG=1
+# CFLAGS += -D_GLIBCXX_DEBUG
+# LDFLAGS += -ggdb
+
 
 $(BIN) : $(VSRCS) $(CSRCS)
 	@rm -rf $(OBJ_DIR)
@@ -77,6 +87,14 @@ run: verilator
 
 wave: run
 	gtkwave  $(LOG_FILE)
+
+
+
+gdb: verilator
+	$(call git_commit, "gdb NPC")
+	gdb -s $(BIN) --args $(NPC_EXE)
+	# gdb -s $(BIN)  $(NPC_EXEC)
+
 
 count: 
 	@echo "Total lines of code:"

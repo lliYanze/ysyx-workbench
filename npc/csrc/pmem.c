@@ -1,6 +1,6 @@
 #include "macro.h"
 #include <stdio.h>
-static uint8_t pmem[0x8000000] PG_ALIGN = {};
+static uint8_t pmem[0x80000] PG_ALIGN = {};
 
 uint8_t *guest_to_host(paddr_t paddr) { return pmem + paddr - 0x80000000; }
 

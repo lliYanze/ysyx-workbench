@@ -141,8 +141,6 @@ static void exec_once(Decode *s, vaddr_t pc) {
 
 #ifndef CONFIG_ISA_loongarch32r
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
-  printf("ilength = %d\n", ilen);
-  printf("size of logbuf = %ld\n", s->logbuf + sizeof(s->logbuf) - p);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
               MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc),
               (uint8_t *)&s->isa.inst.val, ilen);

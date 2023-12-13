@@ -10,17 +10,7 @@
 #define NPC_ABORT 3
 #define NPC_QUIT 4
 
-typedef uint32_t paddr_t;
-typedef uint32_t vaddr_t;
-
-typedef uint32_t word_t;
-
-typedef struct {
-  int state;
-  vaddr_t halt_pc;
-  uint32_t halt_ret;
-} NPCstate;
-extern NPCstate npc_state;
+#define CONFIG_ISA_riscv32
 
 // macro testing
 #define CHOOSE2nd(a, b, ...) b
@@ -38,9 +28,22 @@ extern NPCstate npc_state;
 #define MUXONE(macro, X, Y) MUX_MACRO_PROPERTY(__P_ONE_, macro, X, Y)
 #define MUXZERO(macro, X, Y) MUX_MACRO_PROPERTY(__P_ZERO_, macro, X, Y)
 
-#define PRIx32 "x"
-
+typedef MUXDEF(CONFIG_ISA64, uint64_t, uint32_t) word_t;
+typedef MUXDEF(CONFIG_ISA64, int64_t, int32_t) sword_t;
 #define FMT_WORD MUXDEF(CONFIG_ISA64, "0x%016" PRIx64, "0x%08" PRIx32)
+
+typedef word_t vaddr_t;
+typedef word_t paddr_t;
+typedef MUXDEF(PMEM64, uint64_t, uint32_t) paddr_t;
+#define FMT_PADDR MUXDEF(PMEM64, "0x%016" PRIx64, "0x%08" PRIx32)
+
+// NPC状态
+typedef struct {
+  int state;
+  vaddr_t halt_pc;
+  uint32_t halt_ret;
+} NPCstate;
+extern NPCstate npc_state;
 
 // ----------- log -----------
 
