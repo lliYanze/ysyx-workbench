@@ -7,6 +7,8 @@ VerilatedContext *contextp = new VerilatedContext;
 VTOP *top = new VTOP{contextp};
 VerilatedVcdC *mytrace = new VerilatedVcdC;
 
+CPU_state cpu = {};
+
 void single_exe() { top->io_inst = pmem_read(top->io_pc, 4); }
 
 static int times = 0;
@@ -39,6 +41,8 @@ void reset(int n) {
   }
   top->reset = 0;
 }
+
+// void update_cpu() { cpu.pc = top->io_pc; }
 
 static void exec_once() { single_cycle(); }
 

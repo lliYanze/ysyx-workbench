@@ -5,6 +5,7 @@
 #include <svdpi.h>
 #include <top.h>
 
+// verilator输出波形初始化
 static void wave_init(int arg, char **argv) {
   contextp->commandArgs(arg, argv);
   Verilated::mkdir("./build/logs");
@@ -17,6 +18,7 @@ static void wave_close() {
   delete top;
 }
 
+// 从外部读取命令
 #include <getopt.h>
 #include <unistd.h>
 
@@ -63,6 +65,7 @@ static int parse_args(int argc, char *argv[]) {
 }
 
 #include <assert.h>
+long img_file_size = 0;
 static long load_img() {
   if (img_file == NULL) {
     printf("No image file specified\n");
@@ -77,6 +80,7 @@ static long load_img() {
 
   fseek(fp, 0, SEEK_END);
   long size = ftell(fp);
+  img_file_size = size;
 
   printf("Image '%s' size = %ld\n", img_file, size);
   fseek(fp, 0, SEEK_SET);
@@ -119,6 +123,15 @@ static void ftrace_init() {
          ftrace_file ? ftrace_file : "stdout");
 }
 
+// CPU的初始化
+
+#include <mem/reg.h>
+void init_cpu() {
+  cpu.pc = &(top->io_pc);
+  reg_init();
+  // cpu.reg = preg;
+}
+
 #include <utils/trace.h>
 
 extern "C" void init_disasm(const char *triple);
@@ -129,8 +142,8 @@ void engine_init(int arg, char **argv) {
   log_init();
   init_mem();
   load_img();
+  init_cpu();
 
-  preg_init();
   init_disasm("riscv32"
               "-pc-linux-gnu");
   load_elf();

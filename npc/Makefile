@@ -88,6 +88,11 @@ sim: clean
 	@$(MAKE) verilator
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 
+compilejson:
+	@rm -f $(CSRC_DIR)/compile_commands.json
+	@$(MAKE) -Bnwk | compiledb -o- > $(CSRC_DIR)/compile_commands.json
+	@echo "compile_commands.json generated"
+
 
 run: verilator
 	$(NPC_EXE)
@@ -130,4 +135,4 @@ test:
 clean:
 	-rm -rf $(BUILD_DIR) $(VSRC_DIR) 
 
-.PHONY: test help compile bsp reformat checkformat clean sim wave nbwave verilog
+.PHONY: test help compile bsp reformat checkformat clean sim wave nbwave verilog compilejson
