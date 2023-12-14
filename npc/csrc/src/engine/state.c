@@ -1,4 +1,4 @@
-#include "macro.h"
+#include <macro.h>
 
 NPCstate npc_state = {NPC_RUNNING, 0, 0};
 

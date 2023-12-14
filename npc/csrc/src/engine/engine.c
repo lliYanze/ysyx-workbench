@@ -1,9 +1,9 @@
-#include "macro.h"
-#include "pmem.h"
-#include "reg.h"
-#include "top.h"
+#include <macro.h>
+#include <mem/pmem.h>
+#include <mem/reg.h>
 #include <stdio.h>
 #include <svdpi.h>
+#include <top.h>
 
 static void wave_init(int arg, char **argv) {
   contextp->commandArgs(arg, argv);
@@ -119,7 +119,7 @@ static void ftrace_init() {
          ftrace_file ? ftrace_file : "stdout");
 }
 
-#include "trace.h"
+#include <utils/trace.h>
 
 extern "C" void init_disasm(const char *triple);
 void init_mem();

@@ -1,7 +1,7 @@
-#include "cpu.h"
-#include "macro.h"
-#include "pmem.h"
-#include "top.h"
+#include <cpu/cpu.h>
+#include <macro.h>
+#include <mem/pmem.h>
+#include <top.h>
 
 VerilatedContext *contextp = new VerilatedContext;
 VTOP *top = new VTOP{contextp};

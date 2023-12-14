@@ -12,7 +12,7 @@ OUTVERILOG_DIR = $(BUILD_DIR)/verilog
 LOG_PATH = $(BUILD_DIR)/logs
 LOG_FILE = $(LOG_PATH)/$(TOP).vcd
 
-INC_PATH ?= $(BUILD_DIR)/csrc
+INC_PATH ?= $(NPC_HOME)/csrc/include
 
 
 VSRC_DIR = ./vsrc
@@ -40,6 +40,7 @@ CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*
 # rules for verilator
 INCFLAGS = $(addprefix -I, $(INC_PATH))
 CFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
+
 
 CFLAGS += -I/usr/lib/llvm-14/include -std=c++14   -fno-exceptions -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 CFLAGS += -fPIE

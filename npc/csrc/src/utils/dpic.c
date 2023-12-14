@@ -1,12 +1,12 @@
-#include "macro.h"
 #include <VTOP.h>
 #include <cstdint>
 #include <cstdio>
+#include <macro.h>
 #include <stdio.h>
 #include <string.h>
 #include <svdpi.h>
 
-#include "top.h"
+#include <top.h>
 extern void set_npc_state(int state, vaddr_t pc, int halt_ret);
 
 extern "C" void stopnpc(int state) {
@@ -54,7 +54,7 @@ extern "C" void insttrace(uint32_t pc, uint32_t inst) {
   log_write("0x%08x: %s\n", pc, p);
 }
 
-#include "trace.h"
+#include <utils/trace.h>
 
 extern "C" void ftrace(uint32_t pc, uint32_t inst, uint32_t dst_addr) {
   uint32_t i = inst;

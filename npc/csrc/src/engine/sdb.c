@@ -1,8 +1,8 @@
-#include "sdb.h"
-#include "cpu.h"
-#include "macro.h"
-#include "pmem.h"
-#include "reg.h"
+#include <cpu/cpu.h>
+#include <cpu/sdb.h>
+#include <macro.h>
+#include <mem/pmem.h>
+#include <mem/reg.h>
 
 #include <iostream>
 #include <stdio.h>

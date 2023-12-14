@@ -1,10 +1,10 @@
-#include "trace.h"
-#include "macro.h"
 #include <assert.h>
 #include <elf.h>
+#include <macro.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utils/trace.h>
 
 // elf文件读取
 extern char *elf_file;

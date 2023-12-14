@@ -1,6 +1,6 @@
-#include "macro.h"
 #include <assert.h>
 #include <iostream>
+#include <macro.h>
 #include <memory>
 #include <stdio.h>
 static std::unique_ptr<uint8_t[]> pmem;
