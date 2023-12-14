@@ -12,6 +12,11 @@ static inline int check_reg_idx(int idx) {
   return idx;
 }
 
+static inline const char *reg_name(int idx, int width) {
+  extern const char *regsname[32];
+  return regsname[check_reg_idx(idx)];
+}
+
 #define gpr(idx) *preg[check_reg_idx(idx)]
 #define cpugpr(idx) cpu.reg[check_reg_idx(idx)]
 

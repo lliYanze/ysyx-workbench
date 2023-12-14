@@ -45,17 +45,15 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n,
 }
 
 __EXPORT void difftest_regcpy(void *dut, bool direction) {
-  printf("regcpy\n");
   if (direction == DIFFTEST_TO_REF) {
     diff_set_regs(dut);
   } else {
     diff_get_regs(dut);
   }
-  printf("cpu.pc = 0x%08x\n", cpu.pc);
-  printf("cpu.gpr[2] = 0x%08x\n", cpu.gpr[2]);
+  // printf("<nemu> cpu.pc is 0x%x\n", cpu.pc);
 }
 
-__EXPORT void difftest_exec(uint64_t n) { assert(0); }
+__EXPORT void difftest_exec(uint64_t n) { cpu_exec(n); }
 
 __EXPORT void difftest_raise_intr(word_t NO) { assert(0); }
 

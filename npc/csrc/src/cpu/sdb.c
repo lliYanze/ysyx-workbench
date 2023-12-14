@@ -41,7 +41,6 @@ extern bool batch_mode;
 
 void sdb_mainloop() {
   reset(1);
-
   if (batch_mode) {
     cpu_exec(-1);
     return;

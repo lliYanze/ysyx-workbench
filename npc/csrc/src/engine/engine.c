@@ -123,20 +123,11 @@ static void ftrace_init() {
          ftrace_file ? ftrace_file : "stdout");
 }
 
-// CPU的初始化
-
-#include <mem/reg.h>
-void init_cpu() {
-  cpu.pc = top->io_pc;
-  copyreg2cpu();
-}
-
 #include <utils/trace.h>
 
 extern "C" void init_disasm(const char *triple);
 void init_mem();
 
-#include <cpu/difftest/difftest.h>
 #include <mem/pmem.h>
 
 void engine_init(int arg, char **argv) {
@@ -146,9 +137,6 @@ void engine_init(int arg, char **argv) {
   init_mem();
   load_img();
   reg_init();
-  init_cpu();
-  printf("0x80000000 is 0x%x\n", pmem_read(0x80000000, 4));
-  init_difftest();
 
   init_disasm("riscv32"
               "-pc-linux-gnu");

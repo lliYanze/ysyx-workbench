@@ -1,7 +1,8 @@
 #include <cpu/cpu.h>
-#include <macro.h>
+#include <cpu/difftest/difftest.h>
+// #include <macro.h>
 #include <mem/pmem.h>
-#include <top.h>
+// #include <top.h>
 
 VerilatedContext *contextp = new VerilatedContext;
 VTOP *top = new VTOP{contextp};
@@ -31,6 +32,14 @@ void single_cycle() {
   next_pc = top->io_pc;
 }
 
+// CPU的初始化
+
+#include <mem/reg.h>
+void init_cpu() {
+  cpu.pc = top->io_pc;
+  copyreg2cpu();
+}
+
 void reset(int n) {
   top->reset = 1;
   while (n-- > 0) {
@@ -45,27 +54,32 @@ void reset(int n) {
     ++times;
   }
   top->reset = 0;
+  init_cpu();
+  init_difftest();
 }
 
 #include <mem/reg.h>
 void update_cpu() {
-  cpu.pc = now_pc;
+  cpu.pc = next_pc;
   copyreg2cpu();
 }
 
 static void exec_once() { single_cycle(); }
 
+#include <cpu/difftest/difftest.h>
+
 static void execute(uint64_t n) {
   for (; n > 0; n--) {
     exec_once();
     update_cpu();
+    difftest_step(now_pc, next_pc);
 
     if (npc_state.state != NPC_RUNNING)
       break;
   }
 }
 
-void statistic() { printf("结束\n"); }
+void statistic() { printf("npc 结束\n"); }
 
 void cpu_exec(uint64_t n) {
   switch (npc_state.state) {
