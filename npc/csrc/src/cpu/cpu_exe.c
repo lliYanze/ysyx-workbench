@@ -12,8 +12,8 @@ CPU_state cpu = {};
 
 void single_exe() { top->io_inst = pmem_read(top->io_pc, 4); }
 
-static paddr_t now_pc = 0;
-static paddr_t next_pc = 0;
+paddr_t now_pc = 0;
+paddr_t next_pc = 0;
 
 static int times = 0;
 void single_cycle() {
@@ -99,7 +99,7 @@ void cpu_exec(uint64_t n) {
 
   case NPC_END:
   case NPC_ABORT:
-    printf("\nnemu: %s at pc = " FMT_WORD "\n",
+    printf("\nnpc: %s at pc = " FMT_WORD "\n",
            (npc_state.halt_ret == 0 ? ANSI_FMT("HIT GOOD TRAP", ANSI_FG_GREEN)
                                     : ANSI_FMT("HIT BAD TRAP", ANSI_FG_RED)),
            npc_state.halt_pc);

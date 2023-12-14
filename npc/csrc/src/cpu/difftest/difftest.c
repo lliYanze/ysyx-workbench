@@ -15,7 +15,7 @@ extern "C" void difftest_raise_intr(word_t NO);
 
 extern "C" void difftest_init(int port);
 
-enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
+extern "C" enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
 
 extern long img_file_size;
 

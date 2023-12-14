@@ -9,9 +9,9 @@
 #include <top.h>
 extern void set_npc_state(int state, vaddr_t pc, int halt_ret);
 
-extern "C" void stopnpc(int state) {
-  set_npc_state(NPC_END, top->io_pc, state);
-}
+extern paddr_t now_pc;
+
+extern "C" void stopnpc(int state) { set_npc_state(NPC_END, now_pc, state); }
 
 // 环形缓冲区
 #define IRING_BUF_SIZE 20

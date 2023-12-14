@@ -36,7 +36,6 @@ static int parse_args(int argc, char *argv[]) {
       {0, 0, NULL, 0},
   };
   int o;
-  int time = argc;
 
   while ((o = getopt_long(argc, argv, "-bl:e:f:", table, NULL)) != -1) {
     switch (o) {

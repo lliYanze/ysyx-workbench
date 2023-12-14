@@ -68,7 +68,6 @@ $(BIN) : $(VSRCS) $(CSRCS)
 		$(addprefix -LDFLAGS , $(LDFLAGS)) \
 		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
 
-
 IMG ?=
 
 verilator: $(BIN)
@@ -88,9 +87,9 @@ sim: clean
 	@$(MAKE) verilator
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 
-compilejson:
+compilejson: clean
 	@rm -f $(CSRC_DIR)/compile_commands.json
-	@$(MAKE) -Bnwk | compiledb -o- > $(CSRC_DIR)/compile_commands.json
+	@$(MAKE) sim  | compiledb -o- > $(CSRC_DIR)/compile_commands.json
 	@echo "compile_commands.json generated"
 
 
@@ -99,8 +98,6 @@ run: verilator
 
 wave: run
 	gtkwave  $(LOG_FILE)
-
-
 
 gdb: verilator
 	$(call git_commit, "gdb NPC")
