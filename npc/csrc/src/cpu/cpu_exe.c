@@ -11,12 +11,16 @@ CPU_state cpu = {};
 
 void single_exe() { top->io_inst = pmem_read(top->io_pc, 4); }
 
+static paddr_t now_pc = 0;
+static paddr_t next_pc = 0;
+
 static int times = 0;
 void single_cycle() {
   top->clock = 0;
   top->eval();
   mytrace->dump(times);
   ++times;
+  now_pc = top->io_pc;
 
   single_exe();
 
@@ -24,6 +28,7 @@ void single_cycle() {
   top->eval();
   mytrace->dump(times);
   ++times;
+  next_pc = top->io_pc;
 }
 
 void reset(int n) {
@@ -42,13 +47,19 @@ void reset(int n) {
   top->reset = 0;
 }
 
-// void update_cpu() { cpu.pc = top->io_pc; }
+#include <mem/reg.h>
+void update_cpu() {
+  cpu.pc = now_pc;
+  copyreg2cpu();
+}
 
 static void exec_once() { single_cycle(); }
 
 static void execute(uint64_t n) {
   for (; n > 0; n--) {
     exec_once();
+    update_cpu();
+
     if (npc_state.state != NPC_RUNNING)
       break;
   }

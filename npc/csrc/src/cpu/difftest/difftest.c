@@ -1,3 +1,4 @@
+#include <cpu/difftest/difftest.h>
 #include <iostream>
 #include <top.h>
 
@@ -14,14 +15,16 @@ extern "C" void difftest_raise_intr(word_t NO);
 
 extern "C" void difftest_init(int port);
 
-extern "C" enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
+enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
 
 extern long img_file_size;
 
-// void init_difftest() {
-//   log_write("Differential testing: %s\n", ANSI_FMT("ON", ANSI_FG_GREEN));
-//   difftest_init(1234);
-//   difftest_memcpy(RESET_VECTOR, guest_to_host(RESET_VECTOR), img_file_size,
-//                   DIFFTEST_TO_REF);
-//   difftest_regcpy(&cpu, DIFFTEST_TO_REF);
-// }
+void init_difftest() {
+  log_write("Differential testing: %s\n", ANSI_FMT("ON", ANSI_FG_GREEN));
+  difftest_init(1234);
+  // printf("img_file_size = %ld\n", img_file_size);
+
+  difftest_memcpy(RESET_VECTOR, guest_to_host(RESET_VECTOR), img_file_size,
+                  DIFFTEST_TO_REF);
+  difftest_regcpy(&cpu, DIFFTEST_TO_REF);
+}

@@ -127,22 +127,28 @@ static void ftrace_init() {
 
 #include <mem/reg.h>
 void init_cpu() {
-  cpu.pc = &(top->io_pc);
-  reg_init();
-  // cpu.reg = preg;
+  cpu.pc = top->io_pc;
+  copyreg2cpu();
 }
 
 #include <utils/trace.h>
 
 extern "C" void init_disasm(const char *triple);
 void init_mem();
+
+#include <cpu/difftest/difftest.h>
+#include <mem/pmem.h>
+
 void engine_init(int arg, char **argv) {
   parse_args(arg, argv);
   wave_init(arg, argv);
   log_init();
   init_mem();
   load_img();
+  reg_init();
   init_cpu();
+  printf("0x80000000 is 0x%x\n", pmem_read(0x80000000, 4));
+  init_difftest();
 
   init_disasm("riscv32"
               "-pc-linux-gnu");
