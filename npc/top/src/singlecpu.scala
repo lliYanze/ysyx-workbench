@@ -137,20 +137,20 @@ class R1mux extends Module {
 
 class R2mux extends Module {
   val io = IO(new Bundle {
-    val r2type = Input(Bool())
+    val r2type = Input(UInt(2.W))
     val rs2    = Input(UInt(32.W))
     val imm    = Input(UInt(32.W))
     val r2out  = Output(UInt(32.W))
   })
 
-  io.r2out := Mux(io.r2type, io.rs2, io.imm)
+  io.r2out := Mux(io.r2type(1), 4.U(32.W), Mux(io.r2type(0), io.rs2, io.imm))
 }
 
 class Alu extends Module {
   val io = IO(new Bundle {
     val s1  = Input(UInt(32.W))
     val s2  = Input(UInt(32.W))
-    val op  = Input(UInt(5.W))
+    val op  = Input(UInt(4.W))
     val out = Output(UInt(32.W))
 
     val rw  = Output(Bool()) //临时使用
@@ -159,24 +159,17 @@ class Alu extends Module {
 
   io.end := false.B
 
-  when(io.op === OP.ADD) {
+  when(io.op === OPCTL.ADD) {
     io.out := io.s1 + io.s2
     io.rw  := true.B
-    // printf("add\n")
-  }.elsewhen(io.op === OP.END) {
+  }.elsewhen(io.op === OPCTL.END) {
     io.out := 0.U
     io.rw  := false.B
     io.end := true.B
-    // printf("ebreak!\n")
-  }.elsewhen(io.op === OP.NOP) {
+  }.elsewhen(io.op === OPCTL.NOP) {
     io.out := 0.U
     io.rw  := false.B
     printf("instruction nop!\n")
-  }.elsewhen(io.op === OP.JRET) {
-    io.out := io.s1 + 4.U
-    io.rw  := true.B
-    printf("jump ret \n");
-
   }.otherwise {
     io.out := 0.U
     io.rw  := false.B

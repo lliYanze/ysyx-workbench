@@ -12,9 +12,9 @@ class InstDecode extends Module {
 
     val format  = Output(UInt(3.W))
     val s1type  = Output(Bool()) //true : reg, false : PC
-    val s2type  = Output(Bool()) //ture : reg, false : imm
+    val s2type  = Output(UInt(2.W)) //ture : reg, false : imm
     val jumpctl = Output(UInt(3.W))
-    val op      = Output(UInt(5.W))
+    val op      = Output(UInt(4.W))
     val ftrace  = Output(Bool())
   })
   val s1Reg: Bool = true.B
@@ -34,16 +34,16 @@ class InstDecode extends Module {
         ///***************R***************//
 
         ///***************I***************//
-        instructions.addi -> List(TYPE.I, s1Reg, s2Imm, JUMPCTL.NOTJUMP, OP.ADD, notFtrace),
-        instructions.jalr -> List(TYPE.I, s1Reg, s2Imm, JUMPCTL.JLRS1, OP.JRET, enableFtrace),
+        instructions.addi -> List(TYPE.I, s1Reg, RS2MUX.IMM, JUMPCTL.NOTJUMP, OPCTL.ADD, notFtrace),
+        instructions.jalr -> List(TYPE.I, s1Reg, RS2MUX.PC, JUMPCTL.JLRS1, OPCTL.ADD, enableFtrace),
         ///***************U***************//
-        instructions.auipc -> List(TYPE.U, s1PC, s2Imm, JUMPCTL.NOTJUMP, OP.ADD, notFtrace),
+        instructions.auipc -> List(TYPE.U, s1PC, RS2MUX.IMM, JUMPCTL.NOTJUMP, OPCTL.ADD, notFtrace),
         ///***************J***************//
-        instructions.jal -> List(TYPE.J, s1PC, s2Imm, JUMPCTL.JLPC, OP.JRET, enableFtrace),
+        instructions.jal -> List(TYPE.J, s1PC, RS2MUX.PC, JUMPCTL.JLPC, OPCTL.ADD, enableFtrace),
         ///***************S***************//
-        instructions.sw -> List(TYPE.E, s1Reg, s2Imm, JUMPCTL.NOTJUMP, OP.NOP, notFtrace),
+        instructions.sw -> List(TYPE.E, s1Reg, RS2MUX.IMM, JUMPCTL.NOTJUMP, OPCTL.NOP, notFtrace),
         ///***************E***************//
-        instructions.begin -> List(TYPE.E, s1Reg, s2Imm, JUMPCTL.NOTJUMP, OP.NOP, notFtrace)
+        instructions.begin -> List(TYPE.E, s1Reg, RS2MUX.IMM, JUMPCTL.NOTJUMP, OPCTL.NOP, notFtrace)
       )
     )
 

@@ -26,8 +26,10 @@ case object OP3 {
   val AND               = 7.U(3.W)
 }
 
-case object OP7 {
-  val MAIN = 0.U(7.W)
+case object RS2MUX {
+  val IMM = "b00".U(2.W)
+  val REG = "b01".U(2.W)
+  val PC  = "b10".U(2.W)
 }
 
 case object OPCTL {
