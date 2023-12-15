@@ -1,6 +1,6 @@
 #include <assert.h>
-#include <iostream>
 #include <macro.h>
+#include <mem/pmem.h>
 #include <memory>
 #include <stdio.h>
 static std::unique_ptr<uint8_t[]> pmem;
@@ -42,29 +42,10 @@ word_t pmem_write(paddr_t addr, word_t data, int len) {
   return 0;
 }
 
-extern "C" void data_read(paddr_t addr, int *buf) { *buf = pmem_read(addr, 4); }
-
-extern "C" void data_write(paddr_t addr, int buf, char wmask) {
-  if (wmask == 0x0)
-    pmem_write(addr, buf, 1);
-  else if (wmask == 0x1)
-    pmem_write(addr, buf, 2);
-  else if (wmask == 0x2)
-    pmem_write(addr, buf, 4);
-  else if (wmask == 0x4)
-    pmem_write(addr, buf, 1);
-  else if (wmask == 0x5)
-    pmem_write(addr, buf, 2);
-  else {
-    printf("wmask is 0x%x   wrong\n", wmask);
-    assert(0);
-  }
-}
-
 void show_mem(paddr_t addr, int len) {
   while (len-- > 0) {
     printf("0x%02x ", pmem_read(addr, 4));
-    addr++;
+    addr += 4;
     printf("\n");
   }
 }

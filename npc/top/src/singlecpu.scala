@@ -9,46 +9,48 @@ import chisel3.util._
 import chisel3.util.BitPat
 import chisel3.util.experimental.decode._
 
-// class DataMem extends BlackBox with HasBlackBoxInline {
-//   val io = IO(new Bundle {
-//     val addr  = Input(UInt(32.W))
-//     val data  = Input(UInt(32.W))
-//     val wr    = Input(Bool())
-//     val wmask = Input(UInt(4.W))
-//     // val dataout = Output(UInt(32.W))
-//     val clock = Input(Clock())
-//   })
-//
-//   setInline(
-//     "DataMem.v",
-//     s"""
-//        | import "DPI-C" function void writedata(input int addr, input int data, input char wmask);
-//        | import "DPI-C" function int readdata(input int addr, output int dataout);
-//        |module DataMem(
-//        |    input wire [31:0] addr,
-//        |    input wire [31:0] data,
-//        |    input wire wr,
-//        |    input wire clock,
-//        |);
-//        | always @(posedge clock)
-//        |    if (wr) writedata(addr, data, wmask);
-//        |    else readdata(addr, dataout);
-//        |
-//        |endmodule
-//        |""".stripMargin
-//   )
-//
-// }
+class DataMem extends BlackBox with HasBlackBoxInline {
+  val io = IO(new Bundle {
+    val addr    = Input(UInt(32.W))
+    val data    = Input(UInt(32.W))
+    val wr      = Input(Bool())
+    val wmask   = Input(UInt(3.W))
+    val clock   = Input(Clock())
+    val dataout = Output(UInt(32.W))
+  })
 
-// class MemorRegMux extends Module {
-//   val io = IO(new Bundle {
-//     val memdata = Input(UInt(32.W))
-//     val regdata = Input(UInt(32.W))
-//     val memen   = Input(Bool())
-//     val out     = Output(UInt(32.W))
-//   })
-//   io.out := Mux(io.memen, io.memdata, io.regdata)
-// }
+  setInline(
+    "DataMem.v",
+    s"""
+       | import "DPI-C" function void data_write(input int addr, input int data, input bit[2:0] wmask);
+       | import "DPI-C" function void data_read(input int addr, output int dataout);
+       |module DataMem(
+       |    input wire [31:0] addr,
+       |    input wire [31:0] data,
+       |    input wire [2:0] wmask,
+       |    input wire wr,
+       |    input wire clock,
+       |    output wire [31:0] dataout
+       |);
+       | always @(posedge clock)
+       |    if (wr) data_write(addr, data, wmask);
+       |    else data_read(addr, dataout);
+       |
+       |endmodule
+       |""".stripMargin
+  )
+
+}
+
+class MemorRegMux extends Module {
+  val io = IO(new Bundle {
+    val memdata = Input(UInt(32.W))
+    val regdata = Input(UInt(32.W))
+    val memen   = Input(Bool())
+    val out     = Output(UInt(32.W))
+  })
+  io.out := Mux(io.memen, io.memdata, io.regdata)
+}
 
 class EndNpc extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle {
@@ -152,8 +154,6 @@ class Alu extends Module {
     val s2  = Input(UInt(32.W))
     val op  = Input(UInt(4.W))
     val out = Output(UInt(32.W))
-
-    val rw  = Output(Bool()) //临时使用
     val end = Output(Bool())
   })
 
@@ -161,18 +161,14 @@ class Alu extends Module {
 
   when(io.op === OPCTL.ADD) {
     io.out := io.s1 + io.s2
-    io.rw  := true.B
   }.elsewhen(io.op === OPCTL.END) {
     io.out := 0.U
-    io.rw  := false.B
     io.end := true.B
   }.elsewhen(io.op === OPCTL.NOP) {
     io.out := 0.U
-    io.rw  := false.B
     printf("instruction nop!\n")
   }.otherwise {
     io.out := 0.U
-    io.rw  := false.B
     io.end := true.B
     printf("Error: Unknown instruction!\n")
   }
@@ -232,25 +228,24 @@ class PC extends Module {
   val pc = RegInit("h8000_0000".U(32.W))
   pc    := io.pcin
   io.pc := pc
-  // printf("PC pc: 0x%x\n", pc)
 
 }
 
 class ImmGen extends Module {
   val io = IO(new Bundle {
     val format = Input(UInt(3.W))
-    val inst   = Input(UInt(20.W))
+    val inst   = Input(UInt(32.W))
     val out    = Output(UInt(32.W))
   })
 
   when(io.format === TYPE.I) {
-    io.out := Cat(Fill(20, io.inst(19)), io.inst(19, 8))
+    io.out := Cat(Fill(20, io.inst(31)), io.inst(31, 20))
   }.elsewhen(io.format === TYPE.U) { //U型指令是imm为高20位
-    io.out := Cat(io.inst(19, 0), Fill(12, 0.U(1.W)))
+    io.out := Cat(io.inst(31, 12), Fill(12, 0.U(1.W)))
   }.elsewhen(io.format === TYPE.J) {
-    // imm 20|19:12|11|10:1
-    // inst 19|7:0 |8 |18:9
-    io.out := Cat(Fill(12, io.inst(19)), io.inst(19), io.inst(7, 0), io.inst(8), io.inst(18, 9), 0.U(1.W))
+    io.out := Cat(Fill(12, io.inst(31)), io.inst(31), io.inst(19, 12), io.inst(20), io.inst(30, 21), 0.U(1.W))
+  }.elsewhen(io.format === TYPE.S) {
+    io.out := Cat(Fill(20, io.inst(31)), io.inst(31, 25), io.inst(11, 7))
   }.otherwise {
     io.out := 0.U
   }
@@ -274,12 +269,9 @@ class RegFile extends Module {
   io.end_state := regfile(10.U)
   val datain = Wire(UInt(32.W))
   datain := io.datain
-  // val regin   = RegNext(io.datain)
-  // val regfile = RegNext(VecInit(Seq.fill(32)(0.U(32.W))))
   when(io.wr) {
     regfile(io.rd) := Mux(io.rd === 0.U, 0.U, datain)
   }
-  // printf("datain: 0x%x\n", datain)
 
   io.rs1out := regfile(io.rs1)
   io.rs2out := regfile(io.rs2)
@@ -293,9 +285,8 @@ class Exu extends Module {
 
   })
 
-  val nextpc = Module(new NextPc)
-  val pc     = Module(new PC)
-  // val source_decoder = Module(new SourceDecoder)
+  val nextpc         = Module(new NextPc)
+  val pc             = Module(new PC)
   val source_decoder = Module(new InstDecode)
   val immgen         = Module(new ImmGen)
   val regfile        = Module(new RegFile)
@@ -310,7 +301,18 @@ class Exu extends Module {
   val ftrace    = Module(new Ftrace)
   val jumpctl   = Module(new JumpCtl)
 
-  // val datamem = Module(new DataMem)
+  val memorregmux = Module(new MemorRegMux)
+  val datamem     = Module(new DataMem)
+
+  memorregmux.io.memdata := datamem.io.dataout
+  memorregmux.io.regdata := alu.io.out
+  memorregmux.io.memen   := source_decoder.io.tomemorreg
+
+  datamem.io.addr  := alu.io.out
+  datamem.io.data  := regfile.io.rs2out
+  datamem.io.wr    := source_decoder.io.memwr
+  datamem.io.wmask := source_decoder.io.memctl
+  datamem.io.clock := clock
 
   rdaddr := nextpc.io.nextpc
 
@@ -332,10 +334,10 @@ class Exu extends Module {
   regfile.io.rd  := io.inst(11, 7)
 
   regfile.io.datain := alu.io.out
-  regfile.io.wr     := alu.io.rw
+  regfile.io.wr     := source_decoder.io.regwr
 
   immgen.io.format := source_decoder.io.format
-  immgen.io.inst   := io.inst(31, 12)
+  immgen.io.inst   := io.inst
 
   endnpc.io.endflag := alu.io.end
   endnpc.io.state   := regfile.io.end_state
@@ -358,7 +360,7 @@ class Exu extends Module {
 
   ftrace.io.inst   := source_decoder.io.inst
   ftrace.io.pc     := pc.io.pc
-  ftrace.io.nextpc := alu.io.out
+  ftrace.io.nextpc := nextpc.io.nextpc
   ftrace.io.clock  := clock
   ftrace.io.jump   := source_decoder.io.ftrace
 

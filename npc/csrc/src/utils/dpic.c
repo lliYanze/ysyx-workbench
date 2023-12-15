@@ -81,3 +81,31 @@ extern "C" void ftrace(uint32_t pc, uint32_t inst, uint32_t dst_addr) {
     ftrace_log_write("ret --> %s @[0x%x]\n", dst_func.name, dst_addr);
   }
 }
+
+#include <mem/pmem.h>
+
+extern "C" void data_read(paddr_t addr, int *buf) {
+  if (addr == 0x00000000)
+    return;
+  *buf = pmem_read(addr, 4);
+}
+
+extern "C" void data_write(paddr_t addr, int buf, svBitVecVal *wmask) {
+  log_write("向 0x%08x 写入 0x%08x\n", addr, buf);
+  if (*wmask == 0x0)
+    pmem_write(addr, buf, 1);
+  else if (*wmask == 0x1)
+    pmem_write(addr, buf, 2);
+  else if (*wmask == 0x2)
+    pmem_write(addr, buf, 4);
+  else if (*wmask == 0x4)
+    pmem_write(addr, buf, 1);
+  else if (*wmask == 0x5)
+    pmem_write(addr, buf, 2);
+  else if (*wmask == 0x7)
+    return;
+  else {
+    printf("wmask is 0x%x   wrong\n", *wmask);
+    assert(0);
+  }
+}

@@ -4,13 +4,16 @@
 #include <mem/pmem.h>
 #include <mem/reg.h>
 
+#include <iomanip>
 #include <iostream>
 #include <stdio.h>
 #include <string>
 #include <vector>
 
+extern paddr_t now_pc;
 std::vector<std::string> cl_rd() {
-  std::cout << "[NPC :>]";
+  std::cout << "[NPC 0x" << std::hex << std::setw(8) << std::setfill('0')
+            << now_pc << ":>]";
   std::string getcmd;
   std::getline(std::cin, getcmd);
   std::vector<std::string> cmdlist;

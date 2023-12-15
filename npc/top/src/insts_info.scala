@@ -15,17 +15,6 @@ case object TYPE {
   val E = 6.U(3.W)
 }
 
-case object OP3 {
-  val ADD               = 0.U(3.W)
-  val ShiftLeft         = 1.U(3.W)
-  val LessThan          = 2.U(3.W)
-  val LessThanU         = 3.U(3.W)
-  val XOR               = 4.U(3.W)
-  val ShiftRightLogical = 5.U(3.W)
-  val OR                = 6.U(3.W)
-  val AND               = 7.U(3.W)
-}
-
 case object RS2MUX {
   val IMM = "b00".U(2.W)
   val REG = "b01".U(2.W)
@@ -44,6 +33,8 @@ case object OPCTL {
   val OR   = "b0110".U(4.W)
   val AND  = "b0111".U(4.W)
 
+  val RS2 = "b1001".U(4.W)
+
   val NOP = "b1110".U(4.W)
   val END = "b1111".U(4.W)
 }
@@ -54,16 +45,13 @@ case object JUMPCTL {
   val JLRS1   = "b010".U(3.W)
 }
 
-case object OP {
-  val ADD  = 0.U(5.W)
-  val SUB  = 1.U(5.W)
-  val JRET = 2.U(5.W)
-  val JUMP = 3.U(5.W)
-
-  val NOP = "b11110".U(5.W)
-
-  val END = "b11111".U(5.W)
-
+case object MEMCTL {
+  val CHAR  = "b000".U(3.W)
+  val HALF  = "b001".U(3.W)
+  val WORD  = "b010".U(3.W)
+  val UCHAR = "b100".U(3.W)
+  val UHALF = "b101".U(3.W)
+  val NOP   = "b111".U(3.W)
 }
 
 case object instructions {
