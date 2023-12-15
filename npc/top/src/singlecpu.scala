@@ -1,11 +1,54 @@
 package singlecpu
 
+import InstDecode._
+
 import instsinfo._
 
 import chisel3._
 import chisel3.util._
 import chisel3.util.BitPat
 import chisel3.util.experimental.decode._
+
+// class DataMem extends BlackBox with HasBlackBoxInline {
+//   val io = IO(new Bundle {
+//     val addr  = Input(UInt(32.W))
+//     val data  = Input(UInt(32.W))
+//     val wr    = Input(Bool())
+//     val wmask = Input(UInt(4.W))
+//     // val dataout = Output(UInt(32.W))
+//     val clock = Input(Clock())
+//   })
+//
+//   setInline(
+//     "DataMem.v",
+//     s"""
+//        | import "DPI-C" function void writedata(input int addr, input int data, input char wmask);
+//        | import "DPI-C" function int readdata(input int addr, output int dataout);
+//        |module DataMem(
+//        |    input wire [31:0] addr,
+//        |    input wire [31:0] data,
+//        |    input wire wr,
+//        |    input wire clock,
+//        |);
+//        | always @(posedge clock)
+//        |    if (wr) writedata(addr, data, wmask);
+//        |    else readdata(addr, dataout);
+//        |
+//        |endmodule
+//        |""".stripMargin
+//   )
+//
+// }
+
+// class MemorRegMux extends Module {
+//   val io = IO(new Bundle {
+//     val memdata = Input(UInt(32.W))
+//     val regdata = Input(UInt(32.W))
+//     val memen   = Input(Bool())
+//     val out     = Output(UInt(32.W))
+//   })
+//   io.out := Mux(io.memen, io.memdata, io.regdata)
+// }
 
 class EndNpc extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle {
@@ -132,7 +175,7 @@ class Alu extends Module {
   }.elsewhen(io.op === OP.JRET) {
     io.out := io.s1 + 4.U
     io.rw  := true.B
-    // printf("jump ret \n");
+    printf("jump ret \n");
 
   }.otherwise {
     io.out := 0.U
@@ -143,112 +186,6 @@ class Alu extends Module {
 
 }
 
-class SourceDecoder extends Module {
-  val io = IO(new Bundle {
-    val inst = Input(UInt(32.W))
-
-    val format = Output(UInt(3.W))
-    val s1type = Output(Bool()) //true : reg, false : PC
-    val s2type = Output(Bool()) //ture : reg, false : imm
-    val pclj   = Output(Bool()) //ture : imm, false : +4
-    val pcrs1  = Output(Bool()) //ture : rs1, false : PC
-    val op     = Output(UInt(5.W))
-    val ftrace = Output(Bool())
-  })
-
-  val start = RegInit(0.U) //INFO:为了排除最开始时指令为0的情况
-
-  def set_R: Unit = {
-    io.format := TYPE.R
-    io.s1type := true.B
-    io.s2type := true.B
-    io.ftrace := false.B
-  }
-
-  def set_I(is_jarl: Bool): Unit = {
-    io.format := TYPE.I
-    io.s1type := true.B
-    io.s2type := false.B
-    io.ftrace := Mux(is_jarl, true.B, false.B)
-  }
-
-  def set_S: Unit = {
-    io.format := TYPE.S
-    io.s1type := true.B
-    io.s2type := true.B
-    io.ftrace := false.B
-  }
-
-  def set_B: Unit = {
-    io.format := TYPE.B
-    io.s1type := true.B
-    io.s2type := true.B
-    io.ftrace := false.B
-  }
-
-  def set_U: Unit = {
-    io.format := TYPE.U
-    io.s1type := false.B
-    io.s2type := false.B
-    io.ftrace := false.B
-  }
-  def set_J: Unit = {
-    io.format := TYPE.J
-    io.s1type := false.B
-    io.s2type := false.B
-    io.ftrace := true.B
-  }
-
-  when(io.inst === instructions().addi) {
-    io.op := OP.ADD
-    set_I(false.B)
-    io.pclj  := false.B
-    io.pcrs1 := false.B
-
-  }.elsewhen(io.inst === instructions().ebreak) {
-    set_U
-    io.op    := OP.END
-    io.pclj  := false.B
-    io.pcrs1 := false.B
-
-  }.elsewhen(io.inst === instructions().jal) {
-    set_J
-    io.op    := OP.JRET
-    io.pclj  := true.B
-    io.pcrs1 := false.B
-
-  }.elsewhen(io.inst === instructions().jalr) {
-    set_I(true.B)
-    io.op    := OP.JRET
-    io.pclj  := true.B
-    io.pcrs1 := true.B
-
-  }.elsewhen(io.inst === instructions().sw) {
-    set_I(false.B)
-    io.op    := OP.NOP
-    io.pclj  := false.B
-    io.pcrs1 := false.B
-
-  }.elsewhen(io.inst === instructions().auipc) {
-    set_U
-    io.op    := OP.ADD
-    io.pclj  := false.B
-    io.pcrs1 := false.B
-
-  }.otherwise {
-    io.format := TYPE.E
-    io.op     := Mux(start === 1.U, OP.END, OP.NOP)
-    printf("start: %d\n", start)
-    start     := start + 1.U
-    io.s1type := false.B
-    io.s2type := false.B
-    io.pclj   := false.B
-    io.pcrs1  := false.B
-    io.ftrace := false.B
-    printf("Error: Unknown instruction!\n")
-  }
-
-}
 
 class NextPc extends Module {
   val io = IO(new Bundle {
@@ -337,9 +274,10 @@ class Exu extends Module {
 
   })
 
-  val nextpc         = Module(new NextPc)
-  val pc             = Module(new PC)
-  val source_decoder = Module(new SourceDecoder)
+  val nextpc = Module(new NextPc)
+  val pc     = Module(new PC)
+  // val source_decoder = Module(new SourceDecoder)
+  val source_decoder = Module(new InstDecode)
   val immgen         = Module(new ImmGen)
   val regfile        = Module(new RegFile)
   val r1mux          = Module(new R1mux)
@@ -351,6 +289,8 @@ class Exu extends Module {
 
   val insttrace = Module(new InstTrace)
   val ftrace    = Module(new Ftrace)
+
+  // val datamem = Module(new DataMem)
 
   rdaddr := nextpc.io.nextpc
 
