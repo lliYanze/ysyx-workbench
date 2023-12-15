@@ -24,18 +24,32 @@ case object OP3 {
   val ShiftRightLogical = 5.U(3.W)
   val OR                = 6.U(3.W)
   val AND               = 7.U(3.W)
-
-  // val SUB  = 1.U(5.W)
-  // val JRET = 2.U(5.W)
-  // val JUMP = 3.U(5.W)
-  //
-  // val NOP = "b11110".U(5.W)
-  //
-  // val END = "b11111".U(5.W)
 }
 
 case object OP7 {
   val MAIN = 0.U(7.W)
+}
+
+case object OPCTL {
+  val ADD  = "b0000".U(4.W)
+  val SUB  = "b1000".U(4.W)
+  val SLL  = "b0001".U(4.W)
+  val SLT  = "b0010".U(4.W)
+  val SLTU = "b0011".U(4.W)
+  val XOR  = "b0100".U(4.W)
+  val SRL  = "b0101".U(4.W)
+  val SRA  = "b1101".U(4.W)
+  val OR   = "b0110".U(4.W)
+  val AND  = "b0111".U(4.W)
+
+  val NOP = "b1110".U(4.W)
+  val END = "b1111".U(4.W)
+}
+
+case object JUMPCTL {
+  val NOTJUMP = "b000".U(3.W)
+  val JLPC    = "b001".U(3.W)
+  val JLRS1   = "b010".U(3.W)
 }
 
 case object OP {
@@ -47,19 +61,6 @@ case object OP {
   val NOP = "b11110".U(5.W)
 
   val END = "b11111".U(5.W)
-
-}
-
-case object TESTINSTRUCTIONS {
-  val R  = "b0110011".U(7.W)
-  val IR = "b0010011".U(7.W) //addi xori...
-  val IM = "b0000011".U(7.W) //lb lh lw lbu lhu
-  val IE = "b1110011".U(7.W) //ebreak
-  val S  = "b0100011".U(7.W)
-  val B  = "b1100011".U(7.W)
-  val UP = "b0010111".U(7.W) //auipc
-  val UI = "b0110111".U(7.W) //lui
-  val J  = "b1101111".U(7.W)
 
 }
 

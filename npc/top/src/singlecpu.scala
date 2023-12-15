@@ -183,9 +183,35 @@ class Alu extends Module {
     io.end := true.B
     printf("Error: Unknown instruction!\n")
   }
-
 }
 
+class JumpCtl extends Module {
+  val io = IO(new Bundle {
+    val ctl   = Input(UInt(3.W))
+    val pclj  = Output(Bool()) //ture : imm, false : +4
+    val pcrs1 = Output(Bool()) //ture : rs1, false : PC
+  })
+
+  val pcLJ: Bool = true.B
+  val pcA4: Bool = false.B
+
+  val pcR:  Bool = true.B
+  val pcPC: Bool = false.B
+
+  when(io.ctl === JUMPCTL.JLPC) {
+    io.pclj  := pcLJ
+    io.pcrs1 := pcPC
+  }.elsewhen(io.ctl === JUMPCTL.JLRS1) {
+    io.pclj  := pcLJ
+    io.pcrs1 := pcR
+  }.elsewhen(io.ctl === JUMPCTL.NOTJUMP) {
+    io.pclj  := pcA4
+    io.pcrs1 := pcPC
+  }.otherwise {
+    io.pclj  := pcA4
+    io.pcrs1 := pcPC
+  }
+}
 
 class NextPc extends Module {
   val io = IO(new Bundle {
@@ -289,6 +315,7 @@ class Exu extends Module {
 
   val insttrace = Module(new InstTrace)
   val ftrace    = Module(new Ftrace)
+  val jumpctl   = Module(new JumpCtl)
 
   // val datamem = Module(new DataMem)
 
@@ -297,13 +324,15 @@ class Exu extends Module {
   nextpc.io.imm   := immgen.io.out
   nextpc.io.nowpc := pc.io.pc
   nextpc.io.rs1   := regfile.io.rs1out
-  nextpc.io.pclj  := source_decoder.io.pclj
-  nextpc.io.pcrs1 := source_decoder.io.pcrs1
+  nextpc.io.pclj  := jumpctl.io.pclj
+  nextpc.io.pcrs1 := jumpctl.io.pcrs1
 
   io.pc      := pc.io.pc
   pc.io.pcin := nextpc.io.nextpc
 
   source_decoder.io.inst := io.inst
+
+  jumpctl.io.ctl := source_decoder.io.jumpctl
 
   regfile.io.rs1 := io.inst(19, 15)
   regfile.io.rs2 := io.inst(24, 20)
