@@ -14,6 +14,7 @@ class DataMem extends BlackBox with HasBlackBoxInline {
     val addr    = Input(UInt(32.W))
     val data    = Input(UInt(32.W))
     val wr      = Input(Bool())
+    val valid   = Input(Bool())
     val wmask   = Input(UInt(3.W))
     val clock   = Input(Clock())
     val dataout = Output(UInt(32.W))
@@ -23,22 +24,25 @@ class DataMem extends BlackBox with HasBlackBoxInline {
     "DataMem.v",
     s"""
        | import "DPI-C" function void data_write(input int addr, input int data, input bit[2:0] wmask);
-       | import "DPI-C" function void data_read(input int addr, output int dataout);
+       | import "DPI-C" function int data_read(input int addr, input bit[2:0] wmask, input bit valid);
        |module DataMem(
        |    input wire [31:0] addr,
        |    input wire [31:0] data,
        |    input wire [2:0] wmask,
        |    input wire wr,
+       |    input wire valid,
        |    input wire clock,
        |    output wire [31:0] dataout
        |);
-       | always @(posedge clock)
+       | assign dataout = (valid & ~wr) ?  data_read(addr, wmask, valid & ~wr): 0;
+       | always @(posedge clock) begin
        |    if (wr) data_write(addr, data, wmask);
-       |    else data_read(addr, dataout);
+       | end
        |
        |endmodule
        |""".stripMargin
   )
+  // printf("datemem  dataout is %x\n", io.dataout)
 
 }
 
@@ -47,9 +51,13 @@ class MemorRegMux extends Module {
     val memdata = Input(UInt(32.W))
     val regdata = Input(UInt(32.W))
     val memen   = Input(Bool())
-    val out     = Output(UInt(32.W))
+
+    val out = Output(UInt(32.W))
   })
   io.out := Mux(io.memen, io.memdata, io.regdata)
+  // printf("io.out is %x\n", io.out)
+  // printf("io.memdata is %x\n", io.memdata)
+  // printf("io.regdata is %x\n", io.regdata)
 }
 
 class EndNpc extends BlackBox with HasBlackBoxInline {
@@ -275,6 +283,8 @@ class RegFile extends Module {
 
   io.rs1out := regfile(io.rs1)
   io.rs2out := regfile(io.rs2)
+  printf("rd is %x  datain: %x\n", io.rd, io.datain)
+
 }
 
 class Exu extends Module {
@@ -313,6 +323,7 @@ class Exu extends Module {
   datamem.io.wr    := source_decoder.io.memwr
   datamem.io.wmask := source_decoder.io.memctl
   datamem.io.clock := clock
+  datamem.io.valid := source_decoder.io.memrd
 
   rdaddr := nextpc.io.nextpc
 
@@ -333,7 +344,7 @@ class Exu extends Module {
   regfile.io.rs2 := io.inst(24, 20)
   regfile.io.rd  := io.inst(11, 7)
 
-  regfile.io.datain := alu.io.out
+  regfile.io.datain := memorregmux.io.out
   regfile.io.wr     := source_decoder.io.regwr
 
   immgen.io.format := source_decoder.io.format

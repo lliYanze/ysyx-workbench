@@ -70,6 +70,7 @@ static void exec_once() { single_cycle(); }
 
 static void execute(uint64_t n) {
   for (; n > 0; n--) {
+    log_write("------------------------------------------\n");
     exec_once();
     update_cpu();
     difftest_step(now_pc, next_pc);

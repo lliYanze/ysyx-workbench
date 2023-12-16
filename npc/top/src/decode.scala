@@ -15,6 +15,7 @@ class InstDecode extends Module {
     val jumpctl    = Output(UInt(3.W))
     val op         = Output(UInt(4.W))
     val ftrace     = Output(Bool())
+    val memrd      = Output(Bool())
     val memwr      = Output(Bool())
     val memctl     = Output(UInt(3.W))
     val tomemorreg = Output(Bool())
@@ -38,10 +39,13 @@ class InstDecode extends Module {
   val rwr:    Bool = true.B
   val rnotwr: Bool = false.B
 
+  val mrd:    Bool = true.B
+  val mnotrd: Bool = false.B
+
   val csignals =
     ListLookup(
       io.inst,
-      List(TYPE.E, s1Reg, s2Reg, JUMPCTL.NOTJUMP, OPCTL.END, notFtrace, mnotwr, alutoreg, MEMCTL.NOP, rnotwr),
+      List(TYPE.E, s1Reg, s2Reg, JUMPCTL.NOTJUMP, OPCTL.END, notFtrace, mnotwr, alutoreg, MEMCTL.NOP, rnotwr, mnotrd),
       Array(
         ///***************R***************//
 
@@ -56,7 +60,8 @@ class InstDecode extends Module {
           mnotwr,
           alutoreg,
           MEMCTL.NOP,
-          rwr
+          rwr,
+          mnotrd
         ),
         instructions.jalr -> List(
           TYPE.I,
@@ -68,7 +73,8 @@ class InstDecode extends Module {
           mnotwr,
           alutoreg,
           MEMCTL.NOP,
-          rwr
+          rwr,
+          mnotrd
         ),
         ///***************U***************//
         instructions.auipc -> List(
@@ -81,7 +87,8 @@ class InstDecode extends Module {
           mnotwr,
           alutoreg,
           MEMCTL.NOP,
-          rwr
+          rwr,
+          mnotrd
         ),
         ///***************J***************//
         instructions.jal -> List(
@@ -94,7 +101,8 @@ class InstDecode extends Module {
           mnotwr,
           alutoreg,
           MEMCTL.NOP,
-          rwr
+          rwr,
+          mnotrd
         ),
         ///***************S***************//
         instructions.sw -> List(
@@ -107,7 +115,35 @@ class InstDecode extends Module {
           mwr,
           alutoreg,
           MEMCTL.WORD,
-          rnotwr
+          rnotwr,
+          mrd
+        ),
+        instructions.lw -> List(
+          TYPE.I,
+          s1Reg,
+          RS2MUX.IMM,
+          JUMPCTL.NOTJUMP,
+          OPCTL.ADD,
+          notFtrace,
+          mnotwr,
+          memtoreg,
+          MEMCTL.WORD,
+          rwr,
+          mrd
+        ),
+        ///***************B***************//
+        instructions.bge -> List(
+          TYPE.B,
+          s1Reg,
+          RS2MUX.REG,
+          JUMPCTL.JLRS1,
+          OPCTL.SUB,
+          enableFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rnotwr,
+          mnotrd
         ),
         ///***************E***************//
         instructions.begin -> List(
@@ -120,7 +156,8 @@ class InstDecode extends Module {
           mnotwr,
           alutoreg,
           MEMCTL.NOP,
-          rnotwr
+          rnotwr,
+          mnotrd
         )
       )
     )
@@ -135,4 +172,5 @@ class InstDecode extends Module {
   io.tomemorreg := csignals(7)
   io.memctl     := csignals(8)
   io.regwr      := csignals(9)
+  io.memrd      := csignals(10)
 }
