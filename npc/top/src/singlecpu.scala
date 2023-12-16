@@ -192,6 +192,9 @@ class Alu extends Module {
     io.out  := Mux(io.s1 < io.s2, 1.U, 0.U)
     io.eq   := io.out === 0.U
     io.less := Mux(io.s1 < io.s2, 1.U, 0.U)
+  }.elsewhen(io.op === OPCTL.AND) {
+    dnotjump
+    io.out := io.s1 & io.s2
   }.otherwise {
     dnotjump
     io.out := 0.U

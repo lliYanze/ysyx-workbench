@@ -74,6 +74,19 @@ class InstDecode extends Module {
           rwr,
           mnotrd
         ),
+        instructions.slt -> List(
+          TYPE.I,
+          s1Reg,
+          RS2MUX.REG,
+          JUMPCTL.NOTJUMP,
+          OPCTL.SLT,
+          notFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rwr,
+          mnotrd
+        ),
         ///***************I***************//
         instructions.addi -> List(
           TYPE.I,
@@ -81,6 +94,19 @@ class InstDecode extends Module {
           RS2MUX.IMM,
           JUMPCTL.NOTJUMP,
           OPCTL.ADD,
+          notFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rwr,
+          mnotrd
+        ),
+        instructions.andi -> List(
+          TYPE.I,
+          s1Reg,
+          RS2MUX.IMM,
+          JUMPCTL.NOTJUMP,
+          OPCTL.AND,
           notFtrace,
           mnotwr,
           alutoreg,
@@ -201,6 +227,19 @@ class InstDecode extends Module {
           s1Reg,
           RS2MUX.REG,
           JUMPCTL.JNE,
+          OPCTL.SLT,
+          enableFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rnotwr,
+          mnotrd
+        ),
+        instructions.blt -> List(
+          TYPE.B,
+          s1Reg,
+          RS2MUX.REG,
+          JUMPCTL.JLT,
           OPCTL.SLT,
           enableFtrace,
           mnotwr,
