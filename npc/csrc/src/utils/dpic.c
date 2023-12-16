@@ -85,7 +85,8 @@ extern "C" void ftrace(uint32_t pc, uint32_t inst, uint32_t dst_addr) {
 #include <mem/pmem.h>
 
 extern "C" int data_read(paddr_t addr, svBitVecVal *wmask, svBit valid) {
-  if (addr == 0x00000000 || valid == 0x0)
+  if (addr == 0x00000000 || valid == 0x0 || addr < 0x80000000 ||
+      addr > 0x80000000 + 0xfffffff)
     return 0;
   int buf = 0;
   if (*wmask == 0x0)

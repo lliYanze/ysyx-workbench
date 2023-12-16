@@ -45,10 +45,35 @@ class InstDecode extends Module {
   val csignals =
     ListLookup(
       io.inst,
-      List(TYPE.E, s1Reg, s2Reg, JUMPCTL.NOTJUMP, OPCTL.END, notFtrace, mnotwr, alutoreg, MEMCTL.NOP, rnotwr, mnotrd),
+      List(TYPE.E, s1Reg, s2Reg, JUMPCTL.NOTJUMP, OPCTL.ERR, notFtrace, mnotwr, alutoreg, MEMCTL.NOP, rnotwr, mnotrd),
       Array(
         ///***************R***************//
-
+        instructions.add -> List(
+          TYPE.I,
+          s1Reg,
+          RS2MUX.REG,
+          JUMPCTL.NOTJUMP,
+          OPCTL.ADD,
+          notFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rwr,
+          mnotrd
+        ),
+        instructions.sub -> List(
+          TYPE.I,
+          s1Reg,
+          RS2MUX.REG,
+          JUMPCTL.NOTJUMP,
+          OPCTL.SUB,
+          notFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rwr,
+          mnotrd
+        ),
         ///***************I***************//
         instructions.addi -> List(
           TYPE.I,
@@ -56,6 +81,19 @@ class InstDecode extends Module {
           RS2MUX.IMM,
           JUMPCTL.NOTJUMP,
           OPCTL.ADD,
+          notFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rwr,
+          mnotrd
+        ),
+        instructions.sltiu -> List(
+          TYPE.I,
+          s1Reg,
+          RS2MUX.IMM,
+          JUMPCTL.NOTJUMP,
+          OPCTL.SLTU,
           notFtrace,
           mnotwr,
           alutoreg,
@@ -75,6 +113,32 @@ class InstDecode extends Module {
           MEMCTL.NOP,
           rwr,
           mnotrd
+        ),
+        instructions.lw -> List(
+          TYPE.I,
+          s1Reg,
+          RS2MUX.IMM,
+          JUMPCTL.NOTJUMP,
+          OPCTL.ADD,
+          notFtrace,
+          mnotwr,
+          memtoreg,
+          MEMCTL.WORD,
+          rwr,
+          mrd
+        ),
+        instructions.ebreak -> List(
+          TYPE.E,
+          s1Reg,
+          RS2MUX.IMM,
+          JUMPCTL.NOTJUMP,
+          OPCTL.END,
+          notFtrace,
+          mnotwr,
+          memtoreg,
+          MEMCTL.WORD,
+          rwr,
+          mrd
         ),
         ///***************U***************//
         instructions.auipc -> List(
@@ -118,26 +182,39 @@ class InstDecode extends Module {
           rnotwr,
           mrd
         ),
-        instructions.lw -> List(
-          TYPE.I,
-          s1Reg,
-          RS2MUX.IMM,
-          JUMPCTL.NOTJUMP,
-          OPCTL.ADD,
-          notFtrace,
-          mnotwr,
-          memtoreg,
-          MEMCTL.WORD,
-          rwr,
-          mrd
-        ),
         ///***************B***************//
+        instructions.beq -> List(
+          TYPE.B,
+          s1Reg,
+          RS2MUX.REG,
+          JUMPCTL.JEQ,
+          OPCTL.SLT,
+          enableFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rnotwr,
+          mnotrd
+        ),
+        instructions.bne -> List(
+          TYPE.B,
+          s1Reg,
+          RS2MUX.REG,
+          JUMPCTL.JNE,
+          OPCTL.SLT,
+          enableFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rnotwr,
+          mnotrd
+        ),
         instructions.bge -> List(
           TYPE.B,
           s1Reg,
           RS2MUX.REG,
-          JUMPCTL.JLRS1,
-          OPCTL.SUB,
+          JUMPCTL.JGE,
+          OPCTL.SLT,
           enableFtrace,
           mnotwr,
           alutoreg,

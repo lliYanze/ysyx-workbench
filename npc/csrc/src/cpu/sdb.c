@@ -52,6 +52,18 @@ void sdb_mainloop() {
     std::vector<std::string> cmdlist{};
     while (cmdlist = cl_rd(), cmdlist.size() > 0) {
       switch (cmdlist[0][0]) {
+      case 'b':
+        if (cmdlist.size() == 2) {
+          while (1) {
+            cpu_exec(1);
+            if (now_pc == std::stoul(cmdlist[1], 0, 16)) {
+              break;
+            }
+          }
+        } else {
+          printf("Usege: \n \
+                b [addr]\n");
+        }
       case 'c':
         cpu_exec(1);
         break;

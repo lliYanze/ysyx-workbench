@@ -55,9 +55,6 @@ class MemorRegMux extends Module {
     val out = Output(UInt(32.W))
   })
   io.out := Mux(io.memen, io.memdata, io.regdata)
-  // printf("io.out is %x\n", io.out)
-  // printf("io.memdata is %x\n", io.memdata)
-  // printf("io.regdata is %x\n", io.regdata)
 }
 
 class EndNpc extends BlackBox with HasBlackBoxInline {
@@ -158,33 +155,56 @@ class R2mux extends Module {
 
 class Alu extends Module {
   val io = IO(new Bundle {
-    val s1  = Input(UInt(32.W))
-    val s2  = Input(UInt(32.W))
-    val op  = Input(UInt(4.W))
-    val out = Output(UInt(32.W))
-    val end = Output(Bool())
+    val s1   = Input(UInt(32.W))
+    val s2   = Input(UInt(32.W))
+    val op   = Input(UInt(4.W))
+    val out  = Output(UInt(32.W))
+    val eq   = Output(Bool())
+    val less = Output(Bool())
+    val end  = Output(Bool())
   })
 
   io.end := false.B
 
+  def dnotjump: Unit = {
+    io.eq   := false.B
+    io.less := false.B
+  }
+
   when(io.op === OPCTL.ADD) {
+    dnotjump
     io.out := io.s1 + io.s2
   }.elsewhen(io.op === OPCTL.END) {
+    dnotjump
     io.out := 0.U
     io.end := true.B
   }.elsewhen(io.op === OPCTL.NOP) {
+    dnotjump
     io.out := 0.U
-    printf("instruction nop!\n")
+  }.elsewhen(io.op === OPCTL.SUB) {
+    io.out := io.s1 - io.s2
+    dnotjump
+  }.elsewhen(io.op === OPCTL.SLT) {
+    io.out  := Mux(io.s1.asSInt < io.s2.asSInt, 1.U, 0.U)
+    io.eq   := (io.s1 - io.s2) === 0.U
+    io.less := io.s1.asSInt < io.s2.asSInt
+  }.elsewhen(io.op === OPCTL.SLTU) {
+    io.out  := Mux(io.s1 < io.s2, 1.U, 0.U)
+    io.eq   := io.out === 0.U
+    io.less := Mux(io.s1 < io.s2, 1.U, 0.U)
   }.otherwise {
+    dnotjump
     io.out := 0.U
+    printf("Error: Unknown instruction! \n")
     io.end := true.B
-    printf("Error: Unknown instruction!\n")
   }
 }
 
 class JumpCtl extends Module {
   val io = IO(new Bundle {
     val ctl   = Input(UInt(3.W))
+    val eq    = Input(Bool())
+    val less  = Input(Bool())
     val pclj  = Output(Bool()) //ture : imm, false : +4
     val pcrs1 = Output(Bool()) //ture : rs1, false : PC
   })
@@ -203,6 +223,18 @@ class JumpCtl extends Module {
     io.pcrs1 := pcR
   }.elsewhen(io.ctl === JUMPCTL.NOTJUMP) {
     io.pclj  := pcA4
+    io.pcrs1 := pcPC
+  }.elsewhen(io.ctl === JUMPCTL.JEQ) {
+    io.pclj  := Mux(io.eq, pcLJ, pcA4)
+    io.pcrs1 := pcPC
+  }.elsewhen(io.ctl === JUMPCTL.JNE) {
+    io.pclj  := Mux(io.eq, pcA4, pcLJ)
+    io.pcrs1 := pcPC
+  }.elsewhen(io.ctl === JUMPCTL.JLT) {
+    io.pclj  := Mux(io.less, pcLJ, pcA4)
+    io.pcrs1 := pcPC
+  }.elsewhen(io.ctl === JUMPCTL.JGE) {
+    io.pclj  := Mux(io.less, pcA4, pcLJ)
     io.pcrs1 := pcPC
   }.otherwise {
     io.pclj  := pcA4
@@ -254,6 +286,10 @@ class ImmGen extends Module {
     io.out := Cat(Fill(12, io.inst(31)), io.inst(31), io.inst(19, 12), io.inst(20), io.inst(30, 21), 0.U(1.W))
   }.elsewhen(io.format === TYPE.S) {
     io.out := Cat(Fill(20, io.inst(31)), io.inst(31, 25), io.inst(11, 7))
+  }.elsewhen(io.format === TYPE.B) {
+    //imm = {inst[31], inst[7], inst[30:25], inst[11:8], 0'b0}
+    //          12     11            10-5          4-1     0
+    io.out := Cat(Fill(19, io.inst(31)), io.inst(31), io.inst(7), io.inst(30, 25), io.inst(11, 8), 0.U)
   }.otherwise {
     io.out := 0.U
   }
@@ -283,7 +319,7 @@ class RegFile extends Module {
 
   io.rs1out := regfile(io.rs1)
   io.rs2out := regfile(io.rs2)
-  printf("rd is %x  datain: %x\n", io.rd, io.datain)
+  // printf("rd is %x  datain: %x\n", io.rd, io.datain)
 
 }
 
@@ -338,7 +374,9 @@ class Exu extends Module {
 
   source_decoder.io.inst := io.inst
 
-  jumpctl.io.ctl := source_decoder.io.jumpctl
+  jumpctl.io.ctl  := source_decoder.io.jumpctl
+  jumpctl.io.eq   := alu.io.eq
+  jumpctl.io.less := alu.io.less
 
   regfile.io.rs1 := io.inst(19, 15)
   regfile.io.rs2 := io.inst(24, 20)
