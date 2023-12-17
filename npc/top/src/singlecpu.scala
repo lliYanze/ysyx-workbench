@@ -272,10 +272,12 @@ class NextPc extends Module {
     val rs1    = Input(UInt(32.W))
     val nextpc = Output(UInt(32.W))
   })
+  val nextpc = Wire(UInt(32.W))
   val immor4 = Wire(UInt(32.W))
   immor4 := Mux(io.pclj, io.imm, 4.U)
   val rs1orpc = Wire(UInt(32.W))
   rs1orpc   := Mux(io.pcrs1, io.rs1, io.nowpc)
+  nextpc    := rs1orpc + immor4
   io.nextpc := rs1orpc + immor4
 
 }
@@ -286,7 +288,7 @@ class PC extends Module {
     val pc   = Output(UInt(32.W))
   })
 
-  val pc = RegInit("h8000_0000".U(32.W))
+  val pc = RegNext(io.pcin, "h8000_0000".U(32.W))
   pc    := io.pcin
   io.pc := pc
 
@@ -346,9 +348,9 @@ class RegFile extends Module {
 
 class Exu extends Module {
   val io = IO(new Bundle {
-    val inst = Input(UInt(32.W))
-    val out  = Output(UInt(32.W))
-    val pc   = Output(UInt(32.W))
+    val inst   = Input(UInt(32.W))
+    val nextpc = Output(UInt(32.W))
+    val pc     = Output(UInt(32.W))
 
   })
 
@@ -434,6 +436,6 @@ class Exu extends Module {
   ftrace.io.clock  := clock
   ftrace.io.jump   := source_decoder.io.ftrace
 
-  io.out := alu.io.out
+  io.nextpc := nextpc.io.nextpc
 
 }
