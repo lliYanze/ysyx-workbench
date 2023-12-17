@@ -29,6 +29,14 @@
 #define BITS(x, hi, lo)                                                        \
   (((x) >> (lo)) & BITMASK((hi) - (lo) + 1)) // similar to x[hi:lo] in verilog
 
+#define SEXT(x, len)                                                           \
+  ({                                                                           \
+    struct {                                                                   \
+      int64_t n : len;                                                         \
+    } __x = {.n = x};                                                          \
+    (uint64_t) __x.n;                                                          \
+  })
+
 // macro testing
 #define CHOOSE2nd(a, b, ...) b
 #define MUX_WITH_COMMA(contain_comma, a, b) CHOOSE2nd(contain_comma a, b)

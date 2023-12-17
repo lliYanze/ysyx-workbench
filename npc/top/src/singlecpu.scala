@@ -195,6 +195,24 @@ class Alu extends Module {
   }.elsewhen(io.op === OPCTL.AND) {
     dnotjump
     io.out := io.s1 & io.s2
+  }.elsewhen(io.op === OPCTL.SLL) {
+    dnotjump
+    io.out := io.s1 << io.s2(4, 0)
+  }.elsewhen(io.op === OPCTL.SRL) {
+    dnotjump
+    io.out := io.s1 >> io.s2(4, 0)
+  }.elsewhen(io.op === OPCTL.SRA) {
+    dnotjump
+    io.out := (io.s1.asSInt >> io.s2(4, 0)).asUInt
+  }.elsewhen(io.op === OPCTL.LUI) {
+    dnotjump
+    io.out := io.s2
+  }.elsewhen(io.op === OPCTL.XOR) {
+    dnotjump
+    io.out := io.s1 ^ io.s2
+  }.elsewhen(io.op === OPCTL.OR) {
+    dnotjump
+    io.out := io.s1 | io.s2
   }.otherwise {
     dnotjump
     io.out := 0.U

@@ -89,12 +89,18 @@ extern "C" int data_read(paddr_t addr, svBitVecVal *wmask, svBit valid) {
       addr > 0x80000000 + 0xfffffff)
     return 0;
   int buf = 0;
-  if (*wmask == 0x0)
-    buf = pmem_read(addr, 1);
-  else if (*wmask == 0x1)
-    buf = pmem_read(addr, 2);
-  else if (*wmask == 0x2)
+  if (*wmask == 0x0) {
+    word_t lowbyte = pmem_read(addr, 1);
+    buf = SEXT(lowbyte, 8); // 有符号数扩展
+  } else if (*wmask == 0x1) {
+    word_t lowbyte = pmem_read(addr, 2);
+    buf = SEXT(lowbyte, 16);
+  } else if (*wmask == 0x2)
     buf = pmem_read(addr, 4);
+  else if (*wmask == 0x4)
+    buf = pmem_read(addr, 1);
+  else if (*wmask == 0x5)
+    buf = pmem_read(addr, 2);
   else {
     printf("data_read wmask is 0x%x   wrong\n", *wmask);
     assert(0);
