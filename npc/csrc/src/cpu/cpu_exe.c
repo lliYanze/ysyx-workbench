@@ -21,10 +21,9 @@ void single_cycle() {
   top->eval();
   mytrace->dump(times);
   ++times;
-  now_pc = top->io_pc;
 
   single_exe();
-
+  now_pc = top->io_pc;
   top->clock = 1;
   top->eval();
   mytrace->dump(times);

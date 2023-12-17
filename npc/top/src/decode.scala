@@ -272,7 +272,7 @@ class InstDecode extends Module {
         ),
         instructions.jalr -> List(
           TYPE.I,
-          s1Reg,
+          s1PC,
           RS2MUX.PC,
           JUMPCTL.JLRS1,
           OPCTL.ADD,

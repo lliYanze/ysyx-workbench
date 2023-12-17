@@ -272,14 +272,7 @@ class NextPc extends Module {
     val rs1    = Input(UInt(32.W))
     val nextpc = Output(UInt(32.W))
   })
-  val nextpc = Wire(UInt(32.W))
-  val immor4 = Wire(UInt(32.W))
-  immor4 := Mux(io.pclj, io.imm, 4.U)
-  val rs1orpc = Wire(UInt(32.W))
-  rs1orpc   := Mux(io.pcrs1, io.rs1, io.nowpc)
-  nextpc    := rs1orpc + immor4
-  io.nextpc := rs1orpc + immor4
-
+  io.nextpc := Mux(io.pclj, io.imm, 4.U) + Mux(io.pcrs1, io.rs1, io.nowpc)
 }
 
 class PC extends Module {
@@ -288,10 +281,9 @@ class PC extends Module {
     val pc   = Output(UInt(32.W))
   })
 
-  val pc = RegNext(io.pcin, "h8000_0000".U(32.W))
+  val pc = RegInit("h8000_0000".U(32.W))
   pc    := io.pcin
   io.pc := pc
-
 }
 
 class ImmGen extends Module {
@@ -342,7 +334,6 @@ class RegFile extends Module {
 
   io.rs1out := regfile(io.rs1)
   io.rs2out := regfile(io.rs2)
-  // printf("rd is %x  datain: %x\n", io.rd, io.datain)
 
 }
 
@@ -364,7 +355,6 @@ class Exu extends Module {
   val alu            = Module(new Alu)
 
   val endnpc = Module(new EndNpc)
-  val rdaddr = Reg(UInt(32.W))
 
   val insttrace = Module(new InstTrace)
   val ftrace    = Module(new Ftrace)
@@ -383,8 +373,6 @@ class Exu extends Module {
   datamem.io.wmask := source_decoder.io.memctl
   datamem.io.clock := clock
   datamem.io.valid := source_decoder.io.memrd
-
-  rdaddr := nextpc.io.nextpc
 
   nextpc.io.imm   := immgen.io.out
   nextpc.io.nowpc := pc.io.pc

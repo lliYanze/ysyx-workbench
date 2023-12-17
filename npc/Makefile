@@ -21,7 +21,7 @@ CSRC_DIR = ./csrc
 
 VERILATOR = verilator
 # VERILATOR_CFLAGS += --cc --trace --exe --build -Wall 
-VERILATOR_CFLAGS += --cc --trace --exe --build  
+VERILATOR_CFLAGS += --cc --trace --exe --build  -O3 
 
 
 OBJ_DIR = $(BUILD_DIR)/obj_dir
