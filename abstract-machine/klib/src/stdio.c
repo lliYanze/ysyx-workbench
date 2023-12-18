@@ -7,7 +7,7 @@
 
 static int int_to_str(int num, char *str, int base) {
   int i = 0;
-  int len = 0; //记录长度
+  int len = 0; // 记录长度
   if (num == 0) {
     str[i++] = '0';
     str[i] = '\0';
@@ -25,7 +25,7 @@ static int int_to_str(int num, char *str, int base) {
     str[i++] = '-';
     ++len;
   }
-  //翻转字符串 (int)521 -1-> char(125) -2-> char(521) 这里是第2步
+  // 翻转字符串 (int)521 -1-> char(125) -2-> char(521) 这里是第2步
   char tmp;
   char *end = str + len - 1;
   char *begin = str;
@@ -38,35 +38,32 @@ static int int_to_str(int num, char *str, int base) {
   return len;
 }
 
-int printf(const char *fmt, ...) { 
-    va_list ap;
-    va_start(ap, fmt);
-    char buf[1024] = {0};
-    int ret = vsprintf(buf, fmt, ap);
-    va_end(ap);
-    for(int i = 0; i < ret; i++) {
-        putch(buf[i]);
-    }
-
-    return ret;
-
+int printf(const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  char buf[1024] = {0};
+  int ret = vsprintf(buf, fmt, ap);
+  va_end(ap);
+  for (int i = 0; i < ret; i++) {
+    putch(buf[i]);
+  }
+  return ret;
 }
 
 int sprintf(char *out, const char *fmt, ...) {
   va_list ap;
 
   va_start(ap, fmt);
-   int ret = vsprintf(out, fmt, ap);
+  int ret = vsprintf(out, fmt, ap);
   va_end(ap);
-    return ret;
-
+  return ret;
 }
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
   char *begin = out;
   int d;
   char *s;
-    char c;
+  char c;
 
   while (*fmt != '\0') {
     if (*fmt != '%') {
@@ -101,7 +98,7 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     }
   }
   *begin = '\0';
-    return begin - out;
+  return begin - out;
 }
 
 /*int sprintf(char *out, const char *fmt, ...) {
