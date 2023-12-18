@@ -1,6 +1,8 @@
 #include <VTOP.h>
+#include <cpu/difftest/difftest.h>
 #include <cstdint>
 #include <cstdio>
+#include <device/device.h>
 #include <macro.h>
 #include <stdio.h>
 #include <string.h>
@@ -85,6 +87,10 @@ extern "C" void ftrace(uint32_t pc, uint32_t inst, uint32_t dst_addr) {
 #include <mem/pmem.h>
 
 extern "C" int data_read(paddr_t addr, svBitVecVal *wmask, svBit valid) {
+  if (addr == RTC_ADDR) {
+    printf("获取时间\n");
+  }
+
   if (addr == 0x00000000 || valid == 0x0 || addr < 0x80000000 ||
       addr > 0x80000000 + 0xfffffff)
     return 0;
@@ -110,8 +116,16 @@ extern "C" int data_read(paddr_t addr, svBitVecVal *wmask, svBit valid) {
 }
 
 extern "C" void data_write(paddr_t addr, int buf, svBitVecVal *wmask) {
-  log_write("向 0x%08x 写入 0x%08x\n", addr, buf);
-  // printf("向 0x%08x 写入 0x%08x\n", addr, buf);
+
+  log_write("向 0x%08x 写入 0x%08x  mask is %d\n", addr, buf, *wmask);
+  if (addr == SERIAL_PORT) {
+    if (*wmask == 0x2) {
+      printf("%c", buf);
+    }
+    difftest_skip_ref();
+
+    return;
+  }
   if (*wmask == 0x0)
     pmem_write(addr, buf, 1);
   else if (*wmask == 0x1)

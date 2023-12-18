@@ -16,7 +16,11 @@ Area heap = RANGE(&_heap_start, PMEM_END);
 #endif
 static const char mainargs[] = MAINARGS;
 
-void putch(char ch) {}
+static inline void outw(uintptr_t addr, uint16_t data) {
+  *(volatile uint32_t *)addr = data;
+}
+
+void putch(char ch) { outw(0xa00003f8, ch); }
 
 void halt(int code) {
   npc_trap(code);
