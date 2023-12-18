@@ -72,7 +72,7 @@ static void execute(uint64_t n) {
     log_write("------------------------------------------\n");
     exec_once();
     update_cpu();
-    // difftest_step(now_pc, next_pc);
+    difftest_step(now_pc, next_pc);
 
     if (npc_state.state != NPC_RUNNING)
       break;
