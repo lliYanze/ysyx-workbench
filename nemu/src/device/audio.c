@@ -48,16 +48,15 @@ void fill_buff(void *userdata, uint8_t *stream, int len) {
   // SDL_MixAudio(stream, sbuf + audio_base[reg_count], nread,
   // SDL_MIX_MAXVOLUME);
   audio_base[reg_count] -= nread;
-  printf("reg_count is %d\n", audio_base[reg_count]);
+  // printf("reg_count is %d\n", audio_base[reg_count]);
+  // memset(sbuf + audio_base[reg_count], 0, nread);
+
   if (len > nread)
     SDL_memset(stream + audio_base[reg_count], 0, len - nread);
-
-  printf("-------\n");
 }
 
 void init_sdlaudio() {
   memset(sbuf, 0, CONFIG_SB_SIZE);
-  printf("freq is %d\n", audio_base[reg_freq]);
   SDL_AudioSpec spec, have;
   spec.format = AUDIO_S16SYS;
   spec.userdata = NULL;

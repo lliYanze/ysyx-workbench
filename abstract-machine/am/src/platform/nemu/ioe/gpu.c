@@ -27,14 +27,13 @@ void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *ctl) {
   if (ctl->sync) {
     for (int i = 0; i < h; ++i) { // 行
       for (int j = 0; j < w; ++j) {
-        fb[screen_width * (y) + x] = pixels[w * i + j];
+        fb[screen_width * (y + i) + x + j] = pixels[w * i + j];
       }
     }
     outl(SYNC_ADDR, 1);
   } else {
     for (int i = 0; i < h; ++i) { // 行
       for (int j = 0; j < w; ++j) {
-        // printf("x = %d, y = %d\n", screen_width * (i + y), j + x);
         fb[screen_width * (y + i) + x + j] = pixels[w * i + j];
       }
     }
