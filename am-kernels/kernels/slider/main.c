@@ -1,6 +1,6 @@
 #include <am.h>
-#include <klib.h>
 #include <klib-macros.h>
+#include <klib.h>
 
 extern uint32_t image[][400][300];
 extern uint32_t image_end[][400][300];
