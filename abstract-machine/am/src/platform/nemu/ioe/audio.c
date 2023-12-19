@@ -31,12 +31,9 @@ void __am_audio_play(AM_AUDIO_PLAY_T *ctl) {
   if (count + length > inl(AUDIO_SBUF_SIZE_ADDR)) {
     return;
   }
-  printf("length is %d\n", length);
   for (int i = 0; i < length; i++) {
     outb(AUDIO_SBUF_ADDR + count + i, ((uint8_t *)ctl->buf.start)[i]);
-    printf("%d ", ((uint8_t *)ctl->buf.start)[i]);
   }
-  printf("\n");
-
   outl(AUDIO_COUNT_ADDR, count + length);
+  printf("++++++\n");
 }

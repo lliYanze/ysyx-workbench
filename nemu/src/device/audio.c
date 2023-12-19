@@ -32,31 +32,39 @@ static uint8_t *sbuf = NULL;
 static uint32_t *audio_base = NULL;
 
 void fill_buff(void *userdata, uint8_t *stream, int len) {
+  if (audio_base[reg_count] <= 0) {
+    return;
+  }
   len = CONFIG_SB_SIZE < len ? CONFIG_SB_SIZE : len;
   int nread = len;
   if (audio_base[reg_count] < nread)
     nread = audio_base[reg_count];
 
-  // SDL_memset(stream, 0, nread);
-  // for (int i = 0; i < nread; i++) {
-  //   stream[i] = sbuf[i] * 50;
-  // }
+  SDL_memset(stream, 0, nread);
+  for (int i = 0; i < nread; i++) {
+    stream[i] = sbuf[audio_base[reg_count] + i];
+  }
 
-  SDL_MixAudio(stream, sbuf + audio_base[reg_count], nread, SDL_MIX_MAXVOLUME);
+  // SDL_MixAudio(stream, sbuf + audio_base[reg_count], nread,
+  // SDL_MIX_MAXVOLUME);
   audio_base[reg_count] -= nread;
+  printf("reg_count is %d\n", audio_base[reg_count]);
   if (len > nread)
     SDL_memset(stream + audio_base[reg_count], 0, len - nread);
+
+  printf("-------\n");
 }
 
 void init_sdlaudio() {
   memset(sbuf, 0, CONFIG_SB_SIZE);
+  printf("freq is %d\n", audio_base[reg_freq]);
   SDL_AudioSpec spec, have;
   spec.format = AUDIO_S16SYS;
   spec.userdata = NULL;
   spec.callback = fill_buff;
   spec.channels = 1;
-  spec.freq = 8000;
-  spec.samples = 1024;
+  spec.freq = audio_base[reg_freq];
+  spec.samples = audio_base[reg_samples];
   if (SDL_Init(SDL_INIT_AUDIO)) {
     printf("SDL_Init error: %s\n", SDL_GetError());
     return;
@@ -66,13 +74,34 @@ void init_sdlaudio() {
     printf("Failed to open audio: %s\n", SDL_GetError());
     return;
   }
-  SDL_PauseAudio(0);
 }
 
 static void
 audio_io_handler(uint32_t offset, int len,
                  bool is_write) { // 会传入 访问的偏移和长度 以及读写标志
   assert(len == 4);
+  if (is_write) {
+    switch (offset / 4) {
+    case reg_count:
+      while (audio_base[reg_count] > 0) {
+        SDL_Delay(1);
+      }
+      break;
+
+    case reg_samples:
+      IFDEF(CONFIG_HAS_AUDIO, init_sdlaudio());
+      SDL_PauseAudio(0);
+      break;
+    }
+  } else {
+    switch (offset / 4) {
+    case reg_count:
+      while (audio_base[reg_count] > 0) {
+        SDL_Delay(1);
+      }
+      break;
+    }
+  }
 }
 
 void init_audio() {
@@ -91,5 +120,4 @@ void init_audio() {
 
   sbuf = (uint8_t *)new_space(CONFIG_SB_SIZE);
   add_mmio_map("audio-sbuf", CONFIG_SB_ADDR, sbuf, CONFIG_SB_SIZE, NULL);
-  IFDEF(CONFIG_HAS_AUDIO, init_sdlaudio());
 }
