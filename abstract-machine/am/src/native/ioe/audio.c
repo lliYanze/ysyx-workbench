@@ -23,10 +23,6 @@ static void audio_play(void *userdata, uint8_t *stream, int len) {
     int n = read(rfd, stream, nread);
     if (n > 0) b += n;
   }
-    for (int i = 0; i < nread; i++) {
-        printf("%d " , stream[i]);
-    }
-    printf("\n");
 
   count -= nread;
   if (len > nread) {

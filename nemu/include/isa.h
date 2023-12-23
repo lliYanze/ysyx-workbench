@@ -1,17 +1,17 @@
 /***************************************************************************************
-* Copyright (c) 2014-2022 Zihao Yu, Nanjing University
-*
-* NEMU is licensed under Mulan PSL v2.
-* You can use this software according to the terms and conditions of the Mulan PSL v2.
-* You may obtain a copy of Mulan PSL v2 at:
-*          http://license.coscl.org.cn/MulanPSL2
-*
-* THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
-* EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
-* MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-*
-* See the Mulan PSL v2 for more details.
-***************************************************************************************/
+ * Copyright (c) 2014-2022 Zihao Yu, Nanjing University
+ *
+ * NEMU is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan
+ *PSL v2. You may obtain a copy of Mulan PSL v2 at:
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY
+ *KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+ *NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ *
+ * See the Mulan PSL v2 for more details.
+ ***************************************************************************************/
 
 #ifndef __ISA_H__
 #define __ISA_H__
@@ -24,26 +24,26 @@
 typedef concat(__GUEST_ISA__, _CPU_state) CPU_state;
 typedef concat(__GUEST_ISA__, _ISADecodeInfo) ISADecodeInfo;
 
-//ftrace
+// ftrace
 //
-#define ELF_FUNC_NUM 2048 
+#define ELF_FUNC_NUM 2048
 #define ELF_FUNC_NAME_LEN 64
-typedef struct __Elf_Func_Info{
-    char name[ELF_FUNC_NAME_LEN];
-    uint32_t start;
-    uint32_t size;
-}elf_func_info;
+typedef struct __Elf_Func_Info {
+  char name[ELF_FUNC_NAME_LEN];
+  uint32_t start;
+  uint32_t size;
+} elf_func_info;
 elf_func_info find_func_by_addr(uint32_t addr);
 
-typedef struct __Ftrace_List{
-    elf_func_info cur_func; // 当前位置函数地址 
-    elf_func_info dst_func; // 目标位置函数地址
-    paddr_t addr;       // 指令所在地址
-    int type;           // call 或 return
-    struct __Ftrace_List *next;
-    struct __Ftrace_List *pre;
-}ftrace_list;            // 用于记录函数调用栈
-extern elf_func_info elf_funcs[ELF_FUNC_NUM]; //这里不用extern就会报错
+typedef struct __Ftrace_List {
+  elf_func_info cur_func; // 当前位置函数地址
+  elf_func_info dst_func; // 目标位置函数地址
+  paddr_t addr;           // 指令所在地址
+  int type;               // call 或 return
+  struct __Ftrace_List *next;
+  struct __Ftrace_List *pre;
+} ftrace_list;                                // 用于记录函数调用栈
+extern elf_func_info elf_funcs[ELF_FUNC_NUM]; // 这里不用extern就会报错
 extern ftrace_list *ftrace_list_head;
 void ftrace_init();
 

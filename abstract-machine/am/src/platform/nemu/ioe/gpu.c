@@ -20,6 +20,7 @@ void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *ctl) {
   int h = ctl->h;
   int w = ctl->w;
   int screen_width = inl(VGACTL_ADDR) >> 16;
+  // printf("x: %d, y: %d, h: %d, w: %d\n", x, y, h, w);
 
   uint32_t *pixels = ctl->pixels;
   uint32_t *fb = (uint32_t *)(uintptr_t)FB_ADDR;

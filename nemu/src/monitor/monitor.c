@@ -25,6 +25,7 @@ void init_difftest(char *ref_so_file, long img_size, int port);
 void init_device();
 void init_sdb();
 void init_disasm(const char *triple);
+void init_etrace_log(const char *log_file);
 
 static void welcome() {
   Log("Trace: %s", MUXDEF(CONFIG_TRACE, ANSI_FMT("ON", ANSI_FG_GREEN),
@@ -53,6 +54,7 @@ static char *img_file = NULL;
 static int difftest_port = 1234;
 char *elf_file = NULL;
 char *ftrace_file = NULL;
+char *etrace_file = NULL;
 
 static long load_img() {
   if (img_file == NULL) {
@@ -85,10 +87,11 @@ static int parse_args(int argc, char *argv[]) {
       {"help", no_argument, NULL, 'h'},
       {"elf", required_argument, NULL, 'e'},
       {"ftracelog", required_argument, NULL, 'f'},
+      {"etracelog", required_argument, NULL, 'x'},
       {0, 0, NULL, 0},
   };
   int o;
-  while ((o = getopt_long(argc, argv, "-bhl:d:p:e:f:", table, NULL)) != -1) {
+  while ((o = getopt_long(argc, argv, "-bhl:d:p:e:f:x:", table, NULL)) != -1) {
     switch (o) {
     case 'b':
       sdb_set_batch_mode();
@@ -108,6 +111,9 @@ static int parse_args(int argc, char *argv[]) {
     case 'e':
       elf_file = optarg;
       load_elf();
+      break;
+    case 'x':
+      etrace_file = optarg;
       break;
     case 1:
       img_file = optarg;
@@ -141,6 +147,8 @@ void init_monitor(int argc, char *argv[]) {
   /* Open the ftrace log file. */
   init_ftrace_log(ftrace_file);
 
+  /* Open the etrace log file. */
+  init_etrace_log(etrace_file);
   /* Initialize memory. */
   init_mem();
 

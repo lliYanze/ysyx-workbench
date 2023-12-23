@@ -75,6 +75,14 @@ uint64_t get_time();
         fflush(ftrace_fp);                                                     \
       } while (0))
 
+#define etrace_log_write(...)                                                  \
+  IFDEF(                                                                       \
+      CONFIG_ETRACE, do {                                                      \
+        extern FILE *etrace_fp;                                                \
+        fprintf(etrace_fp, __VA_ARGS__);                                       \
+        fflush(etrace_fp);                                                     \
+      } while (0))
+
 #ifdef CONFIG_LOG_TO_FILE
 #define _Log(...)                                                              \
   do {                                                                         \
