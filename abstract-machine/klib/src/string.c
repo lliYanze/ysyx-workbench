@@ -23,7 +23,7 @@ char *strcpy(char *dst, const char *src) {
     return NULL;
   }
 
-    /*int len_src = 0;*/
+  /*int len_src = 0;*/
   size_t len_src = strlen(src);
 
   for (int i = 0; i < len_src; ++i) {
@@ -36,7 +36,18 @@ char *strcpy(char *dst, const char *src) {
  * 在dst后添加src
  * */
 char *strncpy(char *dst, const char *src, size_t n) {
-  panic("Not implemented");
+  size_t i;
+
+  // 复制字符串
+  for (i = 0; i < n && src[i] != '\0'; i++) {
+    dst[i] = src[i];
+  }
+
+  // 如果源字符串长度小于 n，剩余的部分用 '\0' 填充
+  for (; i < n; i++) {
+    dst[i] = '\0';
+  }
+  return dst;
 }
 
 char *strcat(char *dst, const char *src) {
@@ -44,15 +55,14 @@ char *strcat(char *dst, const char *src) {
     return NULL;
   }
 
-    size_t len_dst = strlen(dst);
-    size_t len_src = strlen(src);
+  size_t len_dst = strlen(dst);
+  size_t len_src = strlen(src);
 
-    for (int i = 0; i < len_src; ++i) {
-        dst[len_dst + i] = src[i];
-    }
-    dst[len_dst + len_src] = '\0';
-    return dst;
-
+  for (int i = 0; i < len_src; ++i) {
+    dst[len_dst + i] = src[i];
+  }
+  dst[len_dst + len_src] = '\0';
+  return dst;
 }
 
 /*
@@ -77,79 +87,98 @@ int strcmp(const char *s1, const char *s2) {
     len++;
   }
   return 0;
-
 }
 
 int strncmp(const char *s1, const char *s2, size_t n) {
-  panic("Not implemented");
+  if (s1 == NULL || s2 == NULL) {
+    return 0;
+  }
+  if (strlen(s1) != strlen(s2)) {
+    return strlen(s1) - strlen(s2);
+  }
+  size_t len = 0;
+  while (s1[len] != '\0' && len < n) {
+    if (s1[len] != s2[len]) {
+      return s1[len] - s2[len];
+    }
+    len++;
+  }
+  return 0;
 }
 
 /*
  * DESCRIPTION
- *The memset() function fills the first n bytes of the memory area pointed to by s with the constant byte c.
- * RETURN VALUE
- *       The memset() function returns a pointer to the memory area s.
-*/
-void *memset(void *s, int c, size_t n) { 
-    void *ret = s;
-    while(n--){
-        *(char *)ret = c;
-        ret = (char *)ret + 1;
-    }
-    return s;
+ *The memset() function fills the first n bytes of the memory area pointed to by
+ *s with the constant byte c. RETURN VALUE The memset() function returns a
+ *pointer to the memory area s.
+ */
+void *memset(void *s, int c, size_t n) {
+  void *ret = s;
+
+  // putch(n);
+  while (n--) {
+    *(char *)ret = c;
+    ret = (char *)ret + 1;
+    // putch('\n');
+  }
+  return s;
 }
 
 void *memmove(void *dst, const void *src, size_t n) {
   panic("Not implemented");
 }
 
-void *memcpy(void *out, const void *in, size_t n) { 
-    /*panic("Not implemented"); */
-    void *ret = out;
-    if(n == 0){
-        return ret;
-    }
-    if(out == NULL || in == NULL){
-        return NULL;
-    }
-    if(out == in){
-        return ret;
-    }
-    for(int i = 0; i < n; i++){
-        *(char *)ret = *(char *)in;
-        ret = (char *)ret + 1;
-        in = (char *)in + 1;
-    }
-    return out;
+void *memcpy(void *out, const void *in, size_t n) {
+  /*panic("Not implemented"); */
+  void *ret = out;
+  if (n == 0) {
+    return ret;
+  }
+  if (out == NULL || in == NULL) {
+    return NULL;
+  }
+  if (out == in) {
+    return ret;
+  }
+  for (int i = 0; i < n; i++) {
+    *(char *)ret = *(char *)in;
+    ret = (char *)ret + 1;
+    in = (char *)in + 1;
+  }
+  return out;
 }
 
 /*
- * 
+ *
  * DESCRIPTION
- *        The memcmp() function compares the first n bytes (each interpreted as unsigned char) of the memory areas s1 and s2.
- * 
+ *        The memcmp() function compares the first n bytes (each interpreted as
+ * unsigned char) of the memory areas s1 and s2.
+ *
  * RETURN VALUE
- *        The  memcmp()  function returns an integer less than, equal to, or greater than zero if the first n bytes of s1 is found, respectively, to be less than, to
- *        match, or be greater than the first n bytes of s2.
- * 
- *        For a nonzero return value, the sign is determined by the sign of the difference between the first pair of bytes (interpreted as unsigned char) that differ
- *        in s1 and s2.
- * 
+ *        The  memcmp()  function returns an integer less than, equal to, or
+ * greater than zero if the first n bytes of s1 is found, respectively, to be
+ * less than, to match, or be greater than the first n bytes of s2.
+ *
+ *        For a nonzero return value, the sign is determined by the sign of the
+ * difference between the first pair of bytes (interpreted as unsigned char)
+ * that differ in s1 and s2.
+ *
  *        If n is zero, the return value is zero.
  * */
 
 int memcmp(const void *s1, const void *s2, size_t n) {
-    if(n == 0) {
-        return 0;
-    }
-    while(n--){
-        if(*(char *)s1 != *(char *)s2){
-            return *(char *)s1 - *(char *)s2;
-        }
-        s1 = (char *)s1 + 1;
-        s2 = (char *)s2 + 1;
-    }
+
+  if (n == 0) {
     return 0;
+  }
+  while (n--) {
+    if (*(char *)s1 != *(char *)s2) {
+      return *(char *)s1 - *(char *)s2;
+    }
+    s1 = (char *)s1 + 1;
+    s2 = (char *)s2 + 1;
+  }
+  return 0;
   /*panic("Not implemented");*/
 }
 
