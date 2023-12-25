@@ -112,11 +112,11 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2,
 }
 
 static word_t do_ecall(word_t epc) {
-  // bool success = false;
-  // int cause = isa_reg_str2val("a5", &success);
-  // Assert(success, "reg failed\n");
+  bool success = false;
+  int cause = isa_reg_str2val("a5", &success);
+  Assert(success, "reg failed\n");
 
-  return isa_raise_intr(0xb, epc);
+  return isa_raise_intr(cause, epc);
 }
 
 static int decode_exec(Decode *s) {
