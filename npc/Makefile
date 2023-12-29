@@ -46,13 +46,14 @@ CFLAGS += -I/usr/lib/llvm-14/include -std=c++14   -fno-exceptions -D_GNU_SOURCE 
 CFLAGS += -fPIE
 LDFLAGS += $(shell llvm-config --libs)
 CFLAGS += -Wall -Werror
-# LDFLAGS += -fsanitize=address
 
 
 # CFLAGS += -I$(NEMU_HOME)/include
 LDFLAGS += -L$(NPC_HOME)/lib
 LDFLAGS += -lriscv32-nemu-interpreter-so
 LDFLAGS += -Wl,-rpath=$(NPC_HOME)/lib
+
+# LDFLAGS += -fsanitize=address
 
 
 #for debug
@@ -74,7 +75,7 @@ IMG ?=
 
 verilator: $(BIN)
 
-NPC_EXE:= $(BIN) $(ARGS) $(IMG)
+NPC_EXE:= LD_PRELOAD=/lib/x86_64-linux-gnu/libasan.so.6 $(BIN) $(ARGS) $(IMG)
 
 verilog: 
 	$(call git_commit, "generate verilog")

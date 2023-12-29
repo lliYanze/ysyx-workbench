@@ -53,7 +53,10 @@ __EXPORT void difftest_regcpy(void *dut, bool direction) {
   // printf("<nemu> cpu.pc is 0x%x\n", cpu.pc);
 }
 
-__EXPORT void difftest_exec(uint64_t n) { cpu_exec(n); }
+__EXPORT void difftest_exec(uint64_t n) {
+  cpu_exec(n);
+  // printf("<nemu> difftest_exec\n");
+}
 
 __EXPORT void difftest_raise_intr(word_t NO) { assert(0); }
 
