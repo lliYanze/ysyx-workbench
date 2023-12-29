@@ -21,8 +21,8 @@ word_t isa_raise_intr(word_t NO, vaddr_t epc) {
    * Then return the address of the interrupt/exception vector.
    */
 
-  elf_func_info cur_func = find_func_by_addr(epc);
 #ifdef CONFIG_ETRACE
+  elf_func_info cur_func = find_func_by_addr(epc);
   etrace_log_write("NO:%x, epc:%s[0x%08x]", NO, cur_func.name, epc);
 #endif
 

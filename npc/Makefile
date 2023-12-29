@@ -46,6 +46,8 @@ CFLAGS += -I/usr/lib/llvm-14/include -std=c++14   -fno-exceptions -D_GNU_SOURCE 
 CFLAGS += -fPIE
 LDFLAGS += $(shell llvm-config --libs)
 CFLAGS += -Wall -Werror
+# LDFLAGS += -fsanitize=address
+
 
 # CFLAGS += -I$(NEMU_HOME)/include
 LDFLAGS += -L$(NPC_HOME)/lib
