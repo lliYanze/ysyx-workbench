@@ -39,7 +39,6 @@ bool cte_init(Context *(*handler)(Event, Context *)) {
 Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
   Context *c = (Context *)(kstack.end - sizeof(Context));
   memset(c, 0, sizeof(Context));
-  // c->gpr[2] = (uintptr_t)c;
   c->mepc = (uintptr_t)entry;
   c->gpr[10] = (uintptr_t)arg;
 
