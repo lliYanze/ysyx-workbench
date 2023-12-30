@@ -149,6 +149,7 @@ extern "C" void data_write(paddr_t addr, int buf, svBitVecVal *wmask) {
   if (addr == SERIAL_PORT) {
     if (*wmask == 0x2) {
       putchar(buf);
+      fflush(stdout);
       // putchar('\n');
     }
     difftest_skip_ref();
