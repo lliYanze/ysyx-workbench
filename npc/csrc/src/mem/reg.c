@@ -4,7 +4,10 @@
 // 寄存器名字为TOP__DOT__exu__DOT__regfile__DOT__regfile_0
 #define R(index) &top->rootp->TOP__DOT__exu__DOT__regfile__DOT__regfile_##index
 
+#define CSR(index) &top->rootp->TOP__DOT__exu__DOT__csr__DOT__csrfile_##index
+
 word_t *preg[32];
+word_t *pcsr[4];
 
 void reg_init() {
   preg[0] = R(0);
@@ -39,6 +42,11 @@ void reg_init() {
   preg[29] = R(29);
   preg[30] = R(30);
   preg[31] = R(31);
+
+  pcsr[0] = CSR(0);
+  pcsr[1] = CSR(1);
+  pcsr[2] = CSR(2);
+  pcsr[3] = CSR(3);
 }
 
 const char *regsname[] = {"$0", "ra", "sp",  "gp",  "tp", "t0", "t1", "t2",
@@ -59,5 +67,14 @@ void show_regs() {
 void copyreg2cpu() {
   for (int i = 0; i < 32; ++i) {
     cpugpr(i) = gpr(i);
+  }
+  // for (int i = 0; i < 4; ++i) {
+  //   cpucsr(i) = csr(i);
+  // }
+}
+
+void copycsr2cpu() {
+  for (int i = 0; i < 4; ++i) {
+    cpucsr(i) = csr(i);
   }
 }

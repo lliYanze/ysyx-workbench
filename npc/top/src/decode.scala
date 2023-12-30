@@ -20,6 +20,7 @@ class InstDecode extends Module {
     val memctl     = Output(UInt(3.W))
     val tomemorreg = Output(Bool())
     val regwr      = Output(Bool())
+    val csrctl     = Output(UInt(3.W))
   })
   val s1Reg: Bool = true.B
   val s1PC:  Bool = false.B
@@ -45,7 +46,20 @@ class InstDecode extends Module {
   val csignals =
     ListLookup(
       io.inst,
-      List(TYPE.E, s1Reg, s2Reg, JUMPCTL.NOTJUMP, OPCTL.ERR, notFtrace, mnotwr, alutoreg, MEMCTL.NOP, rnotwr, mnotrd),
+      List(
+        TYPE.E,
+        s1Reg,
+        s2Reg,
+        JUMPCTL.NOTJUMP,
+        OPCTL.ERR,
+        notFtrace,
+        mnotwr,
+        alutoreg,
+        MEMCTL.NOP,
+        rnotwr,
+        mnotrd,
+        CSRCTL.NOP
+      ),
       Array(
         ///***************R***************//
         instructions.add -> List(
@@ -59,7 +73,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.sub -> List(
           TYPE.I,
@@ -72,7 +87,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.xor -> List(
           TYPE.I,
@@ -85,7 +101,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.or -> List(
           TYPE.I,
@@ -98,7 +115,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.and -> List(
           TYPE.I,
@@ -111,7 +129,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.sll -> List(
           TYPE.I,
@@ -124,7 +143,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.srl -> List(
           TYPE.I,
@@ -137,7 +157,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.sra -> List(
           TYPE.I,
@@ -150,7 +171,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.slt -> List(
           TYPE.I,
@@ -163,7 +185,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.sltu -> List(
           TYPE.I,
@@ -176,7 +199,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         ///***************I***************//
         instructions.addi -> List(
@@ -190,7 +214,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.xori -> List(
           TYPE.I,
@@ -203,7 +228,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.ori -> List(
           TYPE.I,
@@ -216,7 +242,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.andi -> List(
           TYPE.I,
@@ -229,7 +256,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.slli -> List(
           TYPE.I,
@@ -242,7 +270,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.srli -> List(
           TYPE.I,
@@ -255,7 +284,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.srai -> List(
           TYPE.I,
@@ -268,7 +298,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.slti -> List(
           TYPE.I,
@@ -281,7 +312,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.sltiu -> List(
           TYPE.I,
@@ -294,7 +326,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.jalr -> List(
           TYPE.I,
@@ -307,7 +340,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.lb -> List(
           TYPE.I,
@@ -320,7 +354,8 @@ class InstDecode extends Module {
           memtoreg,
           MEMCTL.BYTE,
           rwr,
-          mrd
+          mrd,
+          CSRCTL.NOP
         ),
         instructions.lh -> List(
           TYPE.I,
@@ -333,7 +368,8 @@ class InstDecode extends Module {
           memtoreg,
           MEMCTL.HALF,
           rwr,
-          mrd
+          mrd,
+          CSRCTL.NOP
         ),
         instructions.lw -> List(
           TYPE.I,
@@ -346,7 +382,8 @@ class InstDecode extends Module {
           memtoreg,
           MEMCTL.WORD,
           rwr,
-          mrd
+          mrd,
+          CSRCTL.NOP
         ),
         instructions.lbu -> List(
           TYPE.I,
@@ -359,7 +396,8 @@ class InstDecode extends Module {
           memtoreg,
           MEMCTL.UBYTE,
           rwr,
-          mrd
+          mrd,
+          CSRCTL.NOP
         ),
         instructions.lhu -> List(
           TYPE.I,
@@ -372,7 +410,8 @@ class InstDecode extends Module {
           memtoreg,
           MEMCTL.UHALF,
           rwr,
-          mrd
+          mrd,
+          CSRCTL.NOP
         ),
         instructions.ebreak -> List(
           TYPE.E,
@@ -385,7 +424,8 @@ class InstDecode extends Module {
           memtoreg,
           MEMCTL.WORD,
           rwr,
-          mrd
+          mrd,
+          CSRCTL.NOP
         ),
         ///***************U***************//
         instructions.lui -> List(
@@ -399,7 +439,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.auipc -> List(
           TYPE.U,
@@ -412,7 +453,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         ///***************J***************//
         instructions.jal -> List(
@@ -426,7 +468,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         ///***************S***************//
         instructions.sb -> List(
@@ -440,7 +483,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.BYTE,
           rnotwr,
-          mrd
+          mrd,
+          CSRCTL.NOP
         ),
         instructions.sh -> List(
           TYPE.S,
@@ -453,7 +497,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.HALF,
           rnotwr,
-          mrd
+          mrd,
+          CSRCTL.NOP
         ),
         instructions.sw -> List(
           TYPE.S,
@@ -466,7 +511,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.WORD,
           rnotwr,
-          mrd
+          mrd,
+          CSRCTL.NOP
         ),
         ///***************B***************//
         instructions.beq -> List(
@@ -480,7 +526,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rnotwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.bne -> List(
           TYPE.B,
@@ -493,7 +540,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rnotwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.blt -> List(
           TYPE.B,
@@ -506,7 +554,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rnotwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.bge -> List(
           TYPE.B,
@@ -519,7 +568,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rnotwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.bltu -> List(
           TYPE.B,
@@ -532,7 +582,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rnotwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         instructions.bgeu -> List(
           TYPE.B,
@@ -545,7 +596,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rnotwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
         ),
         ///***************E***************//
         instructions.begin -> List(
@@ -559,7 +611,65 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.NOP,
           rnotwr,
-          mnotrd
+          mnotrd,
+          CSRCTL.NOP
+        ),
+        ///***********CSR相关************///
+        instructions.csrrw -> List(
+          TYPE.I,
+          s1Reg,
+          RS2MUX.IMM,
+          JUMPCTL.NOTJUMP,
+          OPCTL.NOP,
+          notFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rwr,
+          mnotrd,
+          CSRCTL.WR
+        ),
+        instructions.ecall -> List(
+          TYPE.I,
+          s1Reg,
+          RS2MUX.IMM,
+          JUMPCTL.NOTJUMP,
+          OPCTL.NOP,
+          notFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rnotwr,
+          mnotrd,
+          CSRCTL.ECALL
+        ),
+        instructions.csrrs -> List(
+          TYPE.I,
+          s1Reg,
+          RS2MUX.IMM,
+          JUMPCTL.NOTJUMP,
+          OPCTL.NOP,
+          notFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rwr,
+          mnotrd,
+          CSRCTL.RD
+        ),
+        instructions.mret -> List(
+          TYPE.I,
+          s1Reg,
+          RS2MUX.IMM,
+          JUMPCTL.NOTJUMP,
+          OPCTL.NOP,
+          notFtrace,
+          mnotwr,
+          alutoreg,
+          MEMCTL.NOP,
+          rnotwr,
+          mnotrd,
+          CSRCTL.MRET
         )
       )
     )
@@ -575,4 +685,5 @@ class InstDecode extends Module {
   io.memctl     := csignals(8)
   io.regwr      := csignals(9)
   io.memrd      := csignals(10)
+  io.csrctl     := csignals(11)
 }

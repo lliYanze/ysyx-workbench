@@ -265,14 +265,20 @@ class JumpCtl extends Module {
 
 class NextPc extends Module {
   val io = IO(new Bundle {
-    val pclj   = Input(Bool()) //true imm ,false +4
-    val pcrs1  = Input(Bool()) //true rs1 ,false PC
-    val nowpc  = Input(UInt(32.W))
-    val imm    = Input(UInt(32.W))
-    val rs1    = Input(UInt(32.W))
-    val nextpc = Output(UInt(32.W))
+    val pclj    = Input(Bool()) //true imm ,false +4
+    val pcrs1   = Input(Bool()) //true rs1 ,false PC
+    val nowpc   = Input(UInt(32.W))
+    val imm     = Input(UInt(32.W))
+    val rs1     = Input(UInt(32.W))
+    val csrjump = Input(Bool())
+    val csrdata = Input(UInt(32.W))
+    val nextpc  = Output(UInt(32.W))
   })
-  io.nextpc := Mux(io.pclj, io.imm, 4.U) + Mux(io.pcrs1, io.rs1, io.nowpc)
+  when(io.csrjump) {
+    io.nextpc := io.csrdata
+  }.otherwise {
+    io.nextpc := Mux(io.pclj, io.imm, 4.U) + Mux(io.pcrs1, io.rs1, io.nowpc)
+  }
 }
 
 class PC extends Module {
@@ -337,6 +343,130 @@ class RegFile extends Module {
 
 }
 
+class CSRALUMUX extends Module {
+  val io = IO(new Bundle {
+    val aludata   = Input(UInt(32.W))
+    val csrdata   = Input(UInt(32.W))
+    val choosecsr = Input(Bool())
+    val out       = Output(UInt(32.W))
+  })
+  io.out := Mux(io.choosecsr, io.csrdata, io.aludata)
+}
+
+class CSR extends Module {
+  val io = IO(new Bundle {
+    val idx       = Input(UInt(12.W))
+    val wr        = Input(Bool())
+    val wpc       = Input(Bool())
+    val re        = Input(Bool())
+    val pc        = Input(UInt(32.W))
+    val rs1data   = Input(UInt(32.W))
+    val ecall     = Input(Bool())
+    val mret      = Input(Bool())
+    val dataout   = Output(UInt(32.W))
+    val pcdataout = Output(UInt(32.W))
+
+  })
+  val csrfile = RegInit(VecInit(Seq.fill(4)(0.U(32.W))))
+  when(io.wr || io.wpc) {
+    when(io.idx === 0x300.U) {
+      csrfile(0) := io.rs1data
+    }.elsewhen(io.idx === 0x341.U) {
+      csrfile(1) := Mux(io.wpc, io.pc, io.rs1data)
+    }.elsewhen(io.idx === 0x342.U) {
+      csrfile(2) := io.rs1data
+    }.elsewhen(io.idx === 0x305.U) {
+      csrfile(3) := io.rs1data
+    }.elsewhen(io.ecall) {
+      csrfile(1) := io.pc
+      csrfile(2) := "hb".U
+    }
+  }
+  when(io.re) {
+    when(io.idx === 0x300.U) {
+      io.dataout := csrfile(0)
+
+    }.elsewhen(io.idx === 0x341.U) {
+      io.dataout := csrfile(1)
+    }.elsewhen(io.idx === 0x342.U) {
+      io.dataout := csrfile(2) //由于ecall无法读a5，所以用hb代替
+
+    }.elsewhen(io.idx === 0x305.U) {
+      io.dataout := csrfile(3)
+    }.otherwise {
+      io.dataout := 0.U
+    }
+  }.otherwise {
+    io.dataout := 0.U
+  }
+  io.pcdataout := Mux(io.ecall, csrfile(3), csrfile(1))
+
+}
+
+class CSRCTL extends Module {
+  val io = IO(new Bundle {
+    val ctl       = Input(UInt(3.W))
+    val rd        = Input(UInt(5.W))
+    val rs1       = Input(UInt(5.W))
+    val wreg      = Output(Bool())
+    val wpc       = Output(Bool())
+    val read      = Output(Bool())
+    val choosecsr = Output(Bool())
+    val jump      = Output(Bool())
+    val ecall     = Output(Bool())
+    val mret      = Output(Bool())
+  })
+  when(io.ctl === CSRCTL.NOP) {
+    io.wreg      := false.B
+    io.wpc       := false.B
+    io.read      := false.B
+    io.choosecsr := false.B
+    io.jump      := false.B
+    io.ecall     := false.B
+    io.mret      := false.B
+  }.elsewhen(io.ctl === CSRCTL.WR) {
+    io.wreg      := true.B
+    io.wpc       := false.B
+    io.read      := Mux(io.rd === 0.U, false.B, true.B)
+    io.jump      := false.B
+    io.choosecsr := true.B
+    io.ecall     := false.B
+    io.mret      := false.B
+  }.elsewhen(io.ctl === CSRCTL.RD) {
+    io.wreg      := Mux(io.rs1 === 0.U, false.B, true.B)
+    io.wpc       := false.B
+    io.read      := true.B
+    io.choosecsr := true.B
+    io.jump      := false.B
+    io.ecall     := false.B
+    io.mret      := false.B
+  }.elsewhen(io.ctl === CSRCTL.ECALL) {
+    io.wreg      := false.B
+    io.wpc       := true.B
+    io.read      := false.B
+    io.choosecsr := false.B
+    io.jump      := true.B
+    io.ecall     := true.B
+    io.mret      := false.B
+  }.elsewhen(io.ctl === CSRCTL.MRET) {
+    io.wreg      := false.B
+    io.wpc       := false.B
+    io.read      := false.B
+    io.choosecsr := false.B
+    io.jump      := true.B
+    io.ecall     := false.B
+    io.mret      := true.B
+  }.otherwise {
+    io.wreg      := false.B
+    io.wpc       := false.B
+    io.read      := false.B
+    io.choosecsr := false.B
+    io.jump      := false.B
+    io.ecall     := false.B
+    io.mret      := false.B
+  }
+}
+
 class Exu extends Module {
   val io = IO(new Bundle {
     val inst   = Input(UInt(32.W))
@@ -363,6 +493,27 @@ class Exu extends Module {
   val memorregmux = Module(new MemorRegMux)
   val datamem     = Module(new DataMem)
 
+  val csrctl    = Module(new CSRCTL)
+  val csr       = Module(new CSR)
+  val csralumux = Module(new CSRALUMUX)
+
+  csr.io.idx     := io.inst(31, 20)
+  csr.io.wr      := csrctl.io.wreg
+  csr.io.re      := csrctl.io.read
+  csr.io.wpc     := csrctl.io.wpc
+  csr.io.pc      := pc.io.pc
+  csr.io.rs1data := regfile.io.rs1out
+  csr.io.ecall   := csrctl.io.ecall
+  csr.io.mret    := csrctl.io.mret
+
+  csrctl.io.ctl := source_decoder.io.csrctl
+  csrctl.io.rd  := io.inst(11, 7)
+  csrctl.io.rs1 := io.inst(19, 15)
+
+  csralumux.io.aludata   := memorregmux.io.out
+  csralumux.io.csrdata   := csr.io.dataout
+  csralumux.io.choosecsr := csrctl.io.choosecsr
+
   memorregmux.io.memdata := datamem.io.dataout
   memorregmux.io.regdata := alu.io.out
   memorregmux.io.memen   := source_decoder.io.tomemorreg
@@ -374,11 +525,13 @@ class Exu extends Module {
   datamem.io.clock := clock
   datamem.io.valid := source_decoder.io.memrd
 
-  nextpc.io.imm   := immgen.io.out
-  nextpc.io.nowpc := pc.io.pc
-  nextpc.io.rs1   := regfile.io.rs1out
-  nextpc.io.pclj  := jumpctl.io.pclj
-  nextpc.io.pcrs1 := jumpctl.io.pcrs1
+  nextpc.io.imm     := immgen.io.out
+  nextpc.io.nowpc   := pc.io.pc
+  nextpc.io.rs1     := regfile.io.rs1out
+  nextpc.io.pclj    := jumpctl.io.pclj
+  nextpc.io.pcrs1   := jumpctl.io.pcrs1
+  nextpc.io.csrjump := csrctl.io.jump
+  nextpc.io.csrdata := csr.io.pcdataout
 
   io.pc      := pc.io.pc
   pc.io.pcin := nextpc.io.nextpc
@@ -393,7 +546,7 @@ class Exu extends Module {
   regfile.io.rs2 := io.inst(24, 20)
   regfile.io.rd  := io.inst(11, 7)
 
-  regfile.io.datain := memorregmux.io.out
+  regfile.io.datain := csralumux.io.out
   regfile.io.wr     := source_decoder.io.regwr
 
   immgen.io.format := source_decoder.io.format

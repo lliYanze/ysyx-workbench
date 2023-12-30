@@ -61,6 +61,7 @@ void reset(int n) {
 void update_cpu() {
   cpu.pc = next_pc;
   copyreg2cpu();
+  copycsr2cpu();
 }
 
 static void exec_once() { single_cycle(); }

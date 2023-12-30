@@ -48,6 +48,15 @@ case object JUMPCTL {
   val JNE     = "b100".U(3.W)
   val JLT     = "b101".U(3.W)
   val JGE     = "b110".U(3.W)
+  val JJ      = "b111".U(3.W)
+}
+
+case object CSRCTL {
+  val NOP   = "b000".U(3.W)
+  val WR    = "b001".U(3.W)
+  val RD    = "b010".U(3.W)
+  val ECALL = "b100".U(3.W)
+  val MRET  = "b101".U(3.W)
 }
 
 case object MEMCTL {
@@ -148,5 +157,16 @@ case object instructions {
   val jal: BitPat = BitPat("b???????_?????_?????_???_?????_1101111")
 
   val begin: BitPat = BitPat("b0000000_00000_00000_000_00000_0000000")
+
+  /** ****************************
+    */
+  /** ************CSR相关***************
+    */
+  /** ****************************
+    */
+  val csrrw: BitPat = BitPat("b???????_?????_?????_001_?????_1110011")
+  val ecall: BitPat = BitPat("b0000000_00000_00000_000_00000_1110011")
+  val csrrs: BitPat = BitPat("b???????_?????_?????_010_?????_1110011")
+  val mret:  BitPat = BitPat("b0011000_00010_00000_000_00000_1110011")
 
 }
