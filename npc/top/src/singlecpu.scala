@@ -1,6 +1,9 @@
 package singlecpu
 
 import InstDecode._
+import Memory._
+import Trace._
+import Alu._
 
 import instsinfo._
 
@@ -8,43 +11,6 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.BitPat
 import chisel3.util.experimental.decode._
-
-class DataMem extends BlackBox with HasBlackBoxInline {
-  val io = IO(new Bundle {
-    val addr    = Input(UInt(32.W))
-    val data    = Input(UInt(32.W))
-    val wr      = Input(Bool())
-    val valid   = Input(Bool())
-    val wmask   = Input(UInt(3.W))
-    val clock   = Input(Clock())
-    val dataout = Output(UInt(32.W))
-  })
-
-  setInline(
-    "DataMem.v",
-    s"""
-       | import "DPI-C" function void data_write(input int addr, input int data, input bit[2:0] wmask);
-       | import "DPI-C" function int data_read(input int addr, input bit[2:0] wmask, input bit valid);
-       |module DataMem(
-       |    input wire [31:0] addr,
-       |    input wire [31:0] data,
-       |    input wire [2:0] wmask,
-       |    input wire wr,
-       |    input wire valid,
-       |    input wire clock,
-       |    output wire [31:0] dataout
-       |);
-       | assign dataout = (valid & ~wr) ?  data_read(addr, wmask, valid & ~wr): 0;
-       | always @(posedge clock) begin
-       |    if (wr) data_write(addr, data, wmask);
-       | end
-       |
-       |endmodule
-       |""".stripMargin
-  )
-  // printf("datemem  dataout is %x\n", io.dataout)
-
-}
 
 class MemorRegMux extends Module {
   val io = IO(new Bundle {
@@ -55,80 +21,6 @@ class MemorRegMux extends Module {
     val out = Output(UInt(32.W))
   })
   io.out := Mux(io.memen, io.memdata, io.regdata)
-}
-
-class EndNpc extends BlackBox with HasBlackBoxInline {
-  val io = IO(new Bundle {
-    val endflag = Input(Bool())
-    val state   = Input(UInt(32.W))
-  })
-
-  setInline(
-    "EndNpc.v",
-    s"""
-       | import "DPI-C" function void stopnpc(input int state);
-       |module EndNpc(
-       |    input endflag,
-       |  input wire [31:0] state
-       |);
-       | always @(*) 
-       |    if (endflag) stopnpc(state);
-       |
-       |endmodule
-       |""".stripMargin
-  )
-}
-
-class InstTrace extends BlackBox with HasBlackBoxInline {
-  val io = IO(new Bundle {
-    val inst  = Input(UInt(32.W))
-    val pc    = Input(UInt(32.W))
-    val clock = Input(Clock())
-  })
-
-  setInline(
-    "InstTrace.v",
-    s"""
-       | import "DPI-C" function void insttrace(input int pc, input int inst);
-       |module InstTrace(
-       |    input wire [31:0] inst,
-       |    input wire [31:0] pc,
-       |    input wire clock
-       |);
-       | always @(posedge clock)
-       |    insttrace(pc, inst);
-       |
-       |endmodule
-       |""".stripMargin
-  )
-}
-
-class Ftrace extends BlackBox with HasBlackBoxInline {
-  val io = IO(new Bundle {
-    val inst   = Input(UInt(32.W))
-    val pc     = Input(UInt(32.W))
-    val nextpc = Input(UInt(32.W))
-    val jump   = Input(Bool())
-    val clock  = Input(Clock())
-  })
-
-  setInline(
-    "Ftrace.v",
-    s"""
-       | import "DPI-C" function void ftrace(input int pc, input int inst, input int nextpc);
-       |module Ftrace(
-       |    input wire [31:0] inst,
-       |    input wire [31:0] pc,
-       |    input wire [31:0] nextpc,
-       |    input wire  jump,
-       |    input wire clock
-       |);
-       | always @(posedge clock)
-       |    if(jump) ftrace(pc, inst, nextpc);
-       |
-       |endmodule
-       |""".stripMargin
-  )
 }
 
 class R1mux extends Module {
@@ -151,74 +43,6 @@ class R2mux extends Module {
   })
 
   io.r2out := Mux(io.r2type(1), 4.U(32.W), Mux(io.r2type(0), io.rs2, io.imm))
-}
-
-class Alu extends Module {
-  val io = IO(new Bundle {
-    val s1   = Input(UInt(32.W))
-    val s2   = Input(UInt(32.W))
-    val op   = Input(UInt(4.W))
-    val out  = Output(UInt(32.W))
-    val eq   = Output(Bool())
-    val less = Output(Bool())
-    val end  = Output(Bool())
-  })
-
-  io.end := false.B
-
-  def dnotjump: Unit = {
-    io.eq   := false.B
-    io.less := false.B
-  }
-
-  when(io.op === OPCTL.ADD) {
-    dnotjump
-    io.out := io.s1 + io.s2
-  }.elsewhen(io.op === OPCTL.END) {
-    dnotjump
-    io.out := 0.U
-    io.end := true.B
-  }.elsewhen(io.op === OPCTL.NOP) {
-    dnotjump
-    io.out := 0.U
-  }.elsewhen(io.op === OPCTL.SUB) {
-    io.out := io.s1 - io.s2
-    dnotjump
-  }.elsewhen(io.op === OPCTL.SLT) {
-    io.out  := Mux(io.s1.asSInt < io.s2.asSInt, 1.U, 0.U)
-    io.eq   := (io.s1 - io.s2) === 0.U
-    io.less := io.s1.asSInt < io.s2.asSInt
-  }.elsewhen(io.op === OPCTL.SLTU) {
-    io.out  := Mux(io.s1 < io.s2, 1.U, 0.U)
-    io.eq   := io.out === 0.U
-    io.less := Mux(io.s1 < io.s2, 1.U, 0.U)
-  }.elsewhen(io.op === OPCTL.AND) {
-    dnotjump
-    io.out := io.s1 & io.s2
-  }.elsewhen(io.op === OPCTL.SLL) {
-    dnotjump
-    io.out := io.s1 << io.s2(4, 0)
-  }.elsewhen(io.op === OPCTL.SRL) {
-    dnotjump
-    io.out := io.s1 >> io.s2(4, 0)
-  }.elsewhen(io.op === OPCTL.SRA) {
-    dnotjump
-    io.out := (io.s1.asSInt >> io.s2(4, 0)).asUInt
-  }.elsewhen(io.op === OPCTL.LUI) {
-    dnotjump
-    io.out := io.s2
-  }.elsewhen(io.op === OPCTL.XOR) {
-    dnotjump
-    io.out := io.s1 ^ io.s2
-  }.elsewhen(io.op === OPCTL.OR) {
-    dnotjump
-    io.out := io.s1 | io.s2
-  }.otherwise {
-    dnotjump
-    io.out := 0.U
-    printf("Error: Unknown instruction! \n")
-    io.end := true.B
-  }
 }
 
 class JumpCtl extends Module {
@@ -263,33 +87,29 @@ class JumpCtl extends Module {
   }
 }
 
-class NextPc extends Module {
-  val io = IO(new Bundle {
-    val pclj    = Input(Bool()) //true imm ,false +4
-    val pcrs1   = Input(Bool()) //true rs1 ,false PC
-    val nowpc   = Input(UInt(32.W))
-    val imm     = Input(UInt(32.W))
-    val rs1     = Input(UInt(32.W))
-    val csrjump = Input(Bool())
-    val csrdata = Input(UInt(32.W))
-    val nextpc  = Output(UInt(32.W))
-  })
-  when(io.csrjump) {
-    io.nextpc := io.csrdata
-  }.otherwise {
-    io.nextpc := Mux(io.pclj, io.imm, 4.U) + Mux(io.pcrs1, io.rs1, io.nowpc)
-  }
-}
-
 class PC extends Module {
   val io = IO(new Bundle {
-    val pcin = Input(UInt(32.W))
-    val pc   = Output(UInt(32.W))
-  })
+    val csrjump = Input(Bool())
+    val csrdata = Input(UInt(32.W))
+    val pclj    = Input(Bool()) //true imm ,false +4
+    val pcrs1   = Input(Bool()) //true rs1 ,false PC
+    val imm     = Input(UInt(32.W))
+    val rs1     = Input(UInt(32.W))
 
-  val pc = RegInit("h8000_0000".U(32.W))
-  pc    := io.pcin
-  io.pc := pc
+    val nextpc = Output(UInt(32.W))
+
+    val pc = Output(UInt(32.W))
+  })
+  val pc     = RegInit("h8000_0000".U(32.W))
+  val nextpc = Wire(UInt(32.W))
+  when(io.csrjump) {
+    nextpc := io.csrdata
+  }.otherwise {
+    nextpc := Mux(io.pclj, io.imm, 4.U) + Mux(io.pcrs1, io.rs1, pc)
+  }
+  pc        := nextpc
+  io.pc     := pc
+  io.nextpc := nextpc
 }
 
 class ImmGen extends Module {
@@ -475,7 +295,6 @@ class Exu extends Module {
 
   })
 
-  val nextpc         = Module(new NextPc)
   val pc             = Module(new PC)
   val source_decoder = Module(new InstDecode)
   val immgen         = Module(new ImmGen)
@@ -525,16 +344,14 @@ class Exu extends Module {
   datamem.io.clock := clock
   datamem.io.valid := source_decoder.io.memrd
 
-  nextpc.io.imm     := immgen.io.out
-  nextpc.io.nowpc   := pc.io.pc
-  nextpc.io.rs1     := regfile.io.rs1out
-  nextpc.io.pclj    := jumpctl.io.pclj
-  nextpc.io.pcrs1   := jumpctl.io.pcrs1
-  nextpc.io.csrjump := csrctl.io.jump
-  nextpc.io.csrdata := csr.io.pcdataout
+  pc.io.imm     := immgen.io.out
+  pc.io.rs1     := regfile.io.rs1out
+  pc.io.pclj    := jumpctl.io.pclj
+  pc.io.pcrs1   := jumpctl.io.pcrs1
+  pc.io.csrjump := csrctl.io.jump
+  pc.io.csrdata := csr.io.pcdataout
 
-  io.pc      := pc.io.pc
-  pc.io.pcin := nextpc.io.nextpc
+  io.pc := pc.io.pc
 
   source_decoder.io.inst := io.inst
 
@@ -573,10 +390,9 @@ class Exu extends Module {
 
   ftrace.io.inst   := source_decoder.io.inst
   ftrace.io.pc     := pc.io.pc
-  ftrace.io.nextpc := nextpc.io.nextpc
+  ftrace.io.nextpc := pc.io.nextpc
   ftrace.io.clock  := clock
   ftrace.io.jump   := source_decoder.io.ftrace
 
-  io.nextpc := nextpc.io.nextpc
-
+  io.nextpc := pc.io.nextpc
 }
