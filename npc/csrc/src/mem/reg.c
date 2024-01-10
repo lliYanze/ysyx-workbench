@@ -3,9 +3,9 @@
 #include <top.h>
 // 寄存器名字为TOP__DOT__exu__DOT__idu__DOT__regfile__DOT__regfile_0
 #define R(index)                                                               \
-  &top->rootp->TOP__DOT__exu__DOT__idu__DOT__regfile__DOT__regfile_##index
+  &top->rootp->TOP__DOT__core__DOT__idu__DOT__regfile__DOT__regfile_##index
 
-#define CSR(index) &top->rootp->TOP__DOT__exu__DOT__csr__DOT__csrfile_##index
+#define CSR(index) &top->rootp->TOP__DOT__core__DOT__csr__DOT__csrfile_##index
 
 word_t *preg[32];
 word_t *pcsr[4];

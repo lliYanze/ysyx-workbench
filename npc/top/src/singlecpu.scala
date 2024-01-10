@@ -291,7 +291,7 @@ import IFU.IFU
 import IDU.IDU
 import WB.NextPc
 
-class Exu extends Module {
+class Core extends Module {
   val io = IO(new Bundle {
     val inst   = Input(UInt(32.W))
     val nextpc = Output(UInt(32.W))

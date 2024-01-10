@@ -1550,7 +1550,7 @@ module CSRALUMUX(
 );
   assign io_out = io_choosecsr ? io_csrdata : io_aludata; // @[singlecpu.scala 173:16]
 endmodule
-module Exu(
+module Core(
   input         clock,
   input         reset,
   input  [31:0] io_inst,
@@ -1872,21 +1872,21 @@ module TOP(
   output [31:0] io_pc,
   output [31:0] io_nextpc
 );
-  wire  exu_clock; // @[TOP.scala 13:19]
-  wire  exu_reset; // @[TOP.scala 13:19]
-  wire [31:0] exu_io_inst; // @[TOP.scala 13:19]
-  wire [31:0] exu_io_nextpc; // @[TOP.scala 13:19]
-  wire [31:0] exu_io_pc; // @[TOP.scala 13:19]
-  Exu exu ( // @[TOP.scala 13:19]
-    .clock(exu_clock),
-    .reset(exu_reset),
-    .io_inst(exu_io_inst),
-    .io_nextpc(exu_io_nextpc),
-    .io_pc(exu_io_pc)
+  wire  core_clock; // @[TOP.scala 13:20]
+  wire  core_reset; // @[TOP.scala 13:20]
+  wire [31:0] core_io_inst; // @[TOP.scala 13:20]
+  wire [31:0] core_io_nextpc; // @[TOP.scala 13:20]
+  wire [31:0] core_io_pc; // @[TOP.scala 13:20]
+  Core core ( // @[TOP.scala 13:20]
+    .clock(core_clock),
+    .reset(core_reset),
+    .io_inst(core_io_inst),
+    .io_nextpc(core_io_nextpc),
+    .io_pc(core_io_pc)
   );
-  assign io_pc = exu_io_pc; // @[TOP.scala 14:15]
-  assign io_nextpc = exu_io_nextpc; // @[TOP.scala 16:15]
-  assign exu_clock = clock;
-  assign exu_reset = reset;
-  assign exu_io_inst = io_inst; // @[TOP.scala 15:15]
+  assign io_pc = core_io_pc; // @[TOP.scala 14:16]
+  assign io_nextpc = core_io_nextpc; // @[TOP.scala 16:16]
+  assign core_clock = clock;
+  assign core_reset = reset;
+  assign core_io_inst = io_inst; // @[TOP.scala 15:16]
 endmodule

@@ -10,9 +10,9 @@ class TOP extends Module {
     val nextpc = Output(UInt(32.W))
 
   })
-  val exu = Module(new Exu)
-  io.pc       := exu.io.pc
-  exu.io.inst := io.inst
-  io.nextpc   := exu.io.nextpc
+  val core = Module(new Core)
+  io.pc        := core.io.pc
+  core.io.inst := io.inst
+  io.nextpc    := core.io.nextpc
 
 }
