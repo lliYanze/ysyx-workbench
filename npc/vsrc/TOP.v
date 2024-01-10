@@ -66,6 +66,7 @@ module IFU(
   input         clock,
   input         reset,
   output [31:0] io_ifu2idu_bits_inst,
+  output [31:0] io_ifu2idu_bits_pc,
   input  [31:0] io_instin,
   output [31:0] io_instout,
   input  [31:0] io_pcin,
@@ -82,6 +83,7 @@ module IFU(
     .io_pc(pc_io_pc)
   );
   assign io_ifu2idu_bits_inst = io_instin; // @[IFU.scala 32:24]
+  assign io_ifu2idu_bits_pc = pc_io_pc; // @[IFU.scala 31:24]
   assign io_instout = io_instin; // @[IFU.scala 29:14]
   assign io_pc = pc_io_pc; // @[IFU.scala 28:14]
   assign pc_clock = clock;
@@ -1148,6 +1150,11 @@ module IDU(
   input         clock,
   input         reset,
   input  [31:0] io_ifu2idu_bits_inst,
+  input  [31:0] io_ifu2idu_bits_pc,
+  output [31:0] io_idu2exu_bits_pc,
+  output [31:0] io_idu2exu_bits_imm,
+  output [31:0] io_idu2exu_bits_rs1,
+  output [31:0] io_idu2exu_bits_rs2,
   output        io_s1type,
   output [1:0]  io_s2type,
   output [2:0]  io_jumpctl,
@@ -1166,38 +1173,38 @@ module IDU(
   input  [31:0] io_regdatain,
   output [31:0] io_end_state
 );
-  wire [2:0] immgen_io_format; // @[IDU.scala 91:23]
-  wire [31:0] immgen_io_inst; // @[IDU.scala 91:23]
-  wire [31:0] immgen_io_out; // @[IDU.scala 91:23]
-  wire [31:0] decode_io_inst; // @[IDU.scala 92:23]
-  wire [2:0] decode_io_format; // @[IDU.scala 92:23]
-  wire  decode_io_s1type; // @[IDU.scala 92:23]
-  wire [1:0] decode_io_s2type; // @[IDU.scala 92:23]
-  wire [2:0] decode_io_jumpctl; // @[IDU.scala 92:23]
-  wire [3:0] decode_io_op; // @[IDU.scala 92:23]
-  wire  decode_io_ftrace; // @[IDU.scala 92:23]
-  wire  decode_io_memrd; // @[IDU.scala 92:23]
-  wire  decode_io_memwr; // @[IDU.scala 92:23]
-  wire [2:0] decode_io_memctl; // @[IDU.scala 92:23]
-  wire  decode_io_tomemorreg; // @[IDU.scala 92:23]
-  wire  decode_io_regwr; // @[IDU.scala 92:23]
-  wire [2:0] decode_io_csrctl; // @[IDU.scala 92:23]
-  wire  regfile_clock; // @[IDU.scala 93:23]
-  wire  regfile_reset; // @[IDU.scala 93:23]
-  wire [4:0] regfile_io_rs1; // @[IDU.scala 93:23]
-  wire [4:0] regfile_io_rs2; // @[IDU.scala 93:23]
-  wire [4:0] regfile_io_rd; // @[IDU.scala 93:23]
-  wire  regfile_io_wr; // @[IDU.scala 93:23]
-  wire [31:0] regfile_io_datain; // @[IDU.scala 93:23]
-  wire [31:0] regfile_io_rs1out; // @[IDU.scala 93:23]
-  wire [31:0] regfile_io_rs2out; // @[IDU.scala 93:23]
-  wire [31:0] regfile_io_end_state; // @[IDU.scala 93:23]
-  ImmGen immgen ( // @[IDU.scala 91:23]
+  wire [2:0] immgen_io_format; // @[IDU.scala 92:23]
+  wire [31:0] immgen_io_inst; // @[IDU.scala 92:23]
+  wire [31:0] immgen_io_out; // @[IDU.scala 92:23]
+  wire [31:0] decode_io_inst; // @[IDU.scala 93:23]
+  wire [2:0] decode_io_format; // @[IDU.scala 93:23]
+  wire  decode_io_s1type; // @[IDU.scala 93:23]
+  wire [1:0] decode_io_s2type; // @[IDU.scala 93:23]
+  wire [2:0] decode_io_jumpctl; // @[IDU.scala 93:23]
+  wire [3:0] decode_io_op; // @[IDU.scala 93:23]
+  wire  decode_io_ftrace; // @[IDU.scala 93:23]
+  wire  decode_io_memrd; // @[IDU.scala 93:23]
+  wire  decode_io_memwr; // @[IDU.scala 93:23]
+  wire [2:0] decode_io_memctl; // @[IDU.scala 93:23]
+  wire  decode_io_tomemorreg; // @[IDU.scala 93:23]
+  wire  decode_io_regwr; // @[IDU.scala 93:23]
+  wire [2:0] decode_io_csrctl; // @[IDU.scala 93:23]
+  wire  regfile_clock; // @[IDU.scala 94:23]
+  wire  regfile_reset; // @[IDU.scala 94:23]
+  wire [4:0] regfile_io_rs1; // @[IDU.scala 94:23]
+  wire [4:0] regfile_io_rs2; // @[IDU.scala 94:23]
+  wire [4:0] regfile_io_rd; // @[IDU.scala 94:23]
+  wire  regfile_io_wr; // @[IDU.scala 94:23]
+  wire [31:0] regfile_io_datain; // @[IDU.scala 94:23]
+  wire [31:0] regfile_io_rs1out; // @[IDU.scala 94:23]
+  wire [31:0] regfile_io_rs2out; // @[IDU.scala 94:23]
+  wire [31:0] regfile_io_end_state; // @[IDU.scala 94:23]
+  ImmGen immgen ( // @[IDU.scala 92:23]
     .io_format(immgen_io_format),
     .io_inst(immgen_io_inst),
     .io_out(immgen_io_out)
   );
-  InstDecode decode ( // @[IDU.scala 92:23]
+  InstDecode decode ( // @[IDU.scala 93:23]
     .io_inst(decode_io_inst),
     .io_format(decode_io_format),
     .io_s1type(decode_io_s1type),
@@ -1212,7 +1219,7 @@ module IDU(
     .io_regwr(decode_io_regwr),
     .io_csrctl(decode_io_csrctl)
   );
-  RegFile regfile ( // @[IDU.scala 93:23]
+  RegFile regfile ( // @[IDU.scala 94:23]
     .clock(regfile_clock),
     .reset(regfile_reset),
     .io_rs1(regfile_io_rs1),
@@ -1224,46 +1231,35 @@ module IDU(
     .io_rs2out(regfile_io_rs2out),
     .io_end_state(regfile_io_end_state)
   );
-  assign io_s1type = decode_io_s1type; // @[IDU.scala 108:17]
-  assign io_s2type = decode_io_s2type; // @[IDU.scala 109:17]
-  assign io_jumpctl = decode_io_jumpctl; // @[IDU.scala 110:17]
-  assign io_op = decode_io_op; // @[IDU.scala 111:17]
-  assign io_ftrace = decode_io_ftrace; // @[IDU.scala 112:17]
-  assign io_memrd = decode_io_memrd; // @[IDU.scala 113:17]
-  assign io_memwr = decode_io_memwr; // @[IDU.scala 114:17]
-  assign io_memctl = decode_io_memctl; // @[IDU.scala 115:17]
-  assign io_tomemorreg = decode_io_tomemorreg; // @[IDU.scala 116:17]
-  assign io_regwr = decode_io_regwr; // @[IDU.scala 117:17]
-  assign io_csrctl = decode_io_csrctl; // @[IDU.scala 118:17]
-  assign io_immout = immgen_io_out; // @[IDU.scala 120:13]
-  assign io_rs1out = regfile_io_rs1out; // @[IDU.scala 122:13]
-  assign io_rs2out = regfile_io_rs2out; // @[IDU.scala 123:13]
-  assign io_end_state = regfile_io_end_state; // @[IDU.scala 125:16]
-  assign immgen_io_format = decode_io_format; // @[IDU.scala 98:20]
-  assign immgen_io_inst = io_ifu2idu_bits_inst; // @[IDU.scala 99:20]
-  assign decode_io_inst = io_ifu2idu_bits_inst; // @[IDU.scala 95:20]
+  assign io_idu2exu_bits_pc = io_ifu2idu_bits_pc; // @[IDU.scala 98:24]
+  assign io_idu2exu_bits_imm = immgen_io_out; // @[IDU.scala 100:24]
+  assign io_idu2exu_bits_rs1 = regfile_io_rs1out; // @[IDU.scala 101:24]
+  assign io_idu2exu_bits_rs2 = regfile_io_rs2out; // @[IDU.scala 102:24]
+  assign io_s1type = decode_io_s1type; // @[IDU.scala 117:17]
+  assign io_s2type = decode_io_s2type; // @[IDU.scala 118:17]
+  assign io_jumpctl = decode_io_jumpctl; // @[IDU.scala 119:17]
+  assign io_op = decode_io_op; // @[IDU.scala 120:17]
+  assign io_ftrace = decode_io_ftrace; // @[IDU.scala 121:17]
+  assign io_memrd = decode_io_memrd; // @[IDU.scala 122:17]
+  assign io_memwr = decode_io_memwr; // @[IDU.scala 123:17]
+  assign io_memctl = decode_io_memctl; // @[IDU.scala 124:17]
+  assign io_tomemorreg = decode_io_tomemorreg; // @[IDU.scala 125:17]
+  assign io_regwr = decode_io_regwr; // @[IDU.scala 126:17]
+  assign io_csrctl = decode_io_csrctl; // @[IDU.scala 127:17]
+  assign io_immout = immgen_io_out; // @[IDU.scala 129:13]
+  assign io_rs1out = regfile_io_rs1out; // @[IDU.scala 131:13]
+  assign io_rs2out = regfile_io_rs2out; // @[IDU.scala 132:13]
+  assign io_end_state = regfile_io_end_state; // @[IDU.scala 134:16]
+  assign immgen_io_format = decode_io_format; // @[IDU.scala 107:20]
+  assign immgen_io_inst = io_ifu2idu_bits_inst; // @[IDU.scala 108:20]
+  assign decode_io_inst = io_ifu2idu_bits_inst; // @[IDU.scala 96:18]
   assign regfile_clock = clock;
   assign regfile_reset = reset;
-  assign regfile_io_rs1 = io_ifu2idu_bits_inst[19:15]; // @[IDU.scala 101:41]
-  assign regfile_io_rs2 = io_ifu2idu_bits_inst[24:20]; // @[IDU.scala 102:41]
-  assign regfile_io_rd = io_ifu2idu_bits_inst[11:7]; // @[IDU.scala 103:41]
-  assign regfile_io_wr = io_wr; // @[IDU.scala 105:21]
-  assign regfile_io_datain = io_regdatain; // @[IDU.scala 106:21]
-endmodule
-module NextPc(
-  input  [31:0] io_pc,
-  input         io_csrjump,
-  input  [31:0] io_csrdata,
-  input         io_pclj,
-  input         io_pcrs1,
-  input  [31:0] io_imm,
-  input  [31:0] io_rs1,
-  output [31:0] io_nextpc
-);
-  wire [31:0] _io_nextpc_T = io_pclj ? io_imm : 32'h4; // @[WB.scala 19:21]
-  wire [31:0] _io_nextpc_T_1 = io_pcrs1 ? io_rs1 : io_pc; // @[WB.scala 19:49]
-  wire [31:0] _io_nextpc_T_3 = _io_nextpc_T + _io_nextpc_T_1; // @[WB.scala 19:44]
-  assign io_nextpc = io_csrjump ? io_csrdata : _io_nextpc_T_3; // @[WB.scala 16:20 17:15 19:15]
+  assign regfile_io_rs1 = io_ifu2idu_bits_inst[19:15]; // @[IDU.scala 110:41]
+  assign regfile_io_rs2 = io_ifu2idu_bits_inst[24:20]; // @[IDU.scala 111:41]
+  assign regfile_io_rd = io_ifu2idu_bits_inst[11:7]; // @[IDU.scala 112:41]
+  assign regfile_io_wr = io_wr; // @[IDU.scala 114:21]
+  assign regfile_io_datain = io_regdatain; // @[IDU.scala 115:21]
 endmodule
 module R1mux(
   input         io_r1type,
@@ -1271,7 +1267,7 @@ module R1mux(
   input  [31:0] io_pc,
   output [31:0] io_r1out
 );
-  assign io_r1out = io_r1type ? io_rs1 : io_pc; // @[singlecpu.scala 34:18]
+  assign io_r1out = io_r1type ? io_rs1 : io_pc; // @[EXU.scala 17:18]
 endmodule
 module R2mux(
   input  [1:0]  io_r2type,
@@ -1279,8 +1275,27 @@ module R2mux(
   input  [31:0] io_imm,
   output [31:0] io_r2out
 );
-  wire [31:0] _io_r2out_T_2 = io_r2type[0] ? io_rs2 : io_imm; // @[singlecpu.scala 45:47]
-  assign io_r2out = io_r2type[1] ? 32'h4 : _io_r2out_T_2; // @[singlecpu.scala 45:18]
+  wire [31:0] _io_r2out_T_2 = io_r2type[0] ? io_rs2 : io_imm; // @[EXU.scala 28:47]
+  assign io_r2out = io_r2type[1] ? 32'h4 : _io_r2out_T_2; // @[EXU.scala 28:18]
+endmodule
+module JumpCtl(
+  input  [2:0] io_ctl,
+  input        io_eq,
+  input        io_less,
+  output       io_pclj,
+  output       io_pcrs1
+);
+  wire  _T_1 = io_ctl == 3'h2; // @[EXU.scala 49:21]
+  wire  _io_pclj_T_1 = io_eq ? 1'h0 : 1'h1; // @[EXU.scala 59:20]
+  wire  _io_pclj_T_3 = io_less ? 1'h0 : 1'h1; // @[EXU.scala 65:20]
+  wire  _GEN_0 = io_ctl == 3'h6 & _io_pclj_T_3; // @[EXU.scala 64:38 65:14 68:14]
+  wire  _GEN_2 = io_ctl == 3'h5 ? io_less : _GEN_0; // @[EXU.scala 61:38 62:14]
+  wire  _GEN_4 = io_ctl == 3'h4 ? _io_pclj_T_1 : _GEN_2; // @[EXU.scala 58:38 59:14]
+  wire  _GEN_6 = io_ctl == 3'h3 ? io_eq : _GEN_4; // @[EXU.scala 55:38 56:14]
+  wire  _GEN_8 = io_ctl == 3'h0 ? 1'h0 : _GEN_6; // @[EXU.scala 52:42 53:14]
+  wire  _GEN_10 = io_ctl == 3'h2 | _GEN_8; // @[EXU.scala 49:40 50:14]
+  assign io_pclj = io_ctl == 3'h1 | _GEN_10; // @[EXU.scala 46:33 47:14]
+  assign io_pcrs1 = io_ctl == 3'h1 ? 1'h0 : _T_1; // @[EXU.scala 46:33 48:14]
 endmodule
 module Alu(
   input         clock,
@@ -1373,24 +1388,107 @@ module Alu(
     `endif // SYNTHESIS
   end
 endmodule
-module JumpCtl(
-  input  [2:0] io_ctl,
-  input        io_eq,
-  input        io_less,
-  output       io_pclj,
-  output       io_pcrs1
+module EXU(
+  input         clock,
+  input         reset,
+  input  [31:0] io_idu2exu_bits_pc,
+  input  [31:0] io_idu2exu_bits_imm,
+  input  [31:0] io_idu2exu_bits_rs1,
+  input  [31:0] io_idu2exu_bits_rs2,
+  input  [1:0]  io_r2type,
+  input         io_r1type,
+  input  [2:0]  io_ctl,
+  output [31:0] io_out,
+  input  [3:0]  io_op,
+  output        io_pclj,
+  output        io_pcrs1,
+  output        io_end
 );
-  wire  _T_1 = io_ctl == 3'h2; // @[singlecpu.scala 66:21]
-  wire  _io_pclj_T_1 = io_eq ? 1'h0 : 1'h1; // @[singlecpu.scala 76:20]
-  wire  _io_pclj_T_3 = io_less ? 1'h0 : 1'h1; // @[singlecpu.scala 82:20]
-  wire  _GEN_0 = io_ctl == 3'h6 & _io_pclj_T_3; // @[singlecpu.scala 81:38 82:14 85:14]
-  wire  _GEN_2 = io_ctl == 3'h5 ? io_less : _GEN_0; // @[singlecpu.scala 78:38 79:14]
-  wire  _GEN_4 = io_ctl == 3'h4 ? _io_pclj_T_1 : _GEN_2; // @[singlecpu.scala 75:38 76:14]
-  wire  _GEN_6 = io_ctl == 3'h3 ? io_eq : _GEN_4; // @[singlecpu.scala 72:38 73:14]
-  wire  _GEN_8 = io_ctl == 3'h0 ? 1'h0 : _GEN_6; // @[singlecpu.scala 69:42 70:14]
-  wire  _GEN_10 = io_ctl == 3'h2 | _GEN_8; // @[singlecpu.scala 66:40 67:14]
-  assign io_pclj = io_ctl == 3'h1 | _GEN_10; // @[singlecpu.scala 63:33 64:14]
-  assign io_pcrs1 = io_ctl == 3'h1 ? 1'h0 : _T_1; // @[singlecpu.scala 63:33 65:14]
+  wire  r1mux_io_r1type; // @[EXU.scala 95:21]
+  wire [31:0] r1mux_io_rs1; // @[EXU.scala 95:21]
+  wire [31:0] r1mux_io_pc; // @[EXU.scala 95:21]
+  wire [31:0] r1mux_io_r1out; // @[EXU.scala 95:21]
+  wire [1:0] r2mux_io_r2type; // @[EXU.scala 96:21]
+  wire [31:0] r2mux_io_rs2; // @[EXU.scala 96:21]
+  wire [31:0] r2mux_io_imm; // @[EXU.scala 96:21]
+  wire [31:0] r2mux_io_r2out; // @[EXU.scala 96:21]
+  wire [2:0] jumpctl_io_ctl; // @[EXU.scala 98:23]
+  wire  jumpctl_io_eq; // @[EXU.scala 98:23]
+  wire  jumpctl_io_less; // @[EXU.scala 98:23]
+  wire  jumpctl_io_pclj; // @[EXU.scala 98:23]
+  wire  jumpctl_io_pcrs1; // @[EXU.scala 98:23]
+  wire  alu_clock; // @[EXU.scala 100:19]
+  wire  alu_reset; // @[EXU.scala 100:19]
+  wire [31:0] alu_io_s1; // @[EXU.scala 100:19]
+  wire [31:0] alu_io_s2; // @[EXU.scala 100:19]
+  wire [3:0] alu_io_op; // @[EXU.scala 100:19]
+  wire [31:0] alu_io_out; // @[EXU.scala 100:19]
+  wire  alu_io_eq; // @[EXU.scala 100:19]
+  wire  alu_io_less; // @[EXU.scala 100:19]
+  wire  alu_io_end; // @[EXU.scala 100:19]
+  R1mux r1mux ( // @[EXU.scala 95:21]
+    .io_r1type(r1mux_io_r1type),
+    .io_rs1(r1mux_io_rs1),
+    .io_pc(r1mux_io_pc),
+    .io_r1out(r1mux_io_r1out)
+  );
+  R2mux r2mux ( // @[EXU.scala 96:21]
+    .io_r2type(r2mux_io_r2type),
+    .io_rs2(r2mux_io_rs2),
+    .io_imm(r2mux_io_imm),
+    .io_r2out(r2mux_io_r2out)
+  );
+  JumpCtl jumpctl ( // @[EXU.scala 98:23]
+    .io_ctl(jumpctl_io_ctl),
+    .io_eq(jumpctl_io_eq),
+    .io_less(jumpctl_io_less),
+    .io_pclj(jumpctl_io_pclj),
+    .io_pcrs1(jumpctl_io_pcrs1)
+  );
+  Alu alu ( // @[EXU.scala 100:19]
+    .clock(alu_clock),
+    .reset(alu_reset),
+    .io_s1(alu_io_s1),
+    .io_s2(alu_io_s2),
+    .io_op(alu_io_op),
+    .io_out(alu_io_out),
+    .io_eq(alu_io_eq),
+    .io_less(alu_io_less),
+    .io_end(alu_io_end)
+  );
+  assign io_out = alu_io_out; // @[EXU.scala 126:13]
+  assign io_pclj = jumpctl_io_pclj; // @[EXU.scala 124:13]
+  assign io_pcrs1 = jumpctl_io_pcrs1; // @[EXU.scala 125:13]
+  assign io_end = alu_io_end; // @[EXU.scala 123:13]
+  assign r1mux_io_r1type = io_r1type; // @[EXU.scala 104:19]
+  assign r1mux_io_rs1 = io_idu2exu_bits_rs1; // @[EXU.scala 103:19]
+  assign r1mux_io_pc = io_idu2exu_bits_pc; // @[EXU.scala 102:19]
+  assign r2mux_io_r2type = io_r2type; // @[EXU.scala 108:19]
+  assign r2mux_io_rs2 = io_idu2exu_bits_rs2; // @[EXU.scala 106:19]
+  assign r2mux_io_imm = io_idu2exu_bits_imm; // @[EXU.scala 107:19]
+  assign jumpctl_io_ctl = io_ctl; // @[EXU.scala 120:18]
+  assign jumpctl_io_eq = alu_io_eq; // @[EXU.scala 113:19]
+  assign jumpctl_io_less = alu_io_less; // @[EXU.scala 114:19]
+  assign alu_clock = clock;
+  assign alu_reset = reset;
+  assign alu_io_s1 = r1mux_io_r1out; // @[EXU.scala 110:13]
+  assign alu_io_s2 = r2mux_io_r2out; // @[EXU.scala 111:13]
+  assign alu_io_op = io_op; // @[EXU.scala 122:13]
+endmodule
+module NextPc(
+  input  [31:0] io_pc,
+  input         io_csrjump,
+  input  [31:0] io_csrdata,
+  input         io_pclj,
+  input         io_pcrs1,
+  input  [31:0] io_imm,
+  input  [31:0] io_rs1,
+  output [31:0] io_nextpc
+);
+  wire [31:0] _io_nextpc_T = io_pclj ? io_imm : 32'h4; // @[WB.scala 19:21]
+  wire [31:0] _io_nextpc_T_1 = io_pcrs1 ? io_rs1 : io_pc; // @[WB.scala 19:49]
+  wire [31:0] _io_nextpc_T_3 = _io_nextpc_T + _io_nextpc_T_1; // @[WB.scala 19:44]
+  assign io_nextpc = io_csrjump ? io_csrdata : _io_nextpc_T_3; // @[WB.scala 16:20 17:15 19:15]
 endmodule
 module MemorRegMux(
   input  [31:0] io_memdata,
@@ -1398,7 +1496,7 @@ module MemorRegMux(
   input         io_memen,
   output [31:0] io_out
 );
-  assign io_out = io_memen ? io_memdata : io_regdata; // @[singlecpu.scala 23:16]
+  assign io_out = io_memen ? io_memdata : io_regdata; // @[singlecpu.scala 18:16]
 endmodule
 module CSRCTL(
   input  [2:0] io_ctl,
@@ -1411,26 +1509,26 @@ module CSRCTL(
   output       io_jump,
   output       io_ecall
 );
-  wire  _io_read_T_1 = io_rd == 5'h0 ? 1'h0 : 1'h1; // @[singlecpu.scala 174:24]
-  wire  _T_2 = io_ctl == 3'h2; // @[singlecpu.scala 179:21]
-  wire  _io_wreg_T_1 = io_rs1 == 5'h0 ? 1'h0 : 1'h1; // @[singlecpu.scala 180:24]
-  wire  _T_3 = io_ctl == 3'h4; // @[singlecpu.scala 187:21]
-  wire  _T_4 = io_ctl == 3'h5; // @[singlecpu.scala 195:21]
-  wire  _GEN_4 = io_ctl == 3'h4 | _T_4; // @[singlecpu.scala 187:39 192:18]
-  wire  _GEN_6 = io_ctl == 3'h2 & _io_wreg_T_1; // @[singlecpu.scala 179:36 180:18]
-  wire  _GEN_7 = io_ctl == 3'h2 ? 1'h0 : _T_3; // @[singlecpu.scala 179:36 181:18]
-  wire  _GEN_9 = io_ctl == 3'h2 ? 1'h0 : _GEN_4; // @[singlecpu.scala 179:36 184:18]
-  wire  _GEN_11 = io_ctl == 3'h1 | _GEN_6; // @[singlecpu.scala 171:36 172:18]
-  wire  _GEN_12 = io_ctl == 3'h1 ? 1'h0 : _GEN_7; // @[singlecpu.scala 171:36 173:18]
-  wire  _GEN_13 = io_ctl == 3'h1 ? _io_read_T_1 : _T_2; // @[singlecpu.scala 171:36 174:18]
-  wire  _GEN_14 = io_ctl == 3'h1 ? 1'h0 : _GEN_9; // @[singlecpu.scala 171:36 175:18]
-  wire  _GEN_15 = io_ctl == 3'h1 | _T_2; // @[singlecpu.scala 171:36 176:18]
-  assign io_wreg = io_ctl == 3'h0 ? 1'h0 : _GEN_11; // @[singlecpu.scala 163:31 164:18]
-  assign io_wpc = io_ctl == 3'h0 ? 1'h0 : _GEN_12; // @[singlecpu.scala 163:31 165:18]
-  assign io_read = io_ctl == 3'h0 ? 1'h0 : _GEN_13; // @[singlecpu.scala 163:31 166:18]
-  assign io_choosecsr = io_ctl == 3'h0 ? 1'h0 : _GEN_15; // @[singlecpu.scala 163:31 167:18]
-  assign io_jump = io_ctl == 3'h0 ? 1'h0 : _GEN_14; // @[singlecpu.scala 163:31 168:18]
-  assign io_ecall = io_ctl == 3'h0 ? 1'h0 : _GEN_12; // @[singlecpu.scala 163:31 165:18]
+  wire  _io_read_T_1 = io_rd == 5'h0 ? 1'h0 : 1'h1; // @[singlecpu.scala 105:24]
+  wire  _T_2 = io_ctl == 3'h2; // @[singlecpu.scala 110:21]
+  wire  _io_wreg_T_1 = io_rs1 == 5'h0 ? 1'h0 : 1'h1; // @[singlecpu.scala 111:24]
+  wire  _T_3 = io_ctl == 3'h4; // @[singlecpu.scala 118:21]
+  wire  _T_4 = io_ctl == 3'h5; // @[singlecpu.scala 126:21]
+  wire  _GEN_4 = io_ctl == 3'h4 | _T_4; // @[singlecpu.scala 118:39 123:18]
+  wire  _GEN_6 = io_ctl == 3'h2 & _io_wreg_T_1; // @[singlecpu.scala 110:36 111:18]
+  wire  _GEN_7 = io_ctl == 3'h2 ? 1'h0 : _T_3; // @[singlecpu.scala 110:36 112:18]
+  wire  _GEN_9 = io_ctl == 3'h2 ? 1'h0 : _GEN_4; // @[singlecpu.scala 110:36 115:18]
+  wire  _GEN_11 = io_ctl == 3'h1 | _GEN_6; // @[singlecpu.scala 102:36 103:18]
+  wire  _GEN_12 = io_ctl == 3'h1 ? 1'h0 : _GEN_7; // @[singlecpu.scala 102:36 104:18]
+  wire  _GEN_13 = io_ctl == 3'h1 ? _io_read_T_1 : _T_2; // @[singlecpu.scala 102:36 105:18]
+  wire  _GEN_14 = io_ctl == 3'h1 ? 1'h0 : _GEN_9; // @[singlecpu.scala 102:36 106:18]
+  wire  _GEN_15 = io_ctl == 3'h1 | _T_2; // @[singlecpu.scala 102:36 107:18]
+  assign io_wreg = io_ctl == 3'h0 ? 1'h0 : _GEN_11; // @[singlecpu.scala 94:31 95:18]
+  assign io_wpc = io_ctl == 3'h0 ? 1'h0 : _GEN_12; // @[singlecpu.scala 94:31 96:18]
+  assign io_read = io_ctl == 3'h0 ? 1'h0 : _GEN_13; // @[singlecpu.scala 94:31 97:18]
+  assign io_choosecsr = io_ctl == 3'h0 ? 1'h0 : _GEN_15; // @[singlecpu.scala 94:31 98:18]
+  assign io_jump = io_ctl == 3'h0 ? 1'h0 : _GEN_14; // @[singlecpu.scala 94:31 99:18]
+  assign io_ecall = io_ctl == 3'h0 ? 1'h0 : _GEN_12; // @[singlecpu.scala 94:31 96:18]
 endmodule
 module CSR(
   input         clock,
@@ -1451,62 +1549,62 @@ module CSR(
   reg [31:0] _RAND_2;
   reg [31:0] _RAND_3;
 `endif // RANDOMIZE_REG_INIT
-  reg [31:0] csrfile_0; // @[singlecpu.scala 114:24]
-  reg [31:0] csrfile_1; // @[singlecpu.scala 114:24]
-  reg [31:0] csrfile_2; // @[singlecpu.scala 114:24]
-  reg [31:0] csrfile_3; // @[singlecpu.scala 114:24]
-  wire  _T_1 = io_idx == 12'h300; // @[singlecpu.scala 116:17]
-  wire  _T_2 = io_idx == 12'h341; // @[singlecpu.scala 118:23]
-  wire [31:0] _csrfile_1_T = io_wpc ? io_pc : io_rs1data; // @[singlecpu.scala 119:24]
-  wire  _T_3 = io_idx == 12'h342; // @[singlecpu.scala 120:23]
-  wire  _T_4 = io_idx == 12'h305; // @[singlecpu.scala 122:23]
-  wire [31:0] _GEN_0 = io_ecall ? io_pc : csrfile_1; // @[singlecpu.scala 124:26 125:18 114:24]
-  wire [31:0] _GEN_1 = io_ecall ? 32'hb : csrfile_2; // @[singlecpu.scala 124:26 126:18 114:24]
-  wire [31:0] _GEN_2 = io_idx == 12'h305 ? io_rs1data : csrfile_3; // @[singlecpu.scala 122:36 123:18 114:24]
-  wire [31:0] _GEN_3 = io_idx == 12'h305 ? csrfile_1 : _GEN_0; // @[singlecpu.scala 114:24 122:36]
-  wire [31:0] _GEN_4 = io_idx == 12'h305 ? csrfile_2 : _GEN_1; // @[singlecpu.scala 114:24 122:36]
-  wire [31:0] _GEN_5 = io_idx == 12'h342 ? io_rs1data : _GEN_4; // @[singlecpu.scala 120:36 121:18]
-  wire [31:0] _GEN_6 = io_idx == 12'h342 ? csrfile_3 : _GEN_2; // @[singlecpu.scala 114:24 120:36]
-  wire [31:0] _GEN_7 = io_idx == 12'h342 ? csrfile_1 : _GEN_3; // @[singlecpu.scala 114:24 120:36]
-  wire [31:0] _GEN_19 = _T_4 ? csrfile_3 : 32'h0; // @[singlecpu.scala 138:36 139:18 141:18]
-  wire [31:0] _GEN_20 = _T_3 ? csrfile_2 : _GEN_19; // @[singlecpu.scala 135:36 136:18]
-  wire [31:0] _GEN_21 = _T_2 ? csrfile_1 : _GEN_20; // @[singlecpu.scala 133:36 134:18]
-  wire [31:0] _GEN_22 = _T_1 ? csrfile_0 : _GEN_21; // @[singlecpu.scala 130:30 131:18]
-  assign io_dataout = io_re ? _GEN_22 : 32'h0; // @[singlecpu.scala 129:15 144:16]
-  assign io_pcdataout = io_ecall ? csrfile_3 : csrfile_1; // @[singlecpu.scala 146:22]
+  reg [31:0] csrfile_0; // @[singlecpu.scala 45:24]
+  reg [31:0] csrfile_1; // @[singlecpu.scala 45:24]
+  reg [31:0] csrfile_2; // @[singlecpu.scala 45:24]
+  reg [31:0] csrfile_3; // @[singlecpu.scala 45:24]
+  wire  _T_1 = io_idx == 12'h300; // @[singlecpu.scala 47:17]
+  wire  _T_2 = io_idx == 12'h341; // @[singlecpu.scala 49:23]
+  wire [31:0] _csrfile_1_T = io_wpc ? io_pc : io_rs1data; // @[singlecpu.scala 50:24]
+  wire  _T_3 = io_idx == 12'h342; // @[singlecpu.scala 51:23]
+  wire  _T_4 = io_idx == 12'h305; // @[singlecpu.scala 53:23]
+  wire [31:0] _GEN_0 = io_ecall ? io_pc : csrfile_1; // @[singlecpu.scala 55:26 56:18 45:24]
+  wire [31:0] _GEN_1 = io_ecall ? 32'hb : csrfile_2; // @[singlecpu.scala 55:26 57:18 45:24]
+  wire [31:0] _GEN_2 = io_idx == 12'h305 ? io_rs1data : csrfile_3; // @[singlecpu.scala 53:36 54:18 45:24]
+  wire [31:0] _GEN_3 = io_idx == 12'h305 ? csrfile_1 : _GEN_0; // @[singlecpu.scala 45:24 53:36]
+  wire [31:0] _GEN_4 = io_idx == 12'h305 ? csrfile_2 : _GEN_1; // @[singlecpu.scala 45:24 53:36]
+  wire [31:0] _GEN_5 = io_idx == 12'h342 ? io_rs1data : _GEN_4; // @[singlecpu.scala 51:36 52:18]
+  wire [31:0] _GEN_6 = io_idx == 12'h342 ? csrfile_3 : _GEN_2; // @[singlecpu.scala 45:24 51:36]
+  wire [31:0] _GEN_7 = io_idx == 12'h342 ? csrfile_1 : _GEN_3; // @[singlecpu.scala 45:24 51:36]
+  wire [31:0] _GEN_19 = _T_4 ? csrfile_3 : 32'h0; // @[singlecpu.scala 69:36 70:18 72:18]
+  wire [31:0] _GEN_20 = _T_3 ? csrfile_2 : _GEN_19; // @[singlecpu.scala 66:36 67:18]
+  wire [31:0] _GEN_21 = _T_2 ? csrfile_1 : _GEN_20; // @[singlecpu.scala 64:36 65:18]
+  wire [31:0] _GEN_22 = _T_1 ? csrfile_0 : _GEN_21; // @[singlecpu.scala 61:30 62:18]
+  assign io_dataout = io_re ? _GEN_22 : 32'h0; // @[singlecpu.scala 60:15 75:16]
+  assign io_pcdataout = io_ecall ? csrfile_3 : csrfile_1; // @[singlecpu.scala 77:22]
   always @(posedge clock) begin
-    if (reset) begin // @[singlecpu.scala 114:24]
-      csrfile_0 <= 32'h0; // @[singlecpu.scala 114:24]
-    end else if (io_wr | io_wpc) begin // @[singlecpu.scala 115:25]
-      if (io_idx == 12'h300) begin // @[singlecpu.scala 116:30]
-        csrfile_0 <= io_rs1data; // @[singlecpu.scala 117:18]
+    if (reset) begin // @[singlecpu.scala 45:24]
+      csrfile_0 <= 32'h0; // @[singlecpu.scala 45:24]
+    end else if (io_wr | io_wpc) begin // @[singlecpu.scala 46:25]
+      if (io_idx == 12'h300) begin // @[singlecpu.scala 47:30]
+        csrfile_0 <= io_rs1data; // @[singlecpu.scala 48:18]
       end
     end
-    if (reset) begin // @[singlecpu.scala 114:24]
-      csrfile_1 <= 32'h0; // @[singlecpu.scala 114:24]
-    end else if (io_wr | io_wpc) begin // @[singlecpu.scala 115:25]
-      if (!(io_idx == 12'h300)) begin // @[singlecpu.scala 116:30]
-        if (io_idx == 12'h341) begin // @[singlecpu.scala 118:36]
-          csrfile_1 <= _csrfile_1_T; // @[singlecpu.scala 119:18]
+    if (reset) begin // @[singlecpu.scala 45:24]
+      csrfile_1 <= 32'h0; // @[singlecpu.scala 45:24]
+    end else if (io_wr | io_wpc) begin // @[singlecpu.scala 46:25]
+      if (!(io_idx == 12'h300)) begin // @[singlecpu.scala 47:30]
+        if (io_idx == 12'h341) begin // @[singlecpu.scala 49:36]
+          csrfile_1 <= _csrfile_1_T; // @[singlecpu.scala 50:18]
         end else begin
           csrfile_1 <= _GEN_7;
         end
       end
     end
-    if (reset) begin // @[singlecpu.scala 114:24]
-      csrfile_2 <= 32'h0; // @[singlecpu.scala 114:24]
-    end else if (io_wr | io_wpc) begin // @[singlecpu.scala 115:25]
-      if (!(io_idx == 12'h300)) begin // @[singlecpu.scala 116:30]
-        if (!(io_idx == 12'h341)) begin // @[singlecpu.scala 118:36]
+    if (reset) begin // @[singlecpu.scala 45:24]
+      csrfile_2 <= 32'h0; // @[singlecpu.scala 45:24]
+    end else if (io_wr | io_wpc) begin // @[singlecpu.scala 46:25]
+      if (!(io_idx == 12'h300)) begin // @[singlecpu.scala 47:30]
+        if (!(io_idx == 12'h341)) begin // @[singlecpu.scala 49:36]
           csrfile_2 <= _GEN_5;
         end
       end
     end
-    if (reset) begin // @[singlecpu.scala 114:24]
-      csrfile_3 <= 32'h0; // @[singlecpu.scala 114:24]
-    end else if (io_wr | io_wpc) begin // @[singlecpu.scala 115:25]
-      if (!(io_idx == 12'h300)) begin // @[singlecpu.scala 116:30]
-        if (!(io_idx == 12'h341)) begin // @[singlecpu.scala 118:36]
+    if (reset) begin // @[singlecpu.scala 45:24]
+      csrfile_3 <= 32'h0; // @[singlecpu.scala 45:24]
+    end else if (io_wr | io_wpc) begin // @[singlecpu.scala 46:25]
+      if (!(io_idx == 12'h300)) begin // @[singlecpu.scala 47:30]
+        if (!(io_idx == 12'h341)) begin // @[singlecpu.scala 49:36]
           csrfile_3 <= _GEN_6;
         end
       end
@@ -1570,7 +1668,7 @@ module CSRALUMUX(
   input         io_choosecsr,
   output [31:0] io_out
 );
-  assign io_out = io_choosecsr ? io_csrdata : io_aludata; // @[singlecpu.scala 97:16]
+  assign io_out = io_choosecsr ? io_csrdata : io_aludata; // @[singlecpu.scala 28:16]
 endmodule
 module Core(
   input         clock,
@@ -1579,121 +1677,125 @@ module Core(
   output [31:0] io_nextpc,
   output [31:0] io_pc
 );
-  wire  ifu_clock; // @[singlecpu.scala 225:22]
-  wire  ifu_reset; // @[singlecpu.scala 225:22]
-  wire [31:0] ifu_io_ifu2idu_bits_inst; // @[singlecpu.scala 225:22]
-  wire [31:0] ifu_io_instin; // @[singlecpu.scala 225:22]
-  wire [31:0] ifu_io_instout; // @[singlecpu.scala 225:22]
-  wire [31:0] ifu_io_pcin; // @[singlecpu.scala 225:22]
-  wire [31:0] ifu_io_pc; // @[singlecpu.scala 225:22]
-  wire  idu_clock; // @[singlecpu.scala 226:22]
-  wire  idu_reset; // @[singlecpu.scala 226:22]
-  wire [31:0] idu_io_ifu2idu_bits_inst; // @[singlecpu.scala 226:22]
-  wire  idu_io_s1type; // @[singlecpu.scala 226:22]
-  wire [1:0] idu_io_s2type; // @[singlecpu.scala 226:22]
-  wire [2:0] idu_io_jumpctl; // @[singlecpu.scala 226:22]
-  wire [3:0] idu_io_op; // @[singlecpu.scala 226:22]
-  wire  idu_io_ftrace; // @[singlecpu.scala 226:22]
-  wire  idu_io_memrd; // @[singlecpu.scala 226:22]
-  wire  idu_io_memwr; // @[singlecpu.scala 226:22]
-  wire [2:0] idu_io_memctl; // @[singlecpu.scala 226:22]
-  wire  idu_io_tomemorreg; // @[singlecpu.scala 226:22]
-  wire  idu_io_regwr; // @[singlecpu.scala 226:22]
-  wire [2:0] idu_io_csrctl; // @[singlecpu.scala 226:22]
-  wire [31:0] idu_io_immout; // @[singlecpu.scala 226:22]
-  wire [31:0] idu_io_rs1out; // @[singlecpu.scala 226:22]
-  wire [31:0] idu_io_rs2out; // @[singlecpu.scala 226:22]
-  wire  idu_io_wr; // @[singlecpu.scala 226:22]
-  wire [31:0] idu_io_regdatain; // @[singlecpu.scala 226:22]
-  wire [31:0] idu_io_end_state; // @[singlecpu.scala 226:22]
-  wire [31:0] nextpc_io_pc; // @[singlecpu.scala 227:22]
-  wire  nextpc_io_csrjump; // @[singlecpu.scala 227:22]
-  wire [31:0] nextpc_io_csrdata; // @[singlecpu.scala 227:22]
-  wire  nextpc_io_pclj; // @[singlecpu.scala 227:22]
-  wire  nextpc_io_pcrs1; // @[singlecpu.scala 227:22]
-  wire [31:0] nextpc_io_imm; // @[singlecpu.scala 227:22]
-  wire [31:0] nextpc_io_rs1; // @[singlecpu.scala 227:22]
-  wire [31:0] nextpc_io_nextpc; // @[singlecpu.scala 227:22]
-  wire  r1mux_io_r1type; // @[singlecpu.scala 228:22]
-  wire [31:0] r1mux_io_rs1; // @[singlecpu.scala 228:22]
-  wire [31:0] r1mux_io_pc; // @[singlecpu.scala 228:22]
-  wire [31:0] r1mux_io_r1out; // @[singlecpu.scala 228:22]
-  wire [1:0] r2mux_io_r2type; // @[singlecpu.scala 229:22]
-  wire [31:0] r2mux_io_rs2; // @[singlecpu.scala 229:22]
-  wire [31:0] r2mux_io_imm; // @[singlecpu.scala 229:22]
-  wire [31:0] r2mux_io_r2out; // @[singlecpu.scala 229:22]
-  wire  alu_clock; // @[singlecpu.scala 230:22]
-  wire  alu_reset; // @[singlecpu.scala 230:22]
-  wire [31:0] alu_io_s1; // @[singlecpu.scala 230:22]
-  wire [31:0] alu_io_s2; // @[singlecpu.scala 230:22]
-  wire [3:0] alu_io_op; // @[singlecpu.scala 230:22]
-  wire [31:0] alu_io_out; // @[singlecpu.scala 230:22]
-  wire  alu_io_eq; // @[singlecpu.scala 230:22]
-  wire  alu_io_less; // @[singlecpu.scala 230:22]
-  wire  alu_io_end; // @[singlecpu.scala 230:22]
-  wire  endnpc_endflag; // @[singlecpu.scala 232:22]
-  wire [31:0] endnpc_state; // @[singlecpu.scala 232:22]
-  wire [31:0] insttrace_inst; // @[singlecpu.scala 234:25]
-  wire [31:0] insttrace_pc; // @[singlecpu.scala 234:25]
-  wire  insttrace_clock; // @[singlecpu.scala 234:25]
-  wire [31:0] ftrace_inst; // @[singlecpu.scala 235:25]
-  wire [31:0] ftrace_pc; // @[singlecpu.scala 235:25]
-  wire [31:0] ftrace_nextpc; // @[singlecpu.scala 235:25]
-  wire  ftrace_jump; // @[singlecpu.scala 235:25]
-  wire  ftrace_clock; // @[singlecpu.scala 235:25]
-  wire [2:0] jumpctl_io_ctl; // @[singlecpu.scala 236:25]
-  wire  jumpctl_io_eq; // @[singlecpu.scala 236:25]
-  wire  jumpctl_io_less; // @[singlecpu.scala 236:25]
-  wire  jumpctl_io_pclj; // @[singlecpu.scala 236:25]
-  wire  jumpctl_io_pcrs1; // @[singlecpu.scala 236:25]
-  wire [31:0] memorregmux_io_memdata; // @[singlecpu.scala 238:27]
-  wire [31:0] memorregmux_io_regdata; // @[singlecpu.scala 238:27]
-  wire  memorregmux_io_memen; // @[singlecpu.scala 238:27]
-  wire [31:0] memorregmux_io_out; // @[singlecpu.scala 238:27]
-  wire [31:0] datamem_addr; // @[singlecpu.scala 239:27]
-  wire [31:0] datamem_data; // @[singlecpu.scala 239:27]
-  wire  datamem_wr; // @[singlecpu.scala 239:27]
-  wire  datamem_valid; // @[singlecpu.scala 239:27]
-  wire [2:0] datamem_wmask; // @[singlecpu.scala 239:27]
-  wire  datamem_clock; // @[singlecpu.scala 239:27]
-  wire [31:0] datamem_dataout; // @[singlecpu.scala 239:27]
-  wire [2:0] csrctl_io_ctl; // @[singlecpu.scala 241:25]
-  wire [4:0] csrctl_io_rd; // @[singlecpu.scala 241:25]
-  wire [4:0] csrctl_io_rs1; // @[singlecpu.scala 241:25]
-  wire  csrctl_io_wreg; // @[singlecpu.scala 241:25]
-  wire  csrctl_io_wpc; // @[singlecpu.scala 241:25]
-  wire  csrctl_io_read; // @[singlecpu.scala 241:25]
-  wire  csrctl_io_choosecsr; // @[singlecpu.scala 241:25]
-  wire  csrctl_io_jump; // @[singlecpu.scala 241:25]
-  wire  csrctl_io_ecall; // @[singlecpu.scala 241:25]
-  wire  csr_clock; // @[singlecpu.scala 242:25]
-  wire  csr_reset; // @[singlecpu.scala 242:25]
-  wire [11:0] csr_io_idx; // @[singlecpu.scala 242:25]
-  wire  csr_io_wr; // @[singlecpu.scala 242:25]
-  wire  csr_io_wpc; // @[singlecpu.scala 242:25]
-  wire  csr_io_re; // @[singlecpu.scala 242:25]
-  wire [31:0] csr_io_pc; // @[singlecpu.scala 242:25]
-  wire [31:0] csr_io_rs1data; // @[singlecpu.scala 242:25]
-  wire  csr_io_ecall; // @[singlecpu.scala 242:25]
-  wire [31:0] csr_io_dataout; // @[singlecpu.scala 242:25]
-  wire [31:0] csr_io_pcdataout; // @[singlecpu.scala 242:25]
-  wire [31:0] csralumux_io_aludata; // @[singlecpu.scala 243:25]
-  wire [31:0] csralumux_io_csrdata; // @[singlecpu.scala 243:25]
-  wire  csralumux_io_choosecsr; // @[singlecpu.scala 243:25]
-  wire [31:0] csralumux_io_out; // @[singlecpu.scala 243:25]
-  IFU ifu ( // @[singlecpu.scala 225:22]
+  wire  ifu_clock; // @[singlecpu.scala 157:22]
+  wire  ifu_reset; // @[singlecpu.scala 157:22]
+  wire [31:0] ifu_io_ifu2idu_bits_inst; // @[singlecpu.scala 157:22]
+  wire [31:0] ifu_io_ifu2idu_bits_pc; // @[singlecpu.scala 157:22]
+  wire [31:0] ifu_io_instin; // @[singlecpu.scala 157:22]
+  wire [31:0] ifu_io_instout; // @[singlecpu.scala 157:22]
+  wire [31:0] ifu_io_pcin; // @[singlecpu.scala 157:22]
+  wire [31:0] ifu_io_pc; // @[singlecpu.scala 157:22]
+  wire  idu_clock; // @[singlecpu.scala 158:22]
+  wire  idu_reset; // @[singlecpu.scala 158:22]
+  wire [31:0] idu_io_ifu2idu_bits_inst; // @[singlecpu.scala 158:22]
+  wire [31:0] idu_io_ifu2idu_bits_pc; // @[singlecpu.scala 158:22]
+  wire [31:0] idu_io_idu2exu_bits_pc; // @[singlecpu.scala 158:22]
+  wire [31:0] idu_io_idu2exu_bits_imm; // @[singlecpu.scala 158:22]
+  wire [31:0] idu_io_idu2exu_bits_rs1; // @[singlecpu.scala 158:22]
+  wire [31:0] idu_io_idu2exu_bits_rs2; // @[singlecpu.scala 158:22]
+  wire  idu_io_s1type; // @[singlecpu.scala 158:22]
+  wire [1:0] idu_io_s2type; // @[singlecpu.scala 158:22]
+  wire [2:0] idu_io_jumpctl; // @[singlecpu.scala 158:22]
+  wire [3:0] idu_io_op; // @[singlecpu.scala 158:22]
+  wire  idu_io_ftrace; // @[singlecpu.scala 158:22]
+  wire  idu_io_memrd; // @[singlecpu.scala 158:22]
+  wire  idu_io_memwr; // @[singlecpu.scala 158:22]
+  wire [2:0] idu_io_memctl; // @[singlecpu.scala 158:22]
+  wire  idu_io_tomemorreg; // @[singlecpu.scala 158:22]
+  wire  idu_io_regwr; // @[singlecpu.scala 158:22]
+  wire [2:0] idu_io_csrctl; // @[singlecpu.scala 158:22]
+  wire [31:0] idu_io_immout; // @[singlecpu.scala 158:22]
+  wire [31:0] idu_io_rs1out; // @[singlecpu.scala 158:22]
+  wire [31:0] idu_io_rs2out; // @[singlecpu.scala 158:22]
+  wire  idu_io_wr; // @[singlecpu.scala 158:22]
+  wire [31:0] idu_io_regdatain; // @[singlecpu.scala 158:22]
+  wire [31:0] idu_io_end_state; // @[singlecpu.scala 158:22]
+  wire  exu_clock; // @[singlecpu.scala 159:22]
+  wire  exu_reset; // @[singlecpu.scala 159:22]
+  wire [31:0] exu_io_idu2exu_bits_pc; // @[singlecpu.scala 159:22]
+  wire [31:0] exu_io_idu2exu_bits_imm; // @[singlecpu.scala 159:22]
+  wire [31:0] exu_io_idu2exu_bits_rs1; // @[singlecpu.scala 159:22]
+  wire [31:0] exu_io_idu2exu_bits_rs2; // @[singlecpu.scala 159:22]
+  wire [1:0] exu_io_r2type; // @[singlecpu.scala 159:22]
+  wire  exu_io_r1type; // @[singlecpu.scala 159:22]
+  wire [2:0] exu_io_ctl; // @[singlecpu.scala 159:22]
+  wire [31:0] exu_io_out; // @[singlecpu.scala 159:22]
+  wire [3:0] exu_io_op; // @[singlecpu.scala 159:22]
+  wire  exu_io_pclj; // @[singlecpu.scala 159:22]
+  wire  exu_io_pcrs1; // @[singlecpu.scala 159:22]
+  wire  exu_io_end; // @[singlecpu.scala 159:22]
+  wire [31:0] nextpc_io_pc; // @[singlecpu.scala 160:22]
+  wire  nextpc_io_csrjump; // @[singlecpu.scala 160:22]
+  wire [31:0] nextpc_io_csrdata; // @[singlecpu.scala 160:22]
+  wire  nextpc_io_pclj; // @[singlecpu.scala 160:22]
+  wire  nextpc_io_pcrs1; // @[singlecpu.scala 160:22]
+  wire [31:0] nextpc_io_imm; // @[singlecpu.scala 160:22]
+  wire [31:0] nextpc_io_rs1; // @[singlecpu.scala 160:22]
+  wire [31:0] nextpc_io_nextpc; // @[singlecpu.scala 160:22]
+  wire  endnpc_endflag; // @[singlecpu.scala 162:22]
+  wire [31:0] endnpc_state; // @[singlecpu.scala 162:22]
+  wire [31:0] insttrace_inst; // @[singlecpu.scala 164:25]
+  wire [31:0] insttrace_pc; // @[singlecpu.scala 164:25]
+  wire  insttrace_clock; // @[singlecpu.scala 164:25]
+  wire [31:0] ftrace_inst; // @[singlecpu.scala 165:25]
+  wire [31:0] ftrace_pc; // @[singlecpu.scala 165:25]
+  wire [31:0] ftrace_nextpc; // @[singlecpu.scala 165:25]
+  wire  ftrace_jump; // @[singlecpu.scala 165:25]
+  wire  ftrace_clock; // @[singlecpu.scala 165:25]
+  wire [31:0] memorregmux_io_memdata; // @[singlecpu.scala 167:27]
+  wire [31:0] memorregmux_io_regdata; // @[singlecpu.scala 167:27]
+  wire  memorregmux_io_memen; // @[singlecpu.scala 167:27]
+  wire [31:0] memorregmux_io_out; // @[singlecpu.scala 167:27]
+  wire [31:0] datamem_addr; // @[singlecpu.scala 168:27]
+  wire [31:0] datamem_data; // @[singlecpu.scala 168:27]
+  wire  datamem_wr; // @[singlecpu.scala 168:27]
+  wire  datamem_valid; // @[singlecpu.scala 168:27]
+  wire [2:0] datamem_wmask; // @[singlecpu.scala 168:27]
+  wire  datamem_clock; // @[singlecpu.scala 168:27]
+  wire [31:0] datamem_dataout; // @[singlecpu.scala 168:27]
+  wire [2:0] csrctl_io_ctl; // @[singlecpu.scala 170:25]
+  wire [4:0] csrctl_io_rd; // @[singlecpu.scala 170:25]
+  wire [4:0] csrctl_io_rs1; // @[singlecpu.scala 170:25]
+  wire  csrctl_io_wreg; // @[singlecpu.scala 170:25]
+  wire  csrctl_io_wpc; // @[singlecpu.scala 170:25]
+  wire  csrctl_io_read; // @[singlecpu.scala 170:25]
+  wire  csrctl_io_choosecsr; // @[singlecpu.scala 170:25]
+  wire  csrctl_io_jump; // @[singlecpu.scala 170:25]
+  wire  csrctl_io_ecall; // @[singlecpu.scala 170:25]
+  wire  csr_clock; // @[singlecpu.scala 171:25]
+  wire  csr_reset; // @[singlecpu.scala 171:25]
+  wire [11:0] csr_io_idx; // @[singlecpu.scala 171:25]
+  wire  csr_io_wr; // @[singlecpu.scala 171:25]
+  wire  csr_io_wpc; // @[singlecpu.scala 171:25]
+  wire  csr_io_re; // @[singlecpu.scala 171:25]
+  wire [31:0] csr_io_pc; // @[singlecpu.scala 171:25]
+  wire [31:0] csr_io_rs1data; // @[singlecpu.scala 171:25]
+  wire  csr_io_ecall; // @[singlecpu.scala 171:25]
+  wire [31:0] csr_io_dataout; // @[singlecpu.scala 171:25]
+  wire [31:0] csr_io_pcdataout; // @[singlecpu.scala 171:25]
+  wire [31:0] csralumux_io_aludata; // @[singlecpu.scala 172:25]
+  wire [31:0] csralumux_io_csrdata; // @[singlecpu.scala 172:25]
+  wire  csralumux_io_choosecsr; // @[singlecpu.scala 172:25]
+  wire [31:0] csralumux_io_out; // @[singlecpu.scala 172:25]
+  IFU ifu ( // @[singlecpu.scala 157:22]
     .clock(ifu_clock),
     .reset(ifu_reset),
     .io_ifu2idu_bits_inst(ifu_io_ifu2idu_bits_inst),
+    .io_ifu2idu_bits_pc(ifu_io_ifu2idu_bits_pc),
     .io_instin(ifu_io_instin),
     .io_instout(ifu_io_instout),
     .io_pcin(ifu_io_pcin),
     .io_pc(ifu_io_pc)
   );
-  IDU idu ( // @[singlecpu.scala 226:22]
+  IDU idu ( // @[singlecpu.scala 158:22]
     .clock(idu_clock),
     .reset(idu_reset),
     .io_ifu2idu_bits_inst(idu_io_ifu2idu_bits_inst),
+    .io_ifu2idu_bits_pc(idu_io_ifu2idu_bits_pc),
+    .io_idu2exu_bits_pc(idu_io_idu2exu_bits_pc),
+    .io_idu2exu_bits_imm(idu_io_idu2exu_bits_imm),
+    .io_idu2exu_bits_rs1(idu_io_idu2exu_bits_rs1),
+    .io_idu2exu_bits_rs2(idu_io_idu2exu_bits_rs2),
     .io_s1type(idu_io_s1type),
     .io_s2type(idu_io_s2type),
     .io_jumpctl(idu_io_jumpctl),
@@ -1712,7 +1814,23 @@ module Core(
     .io_regdatain(idu_io_regdatain),
     .io_end_state(idu_io_end_state)
   );
-  NextPc nextpc ( // @[singlecpu.scala 227:22]
+  EXU exu ( // @[singlecpu.scala 159:22]
+    .clock(exu_clock),
+    .reset(exu_reset),
+    .io_idu2exu_bits_pc(exu_io_idu2exu_bits_pc),
+    .io_idu2exu_bits_imm(exu_io_idu2exu_bits_imm),
+    .io_idu2exu_bits_rs1(exu_io_idu2exu_bits_rs1),
+    .io_idu2exu_bits_rs2(exu_io_idu2exu_bits_rs2),
+    .io_r2type(exu_io_r2type),
+    .io_r1type(exu_io_r1type),
+    .io_ctl(exu_io_ctl),
+    .io_out(exu_io_out),
+    .io_op(exu_io_op),
+    .io_pclj(exu_io_pclj),
+    .io_pcrs1(exu_io_pcrs1),
+    .io_end(exu_io_end)
+  );
+  NextPc nextpc ( // @[singlecpu.scala 160:22]
     .io_pc(nextpc_io_pc),
     .io_csrjump(nextpc_io_csrjump),
     .io_csrdata(nextpc_io_csrdata),
@@ -1722,59 +1840,29 @@ module Core(
     .io_rs1(nextpc_io_rs1),
     .io_nextpc(nextpc_io_nextpc)
   );
-  R1mux r1mux ( // @[singlecpu.scala 228:22]
-    .io_r1type(r1mux_io_r1type),
-    .io_rs1(r1mux_io_rs1),
-    .io_pc(r1mux_io_pc),
-    .io_r1out(r1mux_io_r1out)
-  );
-  R2mux r2mux ( // @[singlecpu.scala 229:22]
-    .io_r2type(r2mux_io_r2type),
-    .io_rs2(r2mux_io_rs2),
-    .io_imm(r2mux_io_imm),
-    .io_r2out(r2mux_io_r2out)
-  );
-  Alu alu ( // @[singlecpu.scala 230:22]
-    .clock(alu_clock),
-    .reset(alu_reset),
-    .io_s1(alu_io_s1),
-    .io_s2(alu_io_s2),
-    .io_op(alu_io_op),
-    .io_out(alu_io_out),
-    .io_eq(alu_io_eq),
-    .io_less(alu_io_less),
-    .io_end(alu_io_end)
-  );
-  EndNpc endnpc ( // @[singlecpu.scala 232:22]
+  EndNpc endnpc ( // @[singlecpu.scala 162:22]
     .endflag(endnpc_endflag),
     .state(endnpc_state)
   );
-  InstTrace insttrace ( // @[singlecpu.scala 234:25]
+  InstTrace insttrace ( // @[singlecpu.scala 164:25]
     .inst(insttrace_inst),
     .pc(insttrace_pc),
     .clock(insttrace_clock)
   );
-  Ftrace ftrace ( // @[singlecpu.scala 235:25]
+  Ftrace ftrace ( // @[singlecpu.scala 165:25]
     .inst(ftrace_inst),
     .pc(ftrace_pc),
     .nextpc(ftrace_nextpc),
     .jump(ftrace_jump),
     .clock(ftrace_clock)
   );
-  JumpCtl jumpctl ( // @[singlecpu.scala 236:25]
-    .io_ctl(jumpctl_io_ctl),
-    .io_eq(jumpctl_io_eq),
-    .io_less(jumpctl_io_less),
-    .io_pclj(jumpctl_io_pclj),
-    .io_pcrs1(jumpctl_io_pcrs1)
-  );
-  MemorRegMux memorregmux ( // @[singlecpu.scala 238:27]
+  MemorRegMux memorregmux ( // @[singlecpu.scala 167:27]
     .io_memdata(memorregmux_io_memdata),
     .io_regdata(memorregmux_io_regdata),
     .io_memen(memorregmux_io_memen),
     .io_out(memorregmux_io_out)
   );
-  DataMem datamem ( // @[singlecpu.scala 239:27]
+  DataMem datamem ( // @[singlecpu.scala 168:27]
     .addr(datamem_addr),
     .data(datamem_data),
     .wr(datamem_wr),
@@ -1783,7 +1871,7 @@ module Core(
     .clock(datamem_clock),
     .dataout(datamem_dataout)
   );
-  CSRCTL csrctl ( // @[singlecpu.scala 241:25]
+  CSRCTL csrctl ( // @[singlecpu.scala 170:25]
     .io_ctl(csrctl_io_ctl),
     .io_rd(csrctl_io_rd),
     .io_rs1(csrctl_io_rs1),
@@ -1794,7 +1882,7 @@ module Core(
     .io_jump(csrctl_io_jump),
     .io_ecall(csrctl_io_ecall)
   );
-  CSR csr ( // @[singlecpu.scala 242:25]
+  CSR csr ( // @[singlecpu.scala 171:25]
     .clock(csr_clock),
     .reset(csr_reset),
     .io_idx(csr_io_idx),
@@ -1807,78 +1895,75 @@ module Core(
     .io_dataout(csr_io_dataout),
     .io_pcdataout(csr_io_pcdataout)
   );
-  CSRALUMUX csralumux ( // @[singlecpu.scala 243:25]
+  CSRALUMUX csralumux ( // @[singlecpu.scala 172:25]
     .io_aludata(csralumux_io_aludata),
     .io_csrdata(csralumux_io_csrdata),
     .io_choosecsr(csralumux_io_choosecsr),
     .io_out(csralumux_io_out)
   );
-  assign io_nextpc = nextpc_io_nextpc; // @[singlecpu.scala 318:13]
-  assign io_pc = ifu_io_pc; // @[singlecpu.scala 284:21]
+  assign io_nextpc = nextpc_io_nextpc; // @[singlecpu.scala 240:13]
+  assign io_pc = ifu_io_pc; // @[singlecpu.scala 215:21]
   assign ifu_clock = clock;
   assign ifu_reset = reset;
-  assign ifu_io_instin = io_inst; // @[singlecpu.scala 282:21]
-  assign ifu_io_pcin = nextpc_io_nextpc; // @[singlecpu.scala 283:21]
+  assign ifu_io_instin = io_inst; // @[singlecpu.scala 213:21]
+  assign ifu_io_pcin = nextpc_io_nextpc; // @[singlecpu.scala 214:21]
   assign idu_clock = clock;
   assign idu_reset = reset;
-  assign idu_io_ifu2idu_bits_inst = ifu_io_ifu2idu_bits_inst; // @[singlecpu.scala 245:18]
-  assign idu_io_wr = idu_io_regwr; // @[singlecpu.scala 291:20]
-  assign idu_io_regdatain = csralumux_io_out; // @[singlecpu.scala 290:20]
-  assign nextpc_io_pc = ifu_io_pc; // @[singlecpu.scala 281:21]
-  assign nextpc_io_csrjump = csrctl_io_jump; // @[singlecpu.scala 279:21]
-  assign nextpc_io_csrdata = csr_io_pcdataout; // @[singlecpu.scala 280:21]
-  assign nextpc_io_pclj = jumpctl_io_pclj; // @[singlecpu.scala 277:21]
-  assign nextpc_io_pcrs1 = jumpctl_io_pcrs1; // @[singlecpu.scala 278:21]
-  assign nextpc_io_imm = idu_io_immout; // @[singlecpu.scala 275:21]
-  assign nextpc_io_rs1 = idu_io_rs1out; // @[singlecpu.scala 276:21]
-  assign r1mux_io_r1type = idu_io_s1type; // @[singlecpu.scala 296:19]
-  assign r1mux_io_rs1 = idu_io_rs1out; // @[singlecpu.scala 298:19]
-  assign r1mux_io_pc = ifu_io_pc; // @[singlecpu.scala 297:19]
-  assign r2mux_io_r2type = idu_io_s2type; // @[singlecpu.scala 300:19]
-  assign r2mux_io_rs2 = idu_io_rs2out; // @[singlecpu.scala 302:19]
-  assign r2mux_io_imm = idu_io_immout; // @[singlecpu.scala 301:19]
-  assign alu_clock = clock;
-  assign alu_reset = reset;
-  assign alu_io_s1 = r1mux_io_r1out; // @[singlecpu.scala 305:13]
-  assign alu_io_s2 = r2mux_io_r2out; // @[singlecpu.scala 306:13]
-  assign alu_io_op = idu_io_op; // @[singlecpu.scala 304:13]
-  assign endnpc_endflag = alu_io_end; // @[singlecpu.scala 293:21]
-  assign endnpc_state = idu_io_end_state; // @[singlecpu.scala 294:21]
-  assign insttrace_inst = ifu_io_instout; // @[singlecpu.scala 308:22]
-  assign insttrace_pc = ifu_io_pc; // @[singlecpu.scala 309:22]
-  assign insttrace_clock = clock; // @[singlecpu.scala 310:22]
-  assign ftrace_inst = ifu_io_instout; // @[singlecpu.scala 312:20]
-  assign ftrace_pc = ifu_io_pc; // @[singlecpu.scala 313:20]
-  assign ftrace_nextpc = nextpc_io_nextpc; // @[singlecpu.scala 314:20]
-  assign ftrace_jump = idu_io_ftrace; // @[singlecpu.scala 316:20]
-  assign ftrace_clock = clock; // @[singlecpu.scala 315:20]
-  assign jumpctl_io_ctl = idu_io_jumpctl; // @[singlecpu.scala 286:19]
-  assign jumpctl_io_eq = alu_io_eq; // @[singlecpu.scala 287:19]
-  assign jumpctl_io_less = alu_io_less; // @[singlecpu.scala 288:19]
-  assign memorregmux_io_memdata = datamem_dataout; // @[singlecpu.scala 264:26]
-  assign memorregmux_io_regdata = alu_io_out; // @[singlecpu.scala 265:26]
-  assign memorregmux_io_memen = idu_io_tomemorreg; // @[singlecpu.scala 266:26]
-  assign datamem_addr = alu_io_out; // @[singlecpu.scala 268:20]
-  assign datamem_data = idu_io_rs2out; // @[singlecpu.scala 269:20]
-  assign datamem_wr = idu_io_memwr; // @[singlecpu.scala 270:20]
-  assign datamem_valid = idu_io_memrd; // @[singlecpu.scala 273:20]
-  assign datamem_wmask = idu_io_memctl; // @[singlecpu.scala 271:20]
-  assign datamem_clock = clock; // @[singlecpu.scala 272:20]
-  assign csrctl_io_ctl = idu_io_csrctl; // @[singlecpu.scala 256:17]
-  assign csrctl_io_rd = ifu_io_instout[11:7]; // @[singlecpu.scala 257:34]
-  assign csrctl_io_rs1 = ifu_io_instout[19:15]; // @[singlecpu.scala 258:34]
+  assign idu_io_ifu2idu_bits_inst = ifu_io_ifu2idu_bits_inst; // @[singlecpu.scala 174:18]
+  assign idu_io_ifu2idu_bits_pc = ifu_io_ifu2idu_bits_pc; // @[singlecpu.scala 174:18]
+  assign idu_io_wr = idu_io_regwr; // @[singlecpu.scala 220:20]
+  assign idu_io_regdatain = csralumux_io_out; // @[singlecpu.scala 219:20]
+  assign exu_clock = clock;
+  assign exu_reset = reset;
+  assign exu_io_idu2exu_bits_pc = idu_io_idu2exu_bits_pc; // @[singlecpu.scala 175:18]
+  assign exu_io_idu2exu_bits_imm = idu_io_idu2exu_bits_imm; // @[singlecpu.scala 175:18]
+  assign exu_io_idu2exu_bits_rs1 = idu_io_idu2exu_bits_rs1; // @[singlecpu.scala 175:18]
+  assign exu_io_idu2exu_bits_rs2 = idu_io_idu2exu_bits_rs2; // @[singlecpu.scala 175:18]
+  assign exu_io_r2type = idu_io_s2type; // @[singlecpu.scala 226:17]
+  assign exu_io_r1type = idu_io_s1type; // @[singlecpu.scala 225:17]
+  assign exu_io_ctl = idu_io_jumpctl; // @[singlecpu.scala 217:14]
+  assign exu_io_op = idu_io_op; // @[singlecpu.scala 228:13]
+  assign nextpc_io_pc = ifu_io_pc; // @[singlecpu.scala 212:21]
+  assign nextpc_io_csrjump = csrctl_io_jump; // @[singlecpu.scala 210:21]
+  assign nextpc_io_csrdata = csr_io_pcdataout; // @[singlecpu.scala 211:21]
+  assign nextpc_io_pclj = exu_io_pclj; // @[singlecpu.scala 207:19]
+  assign nextpc_io_pcrs1 = exu_io_pcrs1; // @[singlecpu.scala 208:19]
+  assign nextpc_io_imm = idu_io_immout; // @[singlecpu.scala 205:19]
+  assign nextpc_io_rs1 = idu_io_rs1out; // @[singlecpu.scala 206:19]
+  assign endnpc_endflag = exu_io_end; // @[singlecpu.scala 222:21]
+  assign endnpc_state = idu_io_end_state; // @[singlecpu.scala 223:21]
+  assign insttrace_inst = ifu_io_instout; // @[singlecpu.scala 230:22]
+  assign insttrace_pc = ifu_io_pc; // @[singlecpu.scala 231:22]
+  assign insttrace_clock = clock; // @[singlecpu.scala 232:22]
+  assign ftrace_inst = ifu_io_instout; // @[singlecpu.scala 234:20]
+  assign ftrace_pc = ifu_io_pc; // @[singlecpu.scala 235:20]
+  assign ftrace_nextpc = nextpc_io_nextpc; // @[singlecpu.scala 236:20]
+  assign ftrace_jump = idu_io_ftrace; // @[singlecpu.scala 238:20]
+  assign ftrace_clock = clock; // @[singlecpu.scala 237:20]
+  assign memorregmux_io_memdata = datamem_dataout; // @[singlecpu.scala 194:26]
+  assign memorregmux_io_regdata = exu_io_out; // @[singlecpu.scala 195:26]
+  assign memorregmux_io_memen = idu_io_tomemorreg; // @[singlecpu.scala 196:26]
+  assign datamem_addr = exu_io_out; // @[singlecpu.scala 198:20]
+  assign datamem_data = idu_io_rs2out; // @[singlecpu.scala 199:20]
+  assign datamem_wr = idu_io_memwr; // @[singlecpu.scala 200:20]
+  assign datamem_valid = idu_io_memrd; // @[singlecpu.scala 203:20]
+  assign datamem_wmask = idu_io_memctl; // @[singlecpu.scala 201:20]
+  assign datamem_clock = clock; // @[singlecpu.scala 202:20]
+  assign csrctl_io_ctl = idu_io_csrctl; // @[singlecpu.scala 186:17]
+  assign csrctl_io_rd = ifu_io_instout[11:7]; // @[singlecpu.scala 187:34]
+  assign csrctl_io_rs1 = ifu_io_instout[19:15]; // @[singlecpu.scala 188:34]
   assign csr_clock = clock;
   assign csr_reset = reset;
-  assign csr_io_idx = ifu_io_instout[31:20]; // @[singlecpu.scala 247:35]
-  assign csr_io_wr = csrctl_io_wreg; // @[singlecpu.scala 248:18]
-  assign csr_io_wpc = csrctl_io_wpc; // @[singlecpu.scala 250:18]
-  assign csr_io_re = csrctl_io_read; // @[singlecpu.scala 249:18]
-  assign csr_io_pc = ifu_io_pc; // @[singlecpu.scala 251:18]
-  assign csr_io_rs1data = idu_io_rs1out; // @[singlecpu.scala 252:18]
-  assign csr_io_ecall = csrctl_io_ecall; // @[singlecpu.scala 253:18]
-  assign csralumux_io_aludata = memorregmux_io_out; // @[singlecpu.scala 260:26]
-  assign csralumux_io_csrdata = csr_io_dataout; // @[singlecpu.scala 261:26]
-  assign csralumux_io_choosecsr = csrctl_io_choosecsr; // @[singlecpu.scala 262:26]
+  assign csr_io_idx = ifu_io_instout[31:20]; // @[singlecpu.scala 177:35]
+  assign csr_io_wr = csrctl_io_wreg; // @[singlecpu.scala 178:18]
+  assign csr_io_wpc = csrctl_io_wpc; // @[singlecpu.scala 180:18]
+  assign csr_io_re = csrctl_io_read; // @[singlecpu.scala 179:18]
+  assign csr_io_pc = ifu_io_pc; // @[singlecpu.scala 181:18]
+  assign csr_io_rs1data = idu_io_rs1out; // @[singlecpu.scala 182:18]
+  assign csr_io_ecall = csrctl_io_ecall; // @[singlecpu.scala 183:18]
+  assign csralumux_io_aludata = memorregmux_io_out; // @[singlecpu.scala 190:26]
+  assign csralumux_io_csrdata = csr_io_dataout; // @[singlecpu.scala 191:26]
+  assign csralumux_io_choosecsr = csrctl_io_choosecsr; // @[singlecpu.scala 192:26]
 endmodule
 module TOP(
   input         clock,

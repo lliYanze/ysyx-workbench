@@ -58,12 +58,13 @@ class RegFile extends Module {
 
 }
 
-import datapath.IFU2IDUPath
+import datapath.{IDU2EXUPath, IFU2IDUPath}
 import InstDecode._
 
 class IDU extends Module {
   val io = IO(new Bundle {
     val ifu2idu = Flipped(Decoupled(new IFU2IDUPath))
+    val idu2exu = Decoupled(new IDU2EXUPath)
 
     val s1type     = Output(Bool()) //true : reg, false : PC
     val s2type     = Output(UInt(2.W)) //ture : reg, false : imm
@@ -92,8 +93,16 @@ class IDU extends Module {
   val decode  = Module(new InstDecode)
   val regfile = Module(new RegFile)
 
-  decode.io.inst   := io.ifu2idu.bits.inst
+  decode.io.inst := io.ifu2idu.bits.inst
+
+  io.idu2exu.bits.pc   := io.ifu2idu.bits.pc
+  io.idu2exu.bits.inst := io.ifu2idu.bits.inst
+  io.idu2exu.bits.imm  := immgen.io.out
+  io.idu2exu.bits.rs1  := regfile.io.rs1out
+  io.idu2exu.bits.rs2  := regfile.io.rs2out
+
   io.ifu2idu.ready := true.B
+  io.idu2exu.valid := true.B
 
   immgen.io.format := decode.io.format
   immgen.io.inst   := io.ifu2idu.bits.inst
