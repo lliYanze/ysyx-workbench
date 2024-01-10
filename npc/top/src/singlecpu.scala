@@ -77,70 +77,6 @@ class CSR extends Module {
 
 }
 
-class CSRCTL extends Module {
-  val io = IO(new Bundle {
-    val ctl       = Input(UInt(3.W))
-    val rd        = Input(UInt(5.W))
-    val rs1       = Input(UInt(5.W))
-    val wreg      = Output(Bool())
-    val wpc       = Output(Bool())
-    val read      = Output(Bool())
-    val choosecsr = Output(Bool())
-    val jump      = Output(Bool())
-    val ecall     = Output(Bool())
-    val mret      = Output(Bool())
-  })
-  when(io.ctl === CSRCTL.NOP) {
-    io.wreg      := false.B
-    io.wpc       := false.B
-    io.read      := false.B
-    io.choosecsr := false.B
-    io.jump      := false.B
-    io.ecall     := false.B
-    io.mret      := false.B
-  }.elsewhen(io.ctl === CSRCTL.WR) {
-    io.wreg      := true.B
-    io.wpc       := false.B
-    io.read      := Mux(io.rd === 0.U, false.B, true.B)
-    io.jump      := false.B
-    io.choosecsr := true.B
-    io.ecall     := false.B
-    io.mret      := false.B
-  }.elsewhen(io.ctl === CSRCTL.RD) {
-    io.wreg      := Mux(io.rs1 === 0.U, false.B, true.B)
-    io.wpc       := false.B
-    io.read      := true.B
-    io.choosecsr := true.B
-    io.jump      := false.B
-    io.ecall     := false.B
-    io.mret      := false.B
-  }.elsewhen(io.ctl === CSRCTL.ECALL) {
-    io.wreg      := false.B
-    io.wpc       := true.B
-    io.read      := false.B
-    io.choosecsr := false.B
-    io.jump      := true.B
-    io.ecall     := true.B
-    io.mret      := false.B
-  }.elsewhen(io.ctl === CSRCTL.MRET) {
-    io.wreg      := false.B
-    io.wpc       := false.B
-    io.read      := false.B
-    io.choosecsr := false.B
-    io.jump      := true.B
-    io.ecall     := false.B
-    io.mret      := true.B
-  }.otherwise {
-    io.wreg      := false.B
-    io.wpc       := false.B
-    io.read      := false.B
-    io.choosecsr := false.B
-    io.jump      := false.B
-    io.ecall     := false.B
-    io.mret      := false.B
-  }
-}
-
 import IFU.IFU
 import IDU.IDU
 import EXU.EXU
@@ -153,9 +89,10 @@ class Core extends Module {
     val pc     = Output(UInt(32.W))
   })
 
-  val ifu    = Module(new IFU)
-  val idu    = Module(new IDU)
-  val exu    = Module(new EXU)
+  val ifu = Module(new IFU)
+  val idu = Module(new IDU)
+  val exu = Module(new EXU)
+
   val nextpc = Module(new NextPc)
 
   val endnpc = Module(new EndNpc)
@@ -166,29 +103,25 @@ class Core extends Module {
   val memorregmux = Module(new MemorRegMux)
   val datamem     = Module(new DataMem)
 
-  val csrctl    = Module(new CSRCTL)
   val csr       = Module(new CSR)
   val csralumux = Module(new CSRALUMUX)
 
   ifu.io.ifu2idu <> idu.io.ifu2idu
   idu.io.idu2exu <> exu.io.idu2exu
 
-  csr.io.idx     := ifu.io.instout(31, 20)
-  csr.io.wr      := csrctl.io.wreg
-  csr.io.re      := csrctl.io.read
-  csr.io.wpc     := csrctl.io.wpc
+  csr.io.idx := ifu.io.instout(31, 20)
+  csr.io.wr  := idu.io.wreg
+  csr.io.re  := idu.io.read
+  csr.io.wpc := idu.io.wpc
+
   csr.io.pc      := ifu.io.pc
   csr.io.rs1data := idu.io.rs1out
-  csr.io.ecall   := csrctl.io.ecall
-  csr.io.mret    := csrctl.io.mret
-
-  csrctl.io.ctl := idu.io.csrctl
-  csrctl.io.rd  := ifu.io.instout(11, 7)
-  csrctl.io.rs1 := ifu.io.instout(19, 15)
+  csr.io.ecall   := idu.io.ecall
+  csr.io.mret    := idu.io.mret
 
   csralumux.io.aludata   := memorregmux.io.out
   csralumux.io.csrdata   := csr.io.dataout
-  csralumux.io.choosecsr := csrctl.io.choosecsr
+  csralumux.io.choosecsr := idu.io.choosecsr
 
   memorregmux.io.memdata := datamem.io.dataout
   memorregmux.io.regdata := exu.io.out
@@ -206,7 +139,7 @@ class Core extends Module {
   nextpc.io.pclj  := exu.io.pclj
   nextpc.io.pcrs1 := exu.io.pcrs1
 
-  nextpc.io.csrjump := csrctl.io.jump
+  nextpc.io.csrjump := idu.io.jump
   nextpc.io.csrdata := csr.io.pcdataout
   nextpc.io.pc      := ifu.io.pc
   ifu.io.instin     := io.inst

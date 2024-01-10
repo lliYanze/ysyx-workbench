@@ -110,7 +110,12 @@ gdb: verilator
 
 count: 
 	@echo "Total lines of code:"
-	@find . -name Makefile  -o -wholename "./csrc/*.[ch]" -o -wholename "./top/*.scala" | xargs egrep -v '^$$' | wc -l
+	@find . -name Makefile \
+		-o -wholename "./csrc/*.[ch]" \
+		-o -wholename "./csrc/*.cc" \
+		-o -wholename "./top/*.scala" \
+		-o -wholename "./.gitignore" \
+		| xargs egrep -v '^$$' | wc -l
 
 include ../Makefile
 
