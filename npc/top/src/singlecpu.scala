@@ -87,82 +87,6 @@ class JumpCtl extends Module {
   }
 }
 
-// class PC extends Module {
-//   val io = IO(new Bundle {
-//     val csrjump = Input(Bool())
-//     val csrdata = Input(UInt(32.W))
-//     val pclj    = Input(Bool()) //true imm ,false +4
-//     val pcrs1   = Input(Bool()) //true rs1 ,false PC
-//     val imm     = Input(UInt(32.W))
-//     val rs1     = Input(UInt(32.W))
-//
-//     val nextpc = Output(UInt(32.W))
-//
-//     val pc = Output(UInt(32.W))
-//   })
-//   val pc     = RegInit("h8000_0000".U(32.W))
-//   val nextpc = Wire(UInt(32.W))
-//   when(io.csrjump) {
-//     nextpc := io.csrdata
-//   }.otherwise {
-//     nextpc := Mux(io.pclj, io.imm, 4.U) + Mux(io.pcrs1, io.rs1, pc)
-//   }
-//   pc        := nextpc
-//   io.pc     := pc
-//   io.nextpc := nextpc
-// }
-
-// class ImmGen extends Module {
-//   val io = IO(new Bundle {
-//     val format = Input(UInt(3.W))
-//     val inst   = Input(UInt(32.W))
-//     val out    = Output(UInt(32.W))
-//   })
-//
-//   when(io.format === TYPE.I) {
-//     io.out := Cat(Fill(20, io.inst(31)), io.inst(31, 20))
-//   }.elsewhen(io.format === TYPE.U) { //U型指令是imm为高20位
-//     io.out := Cat(io.inst(31, 12), Fill(12, 0.U(1.W)))
-//   }.elsewhen(io.format === TYPE.J) {
-//     io.out := Cat(Fill(12, io.inst(31)), io.inst(31), io.inst(19, 12), io.inst(20), io.inst(30, 21), 0.U(1.W))
-//   }.elsewhen(io.format === TYPE.S) {
-//     io.out := Cat(Fill(20, io.inst(31)), io.inst(31, 25), io.inst(11, 7))
-//   }.elsewhen(io.format === TYPE.B) {
-//     //imm = {inst[31], inst[7], inst[30:25], inst[11:8], 0'b0}
-//     //          12     11            10-5          4-1     0
-//     io.out := Cat(Fill(19, io.inst(31)), io.inst(31), io.inst(7), io.inst(30, 25), io.inst(11, 8), 0.U)
-//   }.otherwise {
-//     io.out := 0.U
-//   }
-// }
-
-// class RegFile extends Module {
-//   val io = IO(new Bundle {
-//     val rs1    = Input(UInt(5.W))
-//     val rs2    = Input(UInt(5.W))
-//     val rd     = Input(UInt(5.W))
-//     val wr     = Input(Bool())
-//     val datain = Input(UInt(32.W))
-//
-//     val rs1out    = Output(UInt(32.W))
-//     val rs2out    = Output(UInt(32.W))
-//     val end_state = Output(UInt(32.W))
-//
-//   })
-//
-//   val regfile = RegInit(VecInit(Seq.fill(32)(0.U(32.W))))
-//   io.end_state := regfile(10.U)
-//   val datain = Wire(UInt(32.W))
-//   datain := io.datain
-//   when(io.wr) {
-//     regfile(io.rd) := Mux(io.rd === 0.U, 0.U, datain)
-//   }
-//
-//   io.rs1out := regfile(io.rs1)
-//   io.rs2out := regfile(io.rs2)
-//
-// }
-
 class CSRALUMUX extends Module {
   val io = IO(new Bundle {
     val aludata   = Input(UInt(32.W))
@@ -298,15 +222,12 @@ class Core extends Module {
     val pc     = Output(UInt(32.W))
   })
 
-  val ifu            = Module(new IFU)
-  val idu            = Module(new IDU)
-  val nextpc         = Module(new NextPc)
-  val source_decoder = Module(new InstDecode)
-  // val immgen         = Module(new ImmGen)
-  // val regfile        = Module(new RegFile)
-  val r1mux = Module(new R1mux)
-  val r2mux = Module(new R2mux)
-  val alu   = Module(new Alu)
+  val ifu    = Module(new IFU)
+  val idu    = Module(new IDU)
+  val nextpc = Module(new NextPc)
+  val r1mux  = Module(new R1mux)
+  val r2mux  = Module(new R2mux)
+  val alu    = Module(new Alu)
 
   val endnpc = Module(new EndNpc)
 
@@ -332,7 +253,7 @@ class Core extends Module {
   csr.io.ecall   := csrctl.io.ecall
   csr.io.mret    := csrctl.io.mret
 
-  csrctl.io.ctl := source_decoder.io.csrctl
+  csrctl.io.ctl := idu.io.csrctl
   csrctl.io.rd  := ifu.io.instout(11, 7)
   csrctl.io.rs1 := ifu.io.instout(19, 15)
 
@@ -342,14 +263,14 @@ class Core extends Module {
 
   memorregmux.io.memdata := datamem.io.dataout
   memorregmux.io.regdata := alu.io.out
-  memorregmux.io.memen   := source_decoder.io.tomemorreg
+  memorregmux.io.memen   := idu.io.tomemorreg
 
   datamem.io.addr  := alu.io.out
   datamem.io.data  := idu.io.rs2out
-  datamem.io.wr    := source_decoder.io.memwr
-  datamem.io.wmask := source_decoder.io.memctl
+  datamem.io.wr    := idu.io.memwr
+  datamem.io.wmask := idu.io.memctl
   datamem.io.clock := clock
-  datamem.io.valid := source_decoder.io.memrd
+  datamem.io.valid := idu.io.memrd
 
   nextpc.io.imm     := idu.io.immout
   nextpc.io.rs1     := idu.io.rs1out
@@ -362,53 +283,37 @@ class Core extends Module {
   ifu.io.pcin       := nextpc.io.nextpc
   io.pc             := ifu.io.pc
 
-  source_decoder.io.inst := ifu.io.instout
-
-  jumpctl.io.ctl  := source_decoder.io.jumpctl
+  jumpctl.io.ctl  := idu.io.jumpctl
   jumpctl.io.eq   := alu.io.eq
   jumpctl.io.less := alu.io.less
 
-  // regfile.io.rs1 := ifu.io.instout(19, 15)
-  // regfile.io.rs2 := ifu.io.instout(24, 20)
-  // regfile.io.rd  := ifu.io.instout(11, 7)
-
-  // regfile.io.datain := csralumux.io.out
-  // regfile.io.wr     := source_decoder.io.regwr
-
   idu.io.regdatain := csralumux.io.out
-  idu.io.wr        := source_decoder.io.regwr
-
-  // immgen.io.format := source_decoder.io.format
-  // immgen.io.inst   := ifu.io.instout
+  idu.io.wr        := idu.io.regwr
 
   endnpc.io.endflag := alu.io.end
-  // endnpc.io.state   := regfile.io.end_state
-  endnpc.io.state := idu.io.end_state
+  endnpc.io.state   := idu.io.end_state
 
-  r1mux.io.r1type := source_decoder.io.s1type
+  r1mux.io.r1type := idu.io.s1type
   r1mux.io.pc     := ifu.io.pc
-  // r1mux.io.rs1    := regfile.io.rs1out
-  r1mux.io.rs1 := idu.io.rs1out
+  r1mux.io.rs1    := idu.io.rs1out
 
-  r2mux.io.r2type := source_decoder.io.s2type
-  // r2mux.io.imm    := immgen.io.out
-  // r2mux.io.rs2    := regfile.io.rs2out
-  r2mux.io.imm := idu.io.immout
-  r2mux.io.rs2 := idu.io.rs2out
+  r2mux.io.r2type := idu.io.s2type
+  r2mux.io.imm    := idu.io.immout
+  r2mux.io.rs2    := idu.io.rs2out
 
-  alu.io.op := source_decoder.io.op
+  alu.io.op := idu.io.op
   alu.io.s1 := r1mux.io.r1out
   alu.io.s2 := r2mux.io.r2out
 
-  insttrace.io.inst  := source_decoder.io.inst
+  insttrace.io.inst  := ifu.io.instout
   insttrace.io.pc    := ifu.io.pc
   insttrace.io.clock := clock
 
-  ftrace.io.inst   := source_decoder.io.inst
+  ftrace.io.inst   := ifu.io.instout
   ftrace.io.pc     := ifu.io.pc
   ftrace.io.nextpc := nextpc.io.nextpc
   ftrace.io.clock  := clock
-  ftrace.io.jump   := source_decoder.io.ftrace
+  ftrace.io.jump   := idu.io.ftrace
 
   io.nextpc := nextpc.io.nextpc
 }
