@@ -87,30 +87,30 @@ class JumpCtl extends Module {
   }
 }
 
-class PC extends Module {
-  val io = IO(new Bundle {
-    val csrjump = Input(Bool())
-    val csrdata = Input(UInt(32.W))
-    val pclj    = Input(Bool()) //true imm ,false +4
-    val pcrs1   = Input(Bool()) //true rs1 ,false PC
-    val imm     = Input(UInt(32.W))
-    val rs1     = Input(UInt(32.W))
-
-    val nextpc = Output(UInt(32.W))
-
-    val pc = Output(UInt(32.W))
-  })
-  val pc     = RegInit("h8000_0000".U(32.W))
-  val nextpc = Wire(UInt(32.W))
-  when(io.csrjump) {
-    nextpc := io.csrdata
-  }.otherwise {
-    nextpc := Mux(io.pclj, io.imm, 4.U) + Mux(io.pcrs1, io.rs1, pc)
-  }
-  pc        := nextpc
-  io.pc     := pc
-  io.nextpc := nextpc
-}
+// class PC extends Module {
+//   val io = IO(new Bundle {
+//     val csrjump = Input(Bool())
+//     val csrdata = Input(UInt(32.W))
+//     val pclj    = Input(Bool()) //true imm ,false +4
+//     val pcrs1   = Input(Bool()) //true rs1 ,false PC
+//     val imm     = Input(UInt(32.W))
+//     val rs1     = Input(UInt(32.W))
+//
+//     val nextpc = Output(UInt(32.W))
+//
+//     val pc = Output(UInt(32.W))
+//   })
+//   val pc     = RegInit("h8000_0000".U(32.W))
+//   val nextpc = Wire(UInt(32.W))
+//   when(io.csrjump) {
+//     nextpc := io.csrdata
+//   }.otherwise {
+//     nextpc := Mux(io.pclj, io.imm, 4.U) + Mux(io.pcrs1, io.rs1, pc)
+//   }
+//   pc        := nextpc
+//   io.pc     := pc
+//   io.nextpc := nextpc
+// }
 
 class ImmGen extends Module {
   val io = IO(new Bundle {
@@ -287,6 +287,8 @@ class CSRCTL extends Module {
   }
 }
 
+import IFU.IFU
+
 class Exu extends Module {
   val io = IO(new Bundle {
     val inst   = Input(UInt(32.W))
@@ -295,7 +297,7 @@ class Exu extends Module {
 
   })
 
-  val pc             = Module(new PC)
+  val ifu            = Module(new IFU)
   val source_decoder = Module(new InstDecode)
   val immgen         = Module(new ImmGen)
   val regfile        = Module(new RegFile)
@@ -316,18 +318,18 @@ class Exu extends Module {
   val csr       = Module(new CSR)
   val csralumux = Module(new CSRALUMUX)
 
-  csr.io.idx     := io.inst(31, 20)
+  csr.io.idx     := ifu.io.instout(31, 20)
   csr.io.wr      := csrctl.io.wreg
   csr.io.re      := csrctl.io.read
   csr.io.wpc     := csrctl.io.wpc
-  csr.io.pc      := pc.io.pc
+  csr.io.pc      := ifu.io.pc
   csr.io.rs1data := regfile.io.rs1out
   csr.io.ecall   := csrctl.io.ecall
   csr.io.mret    := csrctl.io.mret
 
   csrctl.io.ctl := source_decoder.io.csrctl
-  csrctl.io.rd  := io.inst(11, 7)
-  csrctl.io.rs1 := io.inst(19, 15)
+  csrctl.io.rd  := ifu.io.instout(11, 7)
+  csrctl.io.rs1 := ifu.io.instout(19, 15)
 
   csralumux.io.aludata   := memorregmux.io.out
   csralumux.io.csrdata   := csr.io.dataout
@@ -344,36 +346,36 @@ class Exu extends Module {
   datamem.io.clock := clock
   datamem.io.valid := source_decoder.io.memrd
 
-  pc.io.imm     := immgen.io.out
-  pc.io.rs1     := regfile.io.rs1out
-  pc.io.pclj    := jumpctl.io.pclj
-  pc.io.pcrs1   := jumpctl.io.pcrs1
-  pc.io.csrjump := csrctl.io.jump
-  pc.io.csrdata := csr.io.pcdataout
+  ifu.io.imm     := immgen.io.out
+  ifu.io.rs1     := regfile.io.rs1out
+  ifu.io.pclj    := jumpctl.io.pclj
+  ifu.io.pcrs1   := jumpctl.io.pcrs1
+  ifu.io.csrjump := csrctl.io.jump
+  ifu.io.csrdata := csr.io.pcdataout
+  ifu.io.instin  := io.inst
+  io.pc          := ifu.io.pc
 
-  io.pc := pc.io.pc
-
-  source_decoder.io.inst := io.inst
+  source_decoder.io.inst := ifu.io.instout
 
   jumpctl.io.ctl  := source_decoder.io.jumpctl
   jumpctl.io.eq   := alu.io.eq
   jumpctl.io.less := alu.io.less
 
-  regfile.io.rs1 := io.inst(19, 15)
-  regfile.io.rs2 := io.inst(24, 20)
-  regfile.io.rd  := io.inst(11, 7)
+  regfile.io.rs1 := ifu.io.instout(19, 15)
+  regfile.io.rs2 := ifu.io.instout(24, 20)
+  regfile.io.rd  := ifu.io.instout(11, 7)
 
   regfile.io.datain := csralumux.io.out
   regfile.io.wr     := source_decoder.io.regwr
 
   immgen.io.format := source_decoder.io.format
-  immgen.io.inst   := io.inst
+  immgen.io.inst   := ifu.io.instout
 
   endnpc.io.endflag := alu.io.end
   endnpc.io.state   := regfile.io.end_state
 
   r1mux.io.r1type := source_decoder.io.s1type
-  r1mux.io.pc     := pc.io.pc
+  r1mux.io.pc     := ifu.io.pc
   r1mux.io.rs1    := regfile.io.rs1out
 
   r2mux.io.r2type := source_decoder.io.s2type
@@ -385,14 +387,14 @@ class Exu extends Module {
   alu.io.s2 := r2mux.io.r2out
 
   insttrace.io.inst  := source_decoder.io.inst
-  insttrace.io.pc    := pc.io.pc
+  insttrace.io.pc    := ifu.io.pc
   insttrace.io.clock := clock
 
   ftrace.io.inst   := source_decoder.io.inst
-  ftrace.io.pc     := pc.io.pc
-  ftrace.io.nextpc := pc.io.nextpc
+  ftrace.io.pc     := ifu.io.pc
+  ftrace.io.nextpc := ifu.io.nextpc
   ftrace.io.clock  := clock
   ftrace.io.jump   := source_decoder.io.ftrace
 
-  io.nextpc := pc.io.nextpc
+  io.nextpc := ifu.io.nextpc
 }
