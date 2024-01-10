@@ -15,8 +15,8 @@ class PC extends Module {
 
 import datapath.IFU2IDUPath
 class IFU extends Module {
-  val ifu2idu = Decoupled(new IFU2IDUPath)
   val io = IO(new Bundle {
+    val ifu2idu = Decoupled(new IFU2IDUPath)
     val instin  = Input(UInt(32.W))
     val instout = Output(UInt(32.W))
 
@@ -27,4 +27,8 @@ class IFU extends Module {
   pc.io.pcin := io.pcin
   io.pc      := pc.io.pc
   io.instout := io.instin
+
+  io.ifu2idu.bits.pc   := pc.io.pc
+  io.ifu2idu.bits.inst := io.instin
+  io.ifu2idu.valid     := true.B
 }

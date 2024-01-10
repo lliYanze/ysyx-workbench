@@ -1,8 +1,9 @@
 #include "./VTOP___024root.h"
 #include <mem/reg.h>
 #include <top.h>
-// 寄存器名字为TOP__DOT__exu__DOT__regfile__DOT__regfile_0
-#define R(index) &top->rootp->TOP__DOT__exu__DOT__regfile__DOT__regfile_##index
+// 寄存器名字为TOP__DOT__exu__DOT__idu__DOT__regfile__DOT__regfile_0
+#define R(index)                                                               \
+  &top->rootp->TOP__DOT__exu__DOT__idu__DOT__regfile__DOT__regfile_##index
 
 #define CSR(index) &top->rootp->TOP__DOT__exu__DOT__csr__DOT__csrfile_##index
 

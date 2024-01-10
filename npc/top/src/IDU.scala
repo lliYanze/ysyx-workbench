@@ -84,13 +84,16 @@ class IDU extends Module {
     val wr        = Input(Bool())
     val regdatain = Input(UInt(32.W))
 
+    val end_state = Output(UInt(32.W))
+
   })
 
   val immgen  = Module(new ImmGen)
   val decode  = Module(new InstDecode)
   val regfile = Module(new RegFile)
 
-  decode.io.inst := io.ifu2idu.bits.inst
+  decode.io.inst   := io.ifu2idu.bits.inst
+  io.ifu2idu.ready := true.B
 
   immgen.io.format := decode.io.format
   immgen.io.inst   := io.ifu2idu.bits.inst
@@ -118,4 +121,6 @@ class IDU extends Module {
 
   io.rs1out := regfile.io.rs1out
   io.rs2out := regfile.io.rs2out
+
+  io.end_state := regfile.io.end_state
 }
