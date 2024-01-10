@@ -288,16 +288,17 @@ class CSRCTL extends Module {
 }
 
 import IFU.IFU
+import WB.NextPc
 
 class Exu extends Module {
   val io = IO(new Bundle {
     val inst   = Input(UInt(32.W))
     val nextpc = Output(UInt(32.W))
     val pc     = Output(UInt(32.W))
-
   })
 
   val ifu            = Module(new IFU)
+  val nextpc         = Module(new NextPc)
   val source_decoder = Module(new InstDecode)
   val immgen         = Module(new ImmGen)
   val regfile        = Module(new RegFile)
@@ -346,14 +347,16 @@ class Exu extends Module {
   datamem.io.clock := clock
   datamem.io.valid := source_decoder.io.memrd
 
-  ifu.io.imm     := immgen.io.out
-  ifu.io.rs1     := regfile.io.rs1out
-  ifu.io.pclj    := jumpctl.io.pclj
-  ifu.io.pcrs1   := jumpctl.io.pcrs1
-  ifu.io.csrjump := csrctl.io.jump
-  ifu.io.csrdata := csr.io.pcdataout
-  ifu.io.instin  := io.inst
-  io.pc          := ifu.io.pc
+  nextpc.io.imm     := immgen.io.out
+  nextpc.io.rs1     := regfile.io.rs1out
+  nextpc.io.pclj    := jumpctl.io.pclj
+  nextpc.io.pcrs1   := jumpctl.io.pcrs1
+  nextpc.io.csrjump := csrctl.io.jump
+  nextpc.io.csrdata := csr.io.pcdataout
+  nextpc.io.pc      := ifu.io.pc
+  ifu.io.instin     := io.inst
+  ifu.io.pcin       := nextpc.io.nextpc
+  io.pc             := ifu.io.pc
 
   source_decoder.io.inst := ifu.io.instout
 
@@ -392,9 +395,9 @@ class Exu extends Module {
 
   ftrace.io.inst   := source_decoder.io.inst
   ftrace.io.pc     := ifu.io.pc
-  ftrace.io.nextpc := ifu.io.nextpc
+  ftrace.io.nextpc := nextpc.io.nextpc
   ftrace.io.clock  := clock
   ftrace.io.jump   := source_decoder.io.ftrace
 
-  io.nextpc := ifu.io.nextpc
+  io.nextpc := nextpc.io.nextpc
 }
