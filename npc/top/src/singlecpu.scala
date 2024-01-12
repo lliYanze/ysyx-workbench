@@ -28,53 +28,40 @@ class Core extends Module {
   val insttrace = Module(new InstTrace)
   val ftrace    = Module(new Ftrace)
 
+  //链接外部信号
+  io.nextpc     := wb.io.nextpc
+  io.pc         := ifu.io.pc
+  ifu.io.instin := io.inst
+
   ifu.io.ifu2idu <> idu.io.ifu2idu
   idu.io.idu2exu <> exu.io.idu2exu
+  exu.io.exu2wb <> wb.io.exu2wb
 
-  wb.io.idx   := ifu.io.instout(31, 20)
-  wb.io.csrwr := idu.io.wreg
-  wb.io.re    := idu.io.read
-  wb.io.wpc   := idu.io.wpc
+  ifu.io.pcin := wb.io.nextpc
 
-  wb.io.pc      := ifu.io.pc
-  wb.io.rs1data := idu.io.rs1out
-  wb.io.ecall   := idu.io.ecall
-  wb.io.mret    := idu.io.mret
-
+  wb.io.csrwr     := idu.io.wreg
+  wb.io.re        := idu.io.read
+  wb.io.wpc       := idu.io.wpc
+  wb.io.rs1data   := idu.io.rs1out
+  wb.io.ecall     := idu.io.ecall
+  wb.io.mret      := idu.io.mret
   wb.io.choosecsr := idu.io.choosecsr
-
-  wb.io.memen := idu.io.tomemorreg
-
-  wb.io.addr  := exu.io.out
-  wb.io.data  := idu.io.rs2out
-  wb.io.wr    := idu.io.memwr
-  wb.io.wmask := idu.io.memctl
-  wb.io.valid := idu.io.memrd
-
-  wb.io.imm     := idu.io.immout
-  wb.io.rs1     := idu.io.rs1out
-  wb.io.pclj    := exu.io.pclj
-  wb.io.pcrs1   := exu.io.pcrs1
-  wb.io.csrjump := idu.io.csrjump
-  wb.io.csrdata := wb.io.csrpcdataout
-  wb.io.pc      := ifu.io.pc
-
-  ifu.io.instin := io.inst
-  ifu.io.pcin   := wb.io.nextpc
-  io.pc         := ifu.io.pc
-
-  exu.io.ctl := idu.io.jumpctl
+  wb.io.memen     := idu.io.tomemorreg
+  wb.io.data      := idu.io.rs2out
+  wb.io.wr        := idu.io.memwr
+  wb.io.wmask     := idu.io.memctl
+  wb.io.valid     := idu.io.memrd
+  wb.io.imm       := idu.io.immout
+  wb.io.rs1       := idu.io.rs1out
+  wb.io.csrjump   := idu.io.csrjump
+  idu.io.wr       := idu.io.regwr
+  exu.io.ctl      := idu.io.jumpctl
+  exu.io.r1type   := idu.io.s1type
+  exu.io.r2type   := idu.io.s2type
+  exu.io.op       := idu.io.op
 
   idu.io.regdatain := wb.io.wbdataout
-  idu.io.wr        := idu.io.regwr
-
-  endnpc.io.endflag := exu.io.end
-  endnpc.io.state   := idu.io.end_state
-
-  exu.io.r1type := idu.io.s1type
-  exu.io.r2type := idu.io.s2type
-
-  exu.io.op := idu.io.op
+  wb.io.csrdata    := wb.io.csrpcdataout
 
   insttrace.io.inst  := ifu.io.instout
   insttrace.io.pc    := ifu.io.pc
@@ -86,5 +73,7 @@ class Core extends Module {
   ftrace.io.clock  := clock
   ftrace.io.jump   := idu.io.ftrace
 
-  io.nextpc := wb.io.nextpc
+  endnpc.io.endflag := exu.io.end
+  endnpc.io.state   := idu.io.end_state
+
 }

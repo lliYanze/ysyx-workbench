@@ -71,24 +71,19 @@ class JumpCtl extends Module {
 }
 
 import datapath.IDU2EXUPath
+import datapath.EXU2WBPath
 
 class EXU extends Module {
   val io = IO(new Bundle {
+    val exu2wb  = Decoupled(new EXU2WBPath)
     val idu2exu = Flipped(Decoupled(new IDU2EXUPath))
-    val r2type  = Input(UInt(2.W))
-    val r1type  = Input(Bool())
 
-    // val rs1 = Input(UInt(32.W))
-    // val rs2 = Input(UInt(32.W))
-    // val pc  = Input(UInt(32.W))
-    // val imm = Input(UInt(32.W))
-    // val inst = Input(UInt(32.W))
+    val r2type = Input(UInt(2.W))
+    val r1type = Input(Bool())
 
-    val ctl   = Input(UInt(3.W))
-    val out   = Output(UInt(32.W))
-    val op    = Input(UInt(4.W))
-    val pclj  = Output(Bool())
-    val pcrs1 = Output(Bool())
+    val ctl = Input(UInt(3.W))
+
+    val op = Input(UInt(4.W))
 
     val end = Output(Bool())
   })
@@ -98,6 +93,16 @@ class EXU extends Module {
   val jumpctl = Module(new JumpCtl)
 
   val alu = Module(new Alu)
+
+//两总线之间的连接
+  //idu2exu
+  io.exu2wb.bits.pc   := io.idu2exu.bits.pc
+  io.exu2wb.bits.inst := io.idu2exu.bits.inst
+
+  //exu2wb
+  io.exu2wb.bits.pclj        := jumpctl.io.pclj
+  io.exu2wb.bits.pcrs1       := jumpctl.io.pcrs1
+  io.exu2wb.bits.datamemaddr := alu.io.out
 
   r1mux.io.pc     := io.idu2exu.bits.pc
   r1mux.io.rs1    := io.idu2exu.bits.rs1
@@ -116,13 +121,14 @@ class EXU extends Module {
   //未实现总线临时使用部分
 
   io.idu2exu.ready := true.B
+  io.exu2wb.valid  := true.B
 
   jumpctl.io.ctl := io.ctl
 
   alu.io.op := io.op
   io.end    := alu.io.end
-  io.pclj   := jumpctl.io.pclj
-  io.pcrs1  := jumpctl.io.pcrs1
-  io.out    := alu.io.out
+  // io.pclj   := jumpctl.io.pclj
+  // io.pcrs1  := jumpctl.io.pcrs1
+  // io.out    := alu.io.out
 
 }

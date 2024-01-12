@@ -3,6 +3,7 @@ package WB
 import chisel3._
 import Memory._
 import instsinfo._
+import chisel3.util.Decoupled
 
 class NextPc extends Module {
   val io = IO(new Bundle {
@@ -93,18 +94,22 @@ class CSR extends Module {
 
 }
 
+import datapath.EXU2WBPath
+
 class WB extends Module {
   val io = IO(new Bundle {
-    val pc      = Input(UInt(32.W))
+    val exu2wb = Flipped(Decoupled(new EXU2WBPath))
+
+    // val pc      = Input(UInt(32.W))
     val csrjump = Input(Bool())
     val csrdata = Input(UInt(32.W))
-    val pclj    = Input(Bool()) //true imm ,false +4
-    val pcrs1   = Input(Bool()) //true rs1 ,false PC
-    val imm     = Input(UInt(32.W))
-    val rs1     = Input(UInt(32.W))
-    val nextpc  = Output(UInt(32.W))
+    // val pclj    = Input(Bool()) //true imm ,false +4
+    // val pcrs1   = Input(Bool()) //true rs1 ,false PC
+    val imm    = Input(UInt(32.W))
+    val rs1    = Input(UInt(32.W))
+    val nextpc = Output(UInt(32.W))
 
-    val addr    = Input(UInt(32.W))
+    // val addr    = Input(UInt(32.W))
     val data    = Input(UInt(32.W))
     val wr      = Input(Bool())
     val valid   = Input(Bool())
@@ -112,7 +117,7 @@ class WB extends Module {
     val dataout = Output(UInt(32.W))
 
     //CSR
-    val idx     = Input(UInt(12.W))
+    // val idx     = Input(UInt(12.W))
     val csrwr   = Input(Bool())
     val wpc     = Input(Bool())
     val re      = Input(Bool())
@@ -138,6 +143,16 @@ class WB extends Module {
   val csralumux = Module(new CSRALUMUX)
   val csr       = Module(new CSR)
 
+//总线连接
+
+  nextpc.io.pc         := io.exu2wb.bits.pc
+  nextpc.io.pclj       := io.exu2wb.bits.pclj
+  nextpc.io.pcrs1      := io.exu2wb.bits.pcrs1
+  datamem.io.addr      := io.exu2wb.bits.datamemaddr
+  csr.io.pc            := io.exu2wb.bits.pc
+  csr.io.idx           := io.exu2wb.bits.inst(31, 20)
+  memregmux.io.aludata := io.exu2wb.bits.datamemaddr
+
   //内部连线
   memregmux.io.memdata := datamem.io.dataout
   io.wbdataout         := csralumux.io.out
@@ -145,32 +160,25 @@ class WB extends Module {
   csralumux.io.csrdata := csr.io.dataout
 
   //外部连线
-  nextpc.io.pc      := io.pc
   nextpc.io.csrjump := io.csrjump
   nextpc.io.csrdata := io.csrdata
-  nextpc.io.pclj    := io.pclj
-  nextpc.io.pcrs1   := io.pcrs1
   nextpc.io.imm     := io.imm
   nextpc.io.rs1     := io.rs1
 
-  datamem.io.addr  := io.addr
   datamem.io.data  := io.data
   datamem.io.wr    := io.wr
   datamem.io.valid := io.valid
   datamem.io.wmask := io.wmask
   datamem.io.clock := clock
 
-  csr.io.idx     := io.idx
   csr.io.wr      := io.csrwr
   csr.io.re      := io.re
   csr.io.wpc     := io.wpc
   csr.io.rs1data := io.rs1data
   csr.io.ecall   := io.ecall
   csr.io.mret    := io.mret
-  csr.io.pc      := io.pc
 
-  memregmux.io.memen   := io.memen
-  memregmux.io.aludata := io.addr
+  memregmux.io.memen := io.memen
 
   csralumux.io.choosecsr := io.choosecsr
 
@@ -180,4 +188,6 @@ class WB extends Module {
   io.csrpcdataout   := csr.io.pcdataout
   io.memorregmuxout := memregmux.io.out
 
+  //临时使用
+  io.exu2wb.ready := true.B
 }
