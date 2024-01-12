@@ -156,7 +156,7 @@ class IDU extends Module {
     val wpc       = Output(Bool())
     val read      = Output(Bool())
     val choosecsr = Output(Bool())
-    val jump      = Output(Bool())
+    val csrjump   = Output(Bool())
     val ecall     = Output(Bool())
     val mret      = Output(Bool())
 
@@ -215,7 +215,7 @@ class IDU extends Module {
   io.wpc       := csrctl.io.wpc
   io.read      := csrctl.io.read
   io.choosecsr := csrctl.io.choosecsr
-  io.jump      := csrctl.io.jump
+  io.csrjump   := csrctl.io.jump
   io.ecall     := csrctl.io.ecall
   io.mret      := csrctl.io.mret
 

@@ -13,3 +13,8 @@ class IDU2EXUPath extends Bundle {
   val rs1  = UInt(32.W)
   val rs2  = UInt(32.W)
 }
+
+class EXU2WBPath extends Bundle {
+  val pc   = UInt(32.W)
+  val inst = UInt(32.W)
+}
