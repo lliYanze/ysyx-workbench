@@ -100,16 +100,11 @@ class WB extends Module {
   val io = IO(new Bundle {
     val exu2wb = Flipped(Decoupled(new EXU2WBPath))
 
-    // val pc      = Input(UInt(32.W))
     val csrjump = Input(Bool())
-    val csrdata = Input(UInt(32.W))
-    // val pclj    = Input(Bool()) //true imm ,false +4
-    // val pcrs1   = Input(Bool()) //true rs1 ,false PC
-    val imm    = Input(UInt(32.W))
-    val rs1    = Input(UInt(32.W))
-    val nextpc = Output(UInt(32.W))
+    val imm     = Input(UInt(32.W))
+    val rs1     = Input(UInt(32.W))
+    val nextpc  = Output(UInt(32.W))
 
-    // val addr    = Input(UInt(32.W))
     val data    = Input(UInt(32.W))
     val wr      = Input(Bool())
     val valid   = Input(Bool())
@@ -117,15 +112,12 @@ class WB extends Module {
     val dataout = Output(UInt(32.W))
 
     //CSR
-    // val idx     = Input(UInt(12.W))
     val csrwr   = Input(Bool())
     val wpc     = Input(Bool())
     val re      = Input(Bool())
     val rs1data = Input(UInt(32.W))
     val ecall   = Input(Bool())
     val mret    = Input(Bool())
-    // val csrdataout   = Output(UInt(32.W))
-    val csrpcdataout = Output(UInt(32.W))
 
     //MemorRegMux
     val memen          = Input(Bool())
@@ -158,10 +150,10 @@ class WB extends Module {
   io.wbdataout         := csralumux.io.out
   csralumux.io.aludata := memregmux.io.out
   csralumux.io.csrdata := csr.io.dataout
+  nextpc.io.csrdata    := csr.io.pcdataout
 
   //外部连线
   nextpc.io.csrjump := io.csrjump
-  nextpc.io.csrdata := io.csrdata
   nextpc.io.imm     := io.imm
   nextpc.io.rs1     := io.rs1
 
@@ -182,10 +174,8 @@ class WB extends Module {
 
   csralumux.io.choosecsr := io.choosecsr
 
-  io.nextpc  := nextpc.io.nextpc
-  io.dataout := datamem.io.dataout
-  // io.csrdataout     := csr.io.dataout
-  io.csrpcdataout   := csr.io.pcdataout
+  io.nextpc         := nextpc.io.nextpc
+  io.dataout        := datamem.io.dataout
   io.memorregmuxout := memregmux.io.out
 
   //临时使用

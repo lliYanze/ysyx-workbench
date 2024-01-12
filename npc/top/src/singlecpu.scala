@@ -1,6 +1,5 @@
 package singlecpu
 
-// import Memory._
 import Trace._
 import instsinfo._
 
@@ -54,14 +53,14 @@ class Core extends Module {
   wb.io.imm       := idu.io.immout
   wb.io.rs1       := idu.io.rs1out
   wb.io.csrjump   := idu.io.csrjump
-  idu.io.wr       := idu.io.regwr
   exu.io.ctl      := idu.io.jumpctl
   exu.io.r1type   := idu.io.s1type
   exu.io.r2type   := idu.io.s2type
   exu.io.op       := idu.io.op
 
+  //写回时与reg有关的信号
   idu.io.regdatain := wb.io.wbdataout
-  wb.io.csrdata    := wb.io.csrpcdataout
+  idu.io.wr        := idu.io.regwr
 
   insttrace.io.inst  := ifu.io.instout
   insttrace.io.pc    := ifu.io.pc
