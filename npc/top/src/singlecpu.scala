@@ -22,8 +22,7 @@ class Core extends Module {
   val exu = Module(new EXU)
   val wb  = Module(new WB)
 
-  val endnpc = Module(new EndNpc)
-
+  val endnpc    = Module(new EndNpc)
   val insttrace = Module(new InstTrace)
   val ftrace    = Module(new Ftrace)
 
@@ -38,16 +37,10 @@ class Core extends Module {
   idu.io.ctrlpath <> exu.io.ctrlpath
   wb.io.wbctrlpath <> exu.io.wbctrlpath
 
-  ifu.io.pcin := wb.io.nextpc
-
-  wb.io.rs1data := idu.io.rs1out
-  wb.io.data    := idu.io.rs2out
-  wb.io.imm     := idu.io.immout
-  wb.io.rs1     := idu.io.rs1out
-
-  //写回时与reg有关的信号
+  //写回时内部有关的信号
   idu.io.regdatain := wb.io.wbdataout
-  idu.io.wr        := idu.io.regwr
+  idu.io.wr        := wb.io.reg_wr
+  ifu.io.pcin      := wb.io.nextpc
 
   insttrace.io.inst  := ifu.io.instout
   insttrace.io.pc    := ifu.io.pc

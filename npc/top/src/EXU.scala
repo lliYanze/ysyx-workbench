@@ -78,9 +78,9 @@ import datapath.WBCtrlPath
 class EXU extends Module {
   val io = IO(new Bundle {
     val exu2wb     = Decoupled(new EXU2WBPath)
+    val wbctrlpath = Decoupled(new WBCtrlPath)
     val idu2exu    = Flipped(Decoupled(new IDU2EXUPath))
     val ctrlpath   = Flipped(Decoupled(new CtrlPath))
-    val wbctrlpath = Decoupled(new WBCtrlPath)
     val end        = Output(Bool())
   })
   val r1mux   = Module(new R1mux)
@@ -89,38 +89,41 @@ class EXU extends Module {
   val alu     = Module(new Alu)
 
 //两总线之间的连接
-  io.wbctrlpath.bits := io.ctrlpath.bits.wbctrlpath
-  //idu2exu
+  io.wbctrlpath.bits  := io.ctrlpath.bits.wbctrlpath
   io.exu2wb.bits.pc   := io.idu2exu.bits.pc
   io.exu2wb.bits.inst := io.idu2exu.bits.inst
+  io.exu2wb.bits.imm  := io.idu2exu.bits.imm
+  io.exu2wb.bits.rs1  := io.idu2exu.bits.rs1
+  io.exu2wb.bits.rs2  := io.idu2exu.bits.rs2
 
-  //exu2wb
+  //总线连接
   io.exu2wb.bits.pclj        := jumpctl.io.pclj
   io.exu2wb.bits.pcrs1       := jumpctl.io.pcrs1
   io.exu2wb.bits.datamemaddr := alu.io.out
 
-  r1mux.io.pc     := io.idu2exu.bits.pc
-  r1mux.io.rs1    := io.idu2exu.bits.rs1
+  r1mux.io.pc  := io.idu2exu.bits.pc
+  r1mux.io.rs1 := io.idu2exu.bits.rs1
+  r2mux.io.rs2 := io.idu2exu.bits.rs2
+  r2mux.io.imm := io.idu2exu.bits.imm
+
   r1mux.io.r1type := io.ctrlpath.bits.exuctrlpath.rs1type
-
-  r2mux.io.rs2    := io.idu2exu.bits.rs2
-  r2mux.io.imm    := io.idu2exu.bits.imm
   r2mux.io.r2type := io.ctrlpath.bits.exuctrlpath.rs2type
-
-  alu.io.s1 := r1mux.io.r1out
-  alu.io.s2 := r2mux.io.r2out
-  alu.io.op := io.ctrlpath.bits.exuctrlpath.alu_op
-
-  jumpctl.io.eq   := alu.io.eq
-  jumpctl.io.less := alu.io.less
+  alu.io.op       := io.ctrlpath.bits.exuctrlpath.alu_op
   jumpctl.io.ctl  := io.ctrlpath.bits.exuctrlpath.jump_ctl
 
-  //未实现总线临时使用部分
+  //内部连接
+  alu.io.s1       := r1mux.io.r1out
+  alu.io.s2       := r2mux.io.r2out
+  jumpctl.io.eq   := alu.io.eq
+  jumpctl.io.less := alu.io.less
 
+  //外部连接
+  io.end := alu.io.end
+
+  //未实现总线临时使用部分
   io.idu2exu.ready    := true.B
   io.exu2wb.valid     := true.B
   io.ctrlpath.ready   := true.B
   io.wbctrlpath.valid := true.B
 
-  io.end := alu.io.end
 }

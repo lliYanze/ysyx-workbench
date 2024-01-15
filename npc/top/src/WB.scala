@@ -101,21 +101,17 @@ class WB extends Module {
     val exu2wb     = Flipped(Decoupled(new EXU2WBPath))
     val wbctrlpath = Flipped(Decoupled(new WBCtrlPath))
 
-    val imm    = Input(UInt(32.W))
-    val rs1    = Input(UInt(32.W))
-    val nextpc = Output(UInt(32.W))
+    // val imm = Input(UInt(32.W))
 
-    val data    = Input(UInt(32.W))
-    val dataout = Output(UInt(32.W))
+    // val data = Input(UInt(32.W))
 
     //CSR
-    val rs1data = Input(UInt(32.W))
-
-    //MemorRegMux
-    val memorregmuxout = Output(UInt(32.W))
-
+    // val rs1data = Input(UInt(32.W))
     //csralumux
     val wbdataout = Output(UInt(32.W))
+
+    val reg_wr = Output(Bool())
+    val nextpc = Output(UInt(32.W))
   })
 
   val nextpc    = Module(new NextPc)
@@ -128,43 +124,38 @@ class WB extends Module {
   nextpc.io.pc         := io.exu2wb.bits.pc
   nextpc.io.pclj       := io.exu2wb.bits.pclj
   nextpc.io.pcrs1      := io.exu2wb.bits.pcrs1
+  nextpc.io.imm        := io.exu2wb.bits.imm
+  nextpc.io.rs1        := io.exu2wb.bits.rs1
   datamem.io.addr      := io.exu2wb.bits.datamemaddr
+  datamem.io.data      := io.exu2wb.bits.rs2
   csr.io.pc            := io.exu2wb.bits.pc
+  csr.io.rs1data       := io.exu2wb.bits.rs1
   csr.io.idx           := io.exu2wb.bits.inst(31, 20)
   memregmux.io.aludata := io.exu2wb.bits.datamemaddr
 
+  nextpc.io.csrjump      := io.wbctrlpath.bits.csrisjump
+  datamem.io.wr          := io.wbctrlpath.bits.datamem_wr
+  datamem.io.valid       := io.wbctrlpath.bits.datamem_rd
+  datamem.io.wmask       := io.wbctrlpath.bits.datamem_wmask
+  csr.io.wr              := io.wbctrlpath.bits.csr_wr
+  csr.io.re              := io.wbctrlpath.bits.csr_rd
+  csr.io.wpc             := io.wbctrlpath.bits.csr_wpc
+  csr.io.ecall           := io.wbctrlpath.bits.csr_ecall
+  csr.io.mret            := io.wbctrlpath.bits.csr_mret
+  memregmux.io.memen     := io.wbctrlpath.bits.memorreg_memen
+  csralumux.io.choosecsr := io.wbctrlpath.bits.csroralu_isscr
+
   //内部连线
   memregmux.io.memdata := datamem.io.dataout
+  datamem.io.clock     := clock
   io.wbdataout         := csralumux.io.out
   csralumux.io.aludata := memregmux.io.out
   csralumux.io.csrdata := csr.io.dataout
   nextpc.io.csrdata    := csr.io.pcdataout
 
   //外部连线
-  nextpc.io.csrjump := io.wbctrlpath.bits.csrisjump
-  nextpc.io.imm     := io.imm
-  nextpc.io.rs1     := io.rs1
-
-  datamem.io.data  := io.data
-  datamem.io.wr    := io.wbctrlpath.bits.datamem_wr
-  datamem.io.valid := io.wbctrlpath.bits.datamem_rd
-  datamem.io.wmask := io.wbctrlpath.bits.datamem_wmask
-  datamem.io.clock := clock
-
-  csr.io.wr    := io.wbctrlpath.bits.csr_wr
-  csr.io.re    := io.wbctrlpath.bits.csr_rd
-  csr.io.wpc   := io.wbctrlpath.bits.csr_wpc
-  csr.io.ecall := io.wbctrlpath.bits.csr_ecall
-  csr.io.mret  := io.wbctrlpath.bits.csr_mret
-
-  csr.io.rs1data := io.rs1data
-
-  memregmux.io.memen     := io.wbctrlpath.bits.memorreg_memen
-  csralumux.io.choosecsr := io.wbctrlpath.bits.csroralu_isscr
-
-  io.nextpc         := nextpc.io.nextpc
-  io.dataout        := datamem.io.dataout
-  io.memorregmuxout := memregmux.io.out
+  io.nextpc := nextpc.io.nextpc
+  io.reg_wr := io.wbctrlpath.bits.reg_wr
 
   //临时使用
   io.exu2wb.ready     := true.B

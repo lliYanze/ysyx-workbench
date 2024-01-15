@@ -131,18 +131,10 @@ class IDU extends Module {
     val idu2exu  = Decoupled(new IDU2EXUPath)
     val ctrlpath = Decoupled(new CtrlPath)
 
-    val ftrace = Output(Bool())
-    val regwr  = Output(Bool())
-    val csrctl = Output(UInt(3.W))
-
-    val immout = Output(UInt(32.W))
-
-    val rs1out    = Output(UInt(32.W))
-    val rs2out    = Output(UInt(32.W))
     val wr        = Input(Bool())
     val regdatain = Input(UInt(32.W))
-
     val end_state = Output(UInt(32.W))
+    val ftrace    = Output(Bool())
 
   })
 
@@ -151,54 +143,32 @@ class IDU extends Module {
   val regfile = Module(new RegFile)
   val csrctl  = Module(new CSRCTL)
 
-  csrctl.io.ctl := decode.io.csrctl
-  csrctl.io.rd  := io.ifu2idu.bits.inst(11, 7)
-  csrctl.io.rs1 := io.ifu2idu.bits.inst(19, 15)
-
-  decode.io.inst := io.ifu2idu.bits.inst
-
+  //两总线之间连线
   io.idu2exu.bits.pc   := io.ifu2idu.bits.pc
   io.idu2exu.bits.inst := io.ifu2idu.bits.inst
-  io.idu2exu.bits.imm  := immgen.io.out
-  io.idu2exu.bits.rs1  := regfile.io.rs1out
-  io.idu2exu.bits.rs2  := regfile.io.rs2out
 
-  //总线临时使用
-  io.ifu2idu.ready  := true.B
-  io.idu2exu.valid  := true.B
-  io.ctrlpath.valid := true.B
-
-  immgen.io.format := decode.io.format
-  immgen.io.inst   := io.ifu2idu.bits.inst
-
+  //外部总线连接
+  decode.io.inst := io.ifu2idu.bits.inst
+  immgen.io.inst := io.ifu2idu.bits.inst
+  csrctl.io.rd   := io.ifu2idu.bits.inst(11, 7)
+  csrctl.io.rs1  := io.ifu2idu.bits.inst(19, 15)
+  regfile.io.rd  := io.ifu2idu.bits.inst(11, 7)
   regfile.io.rs1 := io.ifu2idu.bits.inst(19, 15)
   regfile.io.rs2 := io.ifu2idu.bits.inst(24, 20)
-  regfile.io.rd  := io.ifu2idu.bits.inst(11, 7)
 
-  io.ctrlpath.bits.exuctrlpath.rs1type  := decode.io.s1type
-  io.ctrlpath.bits.exuctrlpath.rs2type  := decode.io.s2type
-  io.ctrlpath.bits.exuctrlpath.jump_ctl := decode.io.jumpctl
-  io.ctrlpath.bits.exuctrlpath.alu_op   := decode.io.op
+  io.idu2exu.bits.imm := immgen.io.out
+  io.idu2exu.bits.rs1 := regfile.io.rs1out
+  io.idu2exu.bits.rs2 := regfile.io.rs2out
 
-  regfile.io.wr     := io.wr
-  regfile.io.datain := io.regdatain
-
-  io.ftrace                              := decode.io.ftrace
-  io.ctrlpath.bits.wbctrlpath.datamem_rd := decode.io.memrd
-  io.ctrlpath.bits.wbctrlpath.datamem_wr := decode.io.memwr
-
+  io.ctrlpath.bits.exuctrlpath.rs1type       := decode.io.s1type
+  io.ctrlpath.bits.exuctrlpath.rs2type       := decode.io.s2type
+  io.ctrlpath.bits.exuctrlpath.jump_ctl      := decode.io.jumpctl
+  io.ctrlpath.bits.exuctrlpath.alu_op        := decode.io.op
+  io.ctrlpath.bits.wbctrlpath.datamem_rd     := decode.io.memrd
+  io.ctrlpath.bits.wbctrlpath.datamem_wr     := decode.io.memwr
   io.ctrlpath.bits.wbctrlpath.datamem_wmask  := decode.io.memctl
   io.ctrlpath.bits.wbctrlpath.memorreg_memen := decode.io.tomemorreg
-  io.regwr                                   := decode.io.regwr
-  io.csrctl                                  := decode.io.csrctl
-
-  io.immout := immgen.io.out
-
-  io.rs1out := regfile.io.rs1out
-  io.rs2out := regfile.io.rs2out
-
-  io.end_state := regfile.io.end_state
-
+  io.ctrlpath.bits.wbctrlpath.reg_wr         := decode.io.regwr
   io.ctrlpath.bits.wbctrlpath.csr_wr         := csrctl.io.wreg
   io.ctrlpath.bits.wbctrlpath.csr_wpc        := csrctl.io.wpc
   io.ctrlpath.bits.wbctrlpath.csr_rd         := csrctl.io.read
@@ -206,5 +176,22 @@ class IDU extends Module {
   io.ctrlpath.bits.wbctrlpath.csrisjump      := csrctl.io.jump
   io.ctrlpath.bits.wbctrlpath.csr_ecall      := csrctl.io.ecall
   io.ctrlpath.bits.wbctrlpath.csr_mret       := csrctl.io.mret
+
+  //总线临时使用
+  io.ifu2idu.ready  := true.B
+  io.idu2exu.valid  := true.B
+  io.ctrlpath.valid := true.B
+
+  //内部连线
+  csrctl.io.ctl    := decode.io.csrctl
+  immgen.io.format := decode.io.format
+
+  //wb使用
+  regfile.io.wr     := io.wr
+  regfile.io.datain := io.regdatain
+
+  // 其他模块使用
+  io.ftrace    := decode.io.ftrace
+  io.end_state := regfile.io.end_state
 
 }
