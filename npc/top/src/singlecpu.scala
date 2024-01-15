@@ -35,28 +35,15 @@ class Core extends Module {
   ifu.io.ifu2idu <> idu.io.ifu2idu
   idu.io.idu2exu <> exu.io.idu2exu
   exu.io.exu2wb <> wb.io.exu2wb
+  idu.io.ctrlpath <> exu.io.ctrlpath
+  wb.io.wbctrlpath <> exu.io.wbctrlpath
 
   ifu.io.pcin := wb.io.nextpc
 
-  wb.io.csrwr     := idu.io.wreg
-  wb.io.re        := idu.io.read
-  wb.io.wpc       := idu.io.wpc
-  wb.io.rs1data   := idu.io.rs1out
-  wb.io.ecall     := idu.io.ecall
-  wb.io.mret      := idu.io.mret
-  wb.io.choosecsr := idu.io.choosecsr
-  wb.io.memen     := idu.io.tomemorreg
-  wb.io.data      := idu.io.rs2out
-  wb.io.wr        := idu.io.memwr
-  wb.io.wmask     := idu.io.memctl
-  wb.io.valid     := idu.io.memrd
-  wb.io.imm       := idu.io.immout
-  wb.io.rs1       := idu.io.rs1out
-  wb.io.csrjump   := idu.io.csrjump
-  exu.io.ctl      := idu.io.jumpctl
-  exu.io.r1type   := idu.io.s1type
-  exu.io.r2type   := idu.io.s2type
-  exu.io.op       := idu.io.op
+  wb.io.rs1data := idu.io.rs1out
+  wb.io.data    := idu.io.rs2out
+  wb.io.imm     := idu.io.immout
+  wb.io.rs1     := idu.io.rs1out
 
   //写回时与reg有关的信号
   idu.io.regdatain := wb.io.wbdataout

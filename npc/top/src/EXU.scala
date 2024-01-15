@@ -72,29 +72,24 @@ class JumpCtl extends Module {
 
 import datapath.IDU2EXUPath
 import datapath.EXU2WBPath
+import datapath.CtrlPath
+import datapath.WBCtrlPath
 
 class EXU extends Module {
   val io = IO(new Bundle {
-    val exu2wb  = Decoupled(new EXU2WBPath)
-    val idu2exu = Flipped(Decoupled(new IDU2EXUPath))
-
-    val r2type = Input(UInt(2.W))
-    val r1type = Input(Bool())
-
-    val ctl = Input(UInt(3.W))
-
-    val op = Input(UInt(4.W))
-
-    val end = Output(Bool())
+    val exu2wb     = Decoupled(new EXU2WBPath)
+    val idu2exu    = Flipped(Decoupled(new IDU2EXUPath))
+    val ctrlpath   = Flipped(Decoupled(new CtrlPath))
+    val wbctrlpath = Decoupled(new WBCtrlPath)
+    val end        = Output(Bool())
   })
-  val r1mux = Module(new R1mux)
-  val r2mux = Module(new R2mux)
-
+  val r1mux   = Module(new R1mux)
+  val r2mux   = Module(new R2mux)
   val jumpctl = Module(new JumpCtl)
-
-  val alu = Module(new Alu)
+  val alu     = Module(new Alu)
 
 //两总线之间的连接
+  io.wbctrlpath.bits := io.ctrlpath.bits.wbctrlpath
   //idu2exu
   io.exu2wb.bits.pc   := io.idu2exu.bits.pc
   io.exu2wb.bits.inst := io.idu2exu.bits.inst
@@ -106,29 +101,26 @@ class EXU extends Module {
 
   r1mux.io.pc     := io.idu2exu.bits.pc
   r1mux.io.rs1    := io.idu2exu.bits.rs1
-  r1mux.io.r1type := io.r1type
+  r1mux.io.r1type := io.ctrlpath.bits.exuctrlpath.rs1type
 
   r2mux.io.rs2    := io.idu2exu.bits.rs2
   r2mux.io.imm    := io.idu2exu.bits.imm
-  r2mux.io.r2type := io.r2type
+  r2mux.io.r2type := io.ctrlpath.bits.exuctrlpath.rs2type
 
   alu.io.s1 := r1mux.io.r1out
   alu.io.s2 := r2mux.io.r2out
+  alu.io.op := io.ctrlpath.bits.exuctrlpath.alu_op
 
   jumpctl.io.eq   := alu.io.eq
   jumpctl.io.less := alu.io.less
+  jumpctl.io.ctl  := io.ctrlpath.bits.exuctrlpath.jump_ctl
 
   //未实现总线临时使用部分
 
-  io.idu2exu.ready := true.B
-  io.exu2wb.valid  := true.B
+  io.idu2exu.ready    := true.B
+  io.exu2wb.valid     := true.B
+  io.ctrlpath.ready   := true.B
+  io.wbctrlpath.valid := true.B
 
-  jumpctl.io.ctl := io.ctl
-
-  alu.io.op := io.op
-  io.end    := alu.io.end
-  // io.pclj   := jumpctl.io.pclj
-  // io.pcrs1  := jumpctl.io.pcrs1
-  // io.out    := alu.io.out
-
+  io.end := alu.io.end
 }

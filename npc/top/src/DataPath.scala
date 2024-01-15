@@ -23,3 +23,30 @@ class EXU2WBPath extends Bundle {
   val pcrs1       = Input(Bool()) //true rs1 ,false PC
   val datamemaddr = UInt(32.W)
 }
+
+class EXUCtrlPath extends Bundle {
+  val rs1type  = UInt(2.W)
+  val rs2type  = UInt(2.W)
+  val alu_op   = UInt(4.W)
+  val jump_ctl = UInt(3.W)
+}
+
+class WBCtrlPath extends Bundle {
+  val csrisjump      = Bool()
+  val datamem_wr     = Bool()
+  val datamem_rd     = Bool()
+  val datamem_wmask  = UInt(3.W)
+  val csr_wr         = Bool()
+  val csr_rd         = Bool()
+  val csr_wpc        = Bool()
+  val csr_ecall      = Bool()
+  val csr_mret       = Bool()
+  val memorreg_memen = Bool()
+  val csroralu_isscr = Bool()
+
+}
+
+class CtrlPath extends Bundle {
+  val exuctrlpath = new EXUCtrlPath
+  val wbctrlpath  = new WBCtrlPath
+}

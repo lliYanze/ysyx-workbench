@@ -122,25 +122,18 @@ class CSRCTL extends Module {
   }
 }
 
-import datapath.{IDU2EXUPath, IFU2IDUPath}
+import datapath.{CtrlPath, IDU2EXUPath, IFU2IDUPath}
 import InstDecode._
 
 class IDU extends Module {
   val io = IO(new Bundle {
-    val ifu2idu = Flipped(Decoupled(new IFU2IDUPath))
-    val idu2exu = Decoupled(new IDU2EXUPath)
+    val ifu2idu  = Flipped(Decoupled(new IFU2IDUPath))
+    val idu2exu  = Decoupled(new IDU2EXUPath)
+    val ctrlpath = Decoupled(new CtrlPath)
 
-    val s1type     = Output(Bool()) //true : reg, false : PC
-    val s2type     = Output(UInt(2.W)) //ture : reg, false : imm
-    val jumpctl    = Output(UInt(3.W))
-    val op         = Output(UInt(4.W))
-    val ftrace     = Output(Bool())
-    val memrd      = Output(Bool())
-    val memwr      = Output(Bool())
-    val memctl     = Output(UInt(3.W))
-    val tomemorreg = Output(Bool())
-    val regwr      = Output(Bool())
-    val csrctl     = Output(UInt(3.W))
+    val ftrace = Output(Bool())
+    val regwr  = Output(Bool())
+    val csrctl = Output(UInt(3.W))
 
     val immout = Output(UInt(32.W))
 
@@ -150,15 +143,6 @@ class IDU extends Module {
     val regdatain = Input(UInt(32.W))
 
     val end_state = Output(UInt(32.W))
-
-    //csrctl未实现总线
-    val wreg      = Output(Bool())
-    val wpc       = Output(Bool())
-    val read      = Output(Bool())
-    val choosecsr = Output(Bool())
-    val csrjump   = Output(Bool())
-    val ecall     = Output(Bool())
-    val mret      = Output(Bool())
 
   })
 
@@ -179,8 +163,10 @@ class IDU extends Module {
   io.idu2exu.bits.rs1  := regfile.io.rs1out
   io.idu2exu.bits.rs2  := regfile.io.rs2out
 
-  io.ifu2idu.ready := true.B
-  io.idu2exu.valid := true.B
+  //总线临时使用
+  io.ifu2idu.ready  := true.B
+  io.idu2exu.valid  := true.B
+  io.ctrlpath.valid := true.B
 
   immgen.io.format := decode.io.format
   immgen.io.inst   := io.ifu2idu.bits.inst
@@ -189,20 +175,22 @@ class IDU extends Module {
   regfile.io.rs2 := io.ifu2idu.bits.inst(24, 20)
   regfile.io.rd  := io.ifu2idu.bits.inst(11, 7)
 
+  io.ctrlpath.bits.exuctrlpath.rs1type  := decode.io.s1type
+  io.ctrlpath.bits.exuctrlpath.rs2type  := decode.io.s2type
+  io.ctrlpath.bits.exuctrlpath.jump_ctl := decode.io.jumpctl
+  io.ctrlpath.bits.exuctrlpath.alu_op   := decode.io.op
+
   regfile.io.wr     := io.wr
   regfile.io.datain := io.regdatain
 
-  io.s1type     := decode.io.s1type
-  io.s2type     := decode.io.s2type
-  io.jumpctl    := decode.io.jumpctl
-  io.op         := decode.io.op
-  io.ftrace     := decode.io.ftrace
-  io.memrd      := decode.io.memrd
-  io.memwr      := decode.io.memwr
-  io.memctl     := decode.io.memctl
-  io.tomemorreg := decode.io.tomemorreg
-  io.regwr      := decode.io.regwr
-  io.csrctl     := decode.io.csrctl
+  io.ftrace                              := decode.io.ftrace
+  io.ctrlpath.bits.wbctrlpath.datamem_rd := decode.io.memrd
+  io.ctrlpath.bits.wbctrlpath.datamem_wr := decode.io.memwr
+
+  io.ctrlpath.bits.wbctrlpath.datamem_wmask  := decode.io.memctl
+  io.ctrlpath.bits.wbctrlpath.memorreg_memen := decode.io.tomemorreg
+  io.regwr                                   := decode.io.regwr
+  io.csrctl                                  := decode.io.csrctl
 
   io.immout := immgen.io.out
 
@@ -211,12 +199,12 @@ class IDU extends Module {
 
   io.end_state := regfile.io.end_state
 
-  io.wreg      := csrctl.io.wreg
-  io.wpc       := csrctl.io.wpc
-  io.read      := csrctl.io.read
-  io.choosecsr := csrctl.io.choosecsr
-  io.csrjump   := csrctl.io.jump
-  io.ecall     := csrctl.io.ecall
-  io.mret      := csrctl.io.mret
+  io.ctrlpath.bits.wbctrlpath.csr_wr         := csrctl.io.wreg
+  io.ctrlpath.bits.wbctrlpath.csr_wpc        := csrctl.io.wpc
+  io.ctrlpath.bits.wbctrlpath.csr_rd         := csrctl.io.read
+  io.ctrlpath.bits.wbctrlpath.csroralu_isscr := csrctl.io.choosecsr
+  io.ctrlpath.bits.wbctrlpath.csrisjump      := csrctl.io.jump
+  io.ctrlpath.bits.wbctrlpath.csr_ecall      := csrctl.io.ecall
+  io.ctrlpath.bits.wbctrlpath.csr_mret       := csrctl.io.mret
 
 }
