@@ -1,25 +1,26 @@
 *.*
 *
-!*/
+*/
 !Makefile
-!*.mk
-!*.scala
-!*.[cSh]
-!*.v
-!*.cpp
-!*.cc
+!csrc/
+!top/
+!lib/
 !.gitignore
 !.scalafmt.conf
 !build.sc
 !README.md
-build/
-tmp/
-!/lib/*.so
+
+# !*.mk
+# !*.scala
+# !*.[cSh]
+# !*.v
+# !*.cpp
+# !*.cc
 
 # mill
-out/
-.bsp/
-.idea/
-.idea_modules/
-test_run_dir/
+# out/
+# .bsp/
+# .idea/
+# .idea_modules/
+# test_run_dir/
 
