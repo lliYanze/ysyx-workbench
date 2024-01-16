@@ -1,4 +1,5 @@
 #include <VTOP.h>
+#include <config.h>
 #include <cpu/difftest/difftest.h>
 #include <cstdint>
 #include <cstdio>
@@ -15,6 +16,7 @@ extern paddr_t now_pc;
 
 extern "C" void stopnpc(int state) { set_npc_state(NPC_END, now_pc, state); }
 
+#ifdef TRACE
 // 环形缓冲区
 #define IRING_BUF_SIZE 20
 int first = 0;
@@ -41,7 +43,10 @@ static void fmt(char *p, uint32_t pc, uint32_t inst) {
   p += space_len;
 }
 
+#endif
+
 extern "C" void insttrace(uint32_t pc, uint32_t inst) {
+#ifdef TRACE
   if (first == 0) {
     first = 1;
     return;
@@ -54,11 +59,13 @@ extern "C" void insttrace(uint32_t pc, uint32_t inst) {
               (uint8_t *)&inst, PC_LEN);
 
   log_write("0x%08x: %s\n", pc, p);
+#endif
 }
 
 #include <utils/trace.h>
 
 extern "C" void ftrace(uint32_t pc, uint32_t inst, uint32_t dst_addr) {
+#ifdef FTRACE
   uint32_t i = inst;
   static int space_num = 0;
   int rd = BITS(i, 11, 7);
@@ -82,6 +89,7 @@ extern "C" void ftrace(uint32_t pc, uint32_t inst, uint32_t dst_addr) {
     }
     ftrace_log_write("ret --> %s @[0x%x]\n", dst_func.name, dst_addr);
   }
+#endif
 }
 
 #include <mem/pmem.h>
@@ -124,6 +132,7 @@ extern "C" int data_read(paddr_t addr, svBitVecVal *wmask, svBit valid) {
       addr > 0x80000000 + 0xfffffff)
     return 0;
   int buf = 0;
+  log_write(" md5从 0x%08x \n ", addr);
   if (*wmask == 0x0) {
     word_t lowbyte = pmem_read(addr, 1);
     buf = SEXT(lowbyte, 8); // 有符号数扩展
@@ -150,7 +159,6 @@ extern "C" void data_write(paddr_t addr, int buf, svBitVecVal *wmask) {
     if (*wmask == 0x2) {
       putchar(buf);
       fflush(stdout);
-      // putchar('\n');
     }
     difftest_skip_ref();
     log_write("向串口(0x%08x) 写入 0x%08x  mask is %d\n", addr, buf, *wmask);

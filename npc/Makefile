@@ -45,7 +45,7 @@ CFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 CFLAGS += -I/usr/lib/llvm-14/include -std=c++14   -fno-exceptions -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 CFLAGS += -fPIE
 LDFLAGS += $(shell llvm-config --libs)
-CFLAGS += -Wall -Werror
+CFLAGS += -Wall -Werror -O2
 
 
 # CFLAGS += -I$(NEMU_HOME)/include

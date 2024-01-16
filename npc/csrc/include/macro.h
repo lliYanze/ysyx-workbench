@@ -2,8 +2,8 @@
 #define __MACRO_H__
 
 // npc状态
+#include <config.h>
 #include <inttypes.h>
-#include <stdlib.h>
 #define NPC_RUNNING 0
 #define NPC_STOP 1
 #define NPC_END 2
@@ -14,8 +14,8 @@
 
 // PMEM大小
 #define CONFIG_PMEM_MALLOC
+/* #define CONFIG_MSIZE 0x8000000 */
 #define CONFIG_MSIZE 0x8000000
-
 #define CONFIG_MBASE 0x80000000
 
 #define CONFIG_PC_RESET_OFFSET 0x0
@@ -108,21 +108,33 @@ extern NPCstate npc_state;
 
 #define PG_ALIGN __attribute((aligned(4096))) // 4kb 对齐
 
+#ifdef LOGENABLE
 #define log_write(...)                                                         \
   do {                                                                         \
     extern FILE *log_fp;                                                       \
     fprintf(log_fp, __VA_ARGS__);                                              \
     fflush(log_fp);                                                            \
   } while (0)
+#else
+#define log_write(...)
+#endif // LOGENABLE
 
 //
 //
-//
+
+#ifdef LOGENABLE
+#ifdef FTRACE
 #define ftrace_log_write(...)                                                  \
   do {                                                                         \
     extern FILE *ftrace_fp;                                                    \
     fprintf(ftrace_fp, __VA_ARGS__);                                           \
     fflush(ftrace_fp);                                                         \
   } while (0)
+#else
+#define ftrace_log_write(...)
+#endif // FTRACE
+#else
+#define ftrace_log_write(...)
+#endif // LOGENABLE
 
 #endif // MACRO_H
