@@ -128,8 +128,8 @@ extern "C" int data_read(paddr_t addr, svBitVecVal *wmask, svBit valid) {
     return rtc_time[1];
   }
 
-  if (addr == 0x00000000 || valid == 0x0 || addr < 0x80000000 ||
-      addr > 0x80000000 + 0xfffffff)
+  if (addr == 0x00000000 || valid == 0x0 || addr < CONFIG_MBASE ||
+      addr > CONFIG_MBASE + CONFIG_MSIZE)
     return 0;
   int buf = 0;
   log_write(" md5从 0x%08x \n ", addr);

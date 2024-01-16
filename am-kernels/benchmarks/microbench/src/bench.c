@@ -70,11 +70,11 @@ static uint32_t score(Benchmark *b, uint64_t usec) {
 
 int main(const char *args) {
   const char *setting_name = args;
-  setting_name = "train";
   if (args == NULL || strcmp(args, "") == 0) {
     printf("Empty mainargs. Use \"ref\" by default\n");
     setting_name = "ref";
   }
+  setting_name = "train";
   int setting_id = -1;
 
   if (strcmp(setting_name, "test") == 0)
@@ -102,9 +102,8 @@ int main(const char *args) {
   uint64_t score_time = 0;
 
   for (int i = 0; i < LENGTH(benchmarks); i++) {
-    // Benchmark *bench = &benchmarks[i];
-    Benchmark *bench = &benchmarks[LENGTH(benchmarks) - 1];
-    // Benchmark *bench = &benchmarks[1];
+    Benchmark *bench = &benchmarks[i];
+    // Benchmark *bench = &benchmarks[LENGTH(benchmarks) - 1];
     current = bench;
     setting = &bench->settings[setting_id];
     const char *msg = bench_check(bench);
