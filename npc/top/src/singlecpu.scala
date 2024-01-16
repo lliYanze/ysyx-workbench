@@ -22,9 +22,9 @@ class Core extends Module {
   val exu = Module(new EXU)
   val wb  = Module(new WB)
 
-  val endnpc    = Module(new EndNpc)
-  val insttrace = Module(new InstTrace)
-  val ftrace    = Module(new Ftrace)
+  // val endnpc = Module(new EndNpc)
+  // val insttrace = Module(new InstTrace)
+  // val ftrace    = Module(new Ftrace)
 
   //链接外部信号
   io.nextpc     := wb.io.nextpc
@@ -42,17 +42,17 @@ class Core extends Module {
   idu.io.wr        := wb.io.reg_wr
   ifu.io.pcin      := wb.io.nextpc
 
-  insttrace.io.inst  := ifu.io.instout
-  insttrace.io.pc    := ifu.io.pc
-  insttrace.io.clock := clock
+  // insttrace.io.inst  := ifu.io.instout
+  // insttrace.io.pc    := ifu.io.pc
+  // insttrace.io.clock := clock
+  //
+  // ftrace.io.inst   := ifu.io.instout
+  // ftrace.io.pc     := ifu.io.pc
+  // ftrace.io.nextpc := wb.io.nextpc
+  // ftrace.io.clock  := clock
+  // ftrace.io.jump   := idu.io.ftrace
 
-  ftrace.io.inst   := ifu.io.instout
-  ftrace.io.pc     := ifu.io.pc
-  ftrace.io.nextpc := wb.io.nextpc
-  ftrace.io.clock  := clock
-  ftrace.io.jump   := idu.io.ftrace
-
-  endnpc.io.endflag := exu.io.end
-  endnpc.io.state   := idu.io.end_state
+  // endnpc.io.endflag := exu.io.end
+  // endnpc.io.state   := idu.io.end_state
 
 }

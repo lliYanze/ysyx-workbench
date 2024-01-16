@@ -1,0 +1,10 @@
+bin/
+nangate45/
+result
+*.log
+
+!*.tcl
+!*.md
+!Makefile
+!example/
+!example/*

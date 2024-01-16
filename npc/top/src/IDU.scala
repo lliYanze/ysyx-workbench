@@ -176,6 +176,7 @@ class IDU extends Module {
   io.ctrlpath.bits.wbctrlpath.csrisjump      := csrctl.io.jump
   io.ctrlpath.bits.wbctrlpath.csr_ecall      := csrctl.io.ecall
   io.ctrlpath.bits.wbctrlpath.csr_mret       := csrctl.io.mret
+  
 
   //总线临时使用
   io.ifu2idu.ready  := true.B
