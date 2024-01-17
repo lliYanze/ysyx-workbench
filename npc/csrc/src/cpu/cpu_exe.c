@@ -10,7 +10,9 @@ VerilatedVcdC *mytrace = new VerilatedVcdC;
 
 CPU_state cpu = {};
 
-void single_exe() { top->io_inst = pmem_read(top->io_pc, 4); }
+void single_exe() {
+  // top->io_inst = pmem_read(top->io_pc, 4);
+}
 
 paddr_t now_pc = 0;
 paddr_t next_pc = 0;

@@ -40,3 +40,39 @@ class DataMem extends BlackBox with HasBlackBoxInline {
   )
 
 }
+
+class InstMemRead extends BlackBox with HasBlackBoxInline {
+  val io = IO(new Bundle {
+    val pc    = Input(UInt(32.W))
+    val clock = Input(Clock())
+    val inst  = Output(UInt(32.W))
+  })
+  setInline(
+    "InstMemRead.v",
+    s"""
+       |module InstMemRead(
+       |    input wire [31:0] pc,
+       |    input wire clock,
+       |    output var [31:0] inst
+       |);
+       | always @(posedge clock) begin
+       | inst <= data_read(pc, 3'b010, 1'b1);
+       | end
+       |endmodule
+       |""".stripMargin
+  )
+}
+
+class InstMem extends Module {
+  val io = IO(new Bundle {
+    val pc   = Input(UInt(32.W))
+    val inst = Output(UInt(32.W))
+  })
+  val instmemread = Module(new InstMemRead)
+  // val instreg     = RegNext(instmemread.io.inst, 0.U(32.W))
+  instmemread.io.pc    := io.pc
+  instmemread.io.clock := clock
+  // io.inst              := instreg
+  //
+  io.inst := instmemread.io.inst
+}

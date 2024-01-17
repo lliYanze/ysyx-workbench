@@ -11,8 +11,7 @@ class TOP extends Module {
 
   })
   val core = Module(new Core)
-  io.pc        := core.io.pc
-  core.io.inst := io.inst
-  io.nextpc    := core.io.nextpc
+  io.pc     := core.io.pc
+  io.nextpc := core.io.nextpc
 
 }

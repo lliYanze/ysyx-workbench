@@ -12,7 +12,6 @@ import WB.WB
 
 class Core extends Module {
   val io = IO(new Bundle {
-    val inst   = Input(UInt(32.W))
     val nextpc = Output(UInt(32.W))
     val pc     = Output(UInt(32.W))
   })
@@ -27,9 +26,8 @@ class Core extends Module {
   val ftrace    = Module(new Ftrace)
 
   //链接外部信号
-  io.nextpc     := wb.io.nextpc
-  io.pc         := ifu.io.pc
-  ifu.io.instin := io.inst
+  io.nextpc := wb.io.nextpc
+  io.pc     := ifu.io.pc
 
   ifu.io.ifu2idu <> idu.io.ifu2idu
   idu.io.idu2exu <> exu.io.idu2exu

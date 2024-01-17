@@ -1,10 +1,10 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
-/* #define TRACE */
-/* #define FTRACE */
+#define TRACE
+#define FTRACE
 /**/
-/* #define LOGENABLE */
-/* #define DIFF */
+#define LOGENABLE
+#define DIFF
 
 #endif

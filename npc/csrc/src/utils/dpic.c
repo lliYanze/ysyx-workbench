@@ -132,7 +132,6 @@ extern "C" int data_read(paddr_t addr, svBitVecVal *wmask, svBit valid) {
       addr > CONFIG_MBASE + CONFIG_MSIZE)
     return 0;
   int buf = 0;
-  log_write(" md5从 0x%08x \n ", addr);
   if (*wmask == 0x0) {
     word_t lowbyte = pmem_read(addr, 1);
     buf = SEXT(lowbyte, 8); // 有符号数扩展
