@@ -5,6 +5,6 @@
 #define FTRACE
 /**/
 #define LOGENABLE
-#define DIFF
+/* #define DIFF */
 
 #endif

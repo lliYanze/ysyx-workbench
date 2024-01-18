@@ -4,11 +4,25 @@ import Trace._
 import instsinfo._
 
 import chisel3._
+import chisel3.util.DecoupledIO
 
 import IFU.IFU
 import IDU.IDU
 import EXU.EXU
 import WB.WB
+
+object StageConnect {
+  def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T]) = {
+    val arch = "multi"
+    if (arch == "single") {
+      right.bits  := left.bits
+      right.valid := left.valid
+      left.ready  := right.ready
+    } else {
+      right <> left
+    }
+  }
+}
 
 class Core extends Module {
   val io = IO(new Bundle {
@@ -29,11 +43,11 @@ class Core extends Module {
   io.nextpc := wb.io.nextpc
   io.pc     := ifu.io.pc
 
-  ifu.io.ifu2idu <> idu.io.ifu2idu
-  idu.io.idu2exu <> exu.io.idu2exu
-  exu.io.exu2wb <> wb.io.exu2wb
-  idu.io.ctrlpath <> exu.io.ctrlpath
-  wb.io.wbctrlpath <> exu.io.wbctrlpath
+  StageConnect(ifu.io.ifu2idu, idu.io.ifu2idu)
+  StageConnect(idu.io.idu2exu, exu.io.idu2exu)
+  StageConnect(exu.io.exu2wb, wb.io.exu2wb)
+  StageConnect(idu.io.ctrlpath, exu.io.ctrlpath)
+  StageConnect(exu.io.wbctrlpath, wb.io.wbctrlpath)
 
   //写回时内部有关的信号
   idu.io.regdatain := wb.io.wbdataout
