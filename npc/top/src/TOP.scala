@@ -8,10 +8,12 @@ class TOP extends Module {
     val inst   = Input(UInt(32.W))
     val pc     = Output(UInt(32.W))
     val nextpc = Output(UInt(32.W))
+    val diff   = Output(Bool())
 
   })
   val core = Module(new Core)
   io.pc     := core.io.pc
   io.nextpc := core.io.nextpc
+  io.diff   := core.io.diff
 
 }

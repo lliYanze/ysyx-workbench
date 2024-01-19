@@ -51,7 +51,7 @@ void init_difftest() {
 #endif
 }
 
-void difftest_step(vaddr_t pc, vaddr_t npc) {
+void difftest_step(vaddr_t pc, vaddr_t npc, char npc_diff) {
 #ifdef DIFF
   CPU_state ref_r;
 
@@ -62,8 +62,10 @@ void difftest_step(vaddr_t pc, vaddr_t npc) {
     is_skip_ref = false;
     return;
   }
-  difftest_exec(1);
-  difftest_regcpy(&ref_r, DIFFTEST_TO_DUT);
-  checkregs(&ref_r, pc);
+  if (npc_diff != 0) {
+    difftest_exec(1);
+    difftest_regcpy(&ref_r, DIFFTEST_TO_DUT);
+    checkregs(&ref_r, pc);
+  }
 #endif
 }

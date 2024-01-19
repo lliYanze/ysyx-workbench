@@ -601,11 +601,12 @@ class InstDecode extends Module {
         ),
         ///***************E***************//
         instructions.begin -> List(
-          TYPE.E,
+          TYPE.BG,
           s1Reg,
           RS2MUX.IMM,
           JUMPCTL.NOTJUMP,
-          OPCTL.NOP,
+          // JUMPCTL.JLPC,
+          OPCTL.BEGIN,
           notFtrace,
           mnotwr,
           alutoreg,

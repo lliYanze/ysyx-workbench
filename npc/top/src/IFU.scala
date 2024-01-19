@@ -24,6 +24,8 @@ class IFU extends Module {
     val pcin = Input(UInt(32.W))
     val pc   = Output(UInt(32.W))
 
+    val diff = Output(Bool())
+
   })
   val pc      = Module(new PC)
   val instmem = Module(new InstMem)
@@ -42,24 +44,27 @@ class IFU extends Module {
   )
 
   val ifu2iduPath = Wire(new IFU2IDUPath)
-  ifu2iduPath.pc   := pc.io.pc
+  ifu2iduPath.pc   := Mux(state === s_begin, "h8000_0000".U, pc.io.pc)
   ifu2iduPath.inst := instmem.io.inst
 
   val axistate = RegEnable(ifu2iduPath, state === s_free)
   io.ifu2idu.bits := axistate
-
+//Fixme: 用来规避最开始的nextpc问题
   pc.io.pcin := Mux(state === s_begin, "h8000_0000".U, io.pcin)
-  io.pc      := pc.io.pc
+  io.pc      := Mux(state === s_begin, "h8000_0000".U, io.pcin)
 
   io.instout    := instmem.io.inst
   instmem.io.pc := Mux(io.pcin === "h0000_0004".U, "h8000_0000".U, io.pcin)
 
-  // io.ifu2idu.bits.pc   := pc.io.pc
-  // io.ifu2idu.bits.inst := instmem.io.inst
-
-  // io.ifu2idu.valid := RegInit(instmem.io.inst_valid)
   io.ifu2idu.valid := instmem.io.inst_valid
 
   instmem.io.en := Mux(state === s_free, true.B, false.B)
+
+  // io.diff := ~instmem.io.inst_valid
+  when(io.pcin === "h0000_0004".U) {
+    io.diff := false.B
+  }.otherwise {
+    io.diff := Mux(state === s_free, true.B, false.B)
+  }
 
 }

@@ -28,6 +28,7 @@ class Core extends Module {
   val io = IO(new Bundle {
     val nextpc = Output(UInt(32.W))
     val pc     = Output(UInt(32.W))
+    val diff   = Output(Bool())
   })
 
   val ifu = Module(new IFU)
@@ -42,6 +43,7 @@ class Core extends Module {
   //链接外部信号
   io.nextpc := wb.io.nextpc
   io.pc     := ifu.io.pc
+  io.diff   := ifu.io.diff
 
   StageConnect(ifu.io.ifu2idu, idu.io.ifu2idu)
   StageConnect(idu.io.idu2exu, exu.io.idu2exu)

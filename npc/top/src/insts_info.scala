@@ -6,13 +6,14 @@ import chisel3.util.BitPat
 import chisel3.util.experimental.decode._
 
 case object TYPE {
-  val U = 0.U(3.W)
-  val I = 1.U(3.W)
-  val S = 2.U(3.W)
-  val B = 3.U(3.W)
-  val R = 4.U(3.W)
-  val J = 5.U(3.W)
-  val E = 6.U(3.W)
+  val U  = 0.U(3.W)
+  val I  = 1.U(3.W)
+  val S  = 2.U(3.W)
+  val B  = 3.U(3.W)
+  val R  = 4.U(3.W)
+  val J  = 5.U(3.W)
+  val E  = 6.U(3.W)
+  val BG = 7.U(3.W)
 }
 
 case object RS2MUX {
@@ -35,9 +36,10 @@ case object OPCTL {
 
   val LUI = "b1001".U(4.W)
 
-  val NOP = "b1110".U(4.W)
-  val END = "b1111".U(4.W)
-  val ERR = "b1100".U(4.W)
+  val BEGIN = "b1100".U(4.W)
+  val NOP   = "b1110".U(4.W)
+  val END   = "b1111".U(4.W)
+  val ERR   = "b1100".U(4.W)
 }
 
 case object JUMPCTL {

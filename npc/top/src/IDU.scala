@@ -27,7 +27,7 @@ class ImmGen extends Module {
     //          12     11            10-5          4-1     0
     io.out := Cat(Fill(19, io.inst(31)), io.inst(31), io.inst(7), io.inst(30, 25), io.inst(11, 8), 0.U)
   }.otherwise {
-    io.out := 0.U
+    io.out := "h8000_0000".U
   }
 }
 
