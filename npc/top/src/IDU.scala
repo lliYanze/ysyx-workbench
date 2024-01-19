@@ -28,6 +28,8 @@ class ImmGen extends Module {
     io.out := Cat(Fill(19, io.inst(31)), io.inst(31), io.inst(7), io.inst(30, 25), io.inst(11, 8), 0.U)
   }.otherwise {
     io.out := "h8000_0000".U
+    // io.out := 0.U
+
   }
 }
 

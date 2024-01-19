@@ -37,31 +37,30 @@ class IFU extends Module {
     state,
     s_free,
     List(
-      s_begin -> Mux(io.pcin === "h0000_0004".U, s_free, s_begin),
+      s_begin -> Mux(io.pcin === "h8000_0000".U, s_free, s_begin),
       s_free -> Mux(instmem.io.inst_valid, s_working, s_free),
       s_working -> Mux(io.ifu2idu.ready, s_free, s_working)
     )
   )
 
   val ifu2iduPath = Wire(new IFU2IDUPath)
-  ifu2iduPath.pc   := Mux(state === s_begin, "h8000_0000".U, pc.io.pc)
+  ifu2iduPath.pc   := pc.io.pc
   ifu2iduPath.inst := instmem.io.inst
 
   val axistate = RegEnable(ifu2iduPath, state === s_free)
   io.ifu2idu.bits := axistate
-//Fixme: 用来规避最开始的nextpc问题
-  pc.io.pcin := Mux(state === s_begin, "h8000_0000".U, io.pcin)
-  io.pc      := Mux(state === s_begin, "h8000_0000".U, io.pcin)
+  pc.io.pcin      := io.pcin
+  io.pc           := io.pcin
 
   io.instout    := instmem.io.inst
-  instmem.io.pc := Mux(io.pcin === "h0000_0004".U, "h8000_0000".U, io.pcin)
+  instmem.io.pc := io.pcin
 
   io.ifu2idu.valid := instmem.io.inst_valid
 
   instmem.io.en := Mux(state === s_free, true.B, false.B)
 
-  // io.diff := ~instmem.io.inst_valid
-  when(io.pcin === "h0000_0004".U) {
+  //Fixme: diff规避最开始0x80000000的问题
+  when(io.pcin === "h8000_0000".U) {
     io.diff := false.B
   }.otherwise {
     io.diff := Mux(state === s_free, true.B, false.B)
