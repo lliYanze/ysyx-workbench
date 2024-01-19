@@ -53,11 +53,9 @@ class InstMemRead extends BlackBox with HasBlackBoxInline {
        |module InstMemRead(
        |    input wire [31:0] pc,
        |    input wire clock,
-       |    output var [31:0] inst
+       |    output wire [31:0] inst
        |);
-       |always @(posedge clock) begin
-       |  inst <= data_read(pc, 3'b010, 1'b1);
-       |end
+       | assign inst = data_read(pc, 3'b010, 1'b1);
        |endmodule
        |""".stripMargin
   )
@@ -65,21 +63,26 @@ class InstMemRead extends BlackBox with HasBlackBoxInline {
 
 class InstMemIO extends Bundle {
   val pc = Input(UInt(32.W))
-  // val en = Input(Bool())
+  val en = Input(Bool())
 
-  val inst = Output(UInt(32.W))
-  // val inst_valid = Output(Bool())
+  val inst       = Output(UInt(32.W))
+  val inst_valid = Output(Bool())
 }
 
 class InstMem extends Module {
   val io          = IO(new InstMemIO)
   val instmemread = Module(new InstMemRead)
-  // val instreg     = RegEnable(instmemread.io.inst, 0.U(32.W), io.en)
+  val instget     = RegNext(instmemread.io.inst)
+
+  val instvalid = Reg(Bool())
+  // val instvalid = RegNext(io.en)
+  io.inst_valid := instvalid
+  instvalid     := ~io.en
 
   instmemread.io.pc    := io.pc
   instmemread.io.clock := clock
-  // io.inst              := instreg
-  // io.inst_valid        := RegNext(io.en, false.B)
 
-  io.inst := instmemread.io.inst
+  // io.inst := instmemread.io.inst
+  io.inst := instget
+
 }

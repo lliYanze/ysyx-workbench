@@ -3,7 +3,7 @@ package WB
 import chisel3._
 import Memory._
 import instsinfo._
-import chisel3.util.Decoupled
+import chisel3.util._
 
 class NextPc extends Module {
   val io = IO(new Bundle {
@@ -120,6 +120,11 @@ class WB extends Module {
   val csralumux = Module(new CSRALUMUX)
   val csr       = Module(new CSR)
 
+//state
+
+  io.exu2wb.ready     := io.exu2wb.valid
+  io.wbctrlpath.ready := io.exu2wb.valid
+
 //总线连接
   nextpc.io.pc         := io.exu2wb.bits.pc
   nextpc.io.pclj       := io.exu2wb.bits.pclj
@@ -133,8 +138,9 @@ class WB extends Module {
   csr.io.idx           := io.exu2wb.bits.inst(31, 20)
   memregmux.io.aludata := io.exu2wb.bits.datamemaddr
 
-  nextpc.io.csrjump      := io.wbctrlpath.bits.csrisjump
-  datamem.io.wr          := io.wbctrlpath.bits.datamem_wr
+  nextpc.io.csrjump := io.wbctrlpath.bits.csrisjump
+  // datamem.io.wr          := io.wbctrlpath.bits.datamem_wr
+  datamem.io.wr          := io.wbctrlpath.bits.datamem_wr & io.exu2wb.valid
   datamem.io.valid       := io.wbctrlpath.bits.datamem_rd
   datamem.io.wmask       := io.wbctrlpath.bits.datamem_wmask
   csr.io.wr              := io.wbctrlpath.bits.csr_wr
@@ -155,9 +161,10 @@ class WB extends Module {
 
   //外部连线
   io.nextpc := nextpc.io.nextpc
-  io.reg_wr := io.wbctrlpath.bits.reg_wr
+  // io.reg_wr := io.wbctrlpath.bits.reg_wr
+  io.reg_wr := io.wbctrlpath.bits.reg_wr & io.exu2wb.valid
 
   //临时使用
-  io.exu2wb.ready     := true.B
-  io.wbctrlpath.ready := true.B
+  // io.exu2wb.ready     := true.B
+  // io.wbctrlpath.ready := true.B
 }

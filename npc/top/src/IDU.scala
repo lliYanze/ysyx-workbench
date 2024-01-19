@@ -143,6 +143,13 @@ class IDU extends Module {
   val regfile = Module(new RegFile)
   val csrctl  = Module(new CSRCTL)
 
+//state
+  val ready = Reg(Bool())
+  ready             := io.ifu2idu.valid
+  io.ifu2idu.ready  := ready
+  io.idu2exu.valid  := ready
+  io.ctrlpath.valid := ready
+
   //两总线之间连线
   io.idu2exu.bits.pc   := io.ifu2idu.bits.pc
   io.idu2exu.bits.inst := io.ifu2idu.bits.inst
@@ -176,12 +183,11 @@ class IDU extends Module {
   io.ctrlpath.bits.wbctrlpath.csrisjump      := csrctl.io.jump
   io.ctrlpath.bits.wbctrlpath.csr_ecall      := csrctl.io.ecall
   io.ctrlpath.bits.wbctrlpath.csr_mret       := csrctl.io.mret
-  
 
   //总线临时使用
-  io.ifu2idu.ready  := true.B
-  io.idu2exu.valid  := true.B
-  io.ctrlpath.valid := true.B
+  // io.ifu2idu.ready  := true.B
+  // io.idu2exu.valid  := true.B
+  // io.ctrlpath.valid := true.B
 
   //内部连线
   csrctl.io.ctl    := decode.io.csrctl

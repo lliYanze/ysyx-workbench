@@ -88,6 +88,12 @@ class EXU extends Module {
   val jumpctl = Module(new JumpCtl)
   val alu     = Module(new Alu)
 
+//state
+  io.idu2exu.ready    := io.idu2exu.valid
+  io.exu2wb.valid     := io.idu2exu.valid
+  io.ctrlpath.ready   := io.idu2exu.valid
+  io.wbctrlpath.valid := io.idu2exu.valid
+
 //两总线之间的连接
   io.wbctrlpath.bits  := io.ctrlpath.bits.wbctrlpath
   io.exu2wb.bits.pc   := io.idu2exu.bits.pc
@@ -121,9 +127,9 @@ class EXU extends Module {
   io.end := alu.io.end
 
   //未实现总线临时使用部分
-  io.idu2exu.ready    := true.B
-  io.exu2wb.valid     := true.B
-  io.ctrlpath.ready   := true.B
-  io.wbctrlpath.valid := true.B
+  // io.idu2exu.ready    := true.B
+  // io.exu2wb.valid     := true.B
+  // io.ctrlpath.ready   := true.B
+  // io.wbctrlpath.valid := true.B
 
 }
