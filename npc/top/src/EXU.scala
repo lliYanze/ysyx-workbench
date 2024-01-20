@@ -89,9 +89,11 @@ class EXU extends Module {
   val alu     = Module(new Alu)
 
 //state
-  io.idu2exu.ready    := io.idu2exu.valid
+  // io.idu2exu.ready    := io.idu2exu.valid
+  io.idu2exu.ready  := io.exu2wb.ready
+  io.ctrlpath.ready := io.wbctrlpath.ready
+  // io.ctrlpath.ready   := io.idu2exu.valid
   io.exu2wb.valid     := io.idu2exu.valid
-  io.ctrlpath.ready   := io.idu2exu.valid
   io.wbctrlpath.valid := io.idu2exu.valid
 
 //两总线之间的连接

@@ -146,11 +146,14 @@ class IDU extends Module {
   val csrctl  = Module(new CSRCTL)
 
 //state
-  val ready = Reg(Bool())
-  ready             := io.ifu2idu.valid
-  io.ifu2idu.ready  := ready
-  io.idu2exu.valid  := ready
-  io.ctrlpath.valid := ready
+  // val ready = Reg(Bool())
+  // ready := io.ifu2idu.valid
+  // io.ifu2idu.ready  := ready
+  io.ifu2idu.ready  := io.idu2exu.ready & io.ctrlpath.ready
+  io.idu2exu.valid  := io.ifu2idu.valid
+  io.ctrlpath.valid := io.ifu2idu.valid
+  // io.idu2exu.valid  := ready
+  // io.ctrlpath.valid := ready
 
   //两总线之间连线
   io.idu2exu.bits.pc   := io.ifu2idu.bits.pc

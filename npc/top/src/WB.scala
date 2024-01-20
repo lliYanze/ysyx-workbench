@@ -101,12 +101,6 @@ class WB extends Module {
     val exu2wb     = Flipped(Decoupled(new EXU2WBPath))
     val wbctrlpath = Flipped(Decoupled(new WBCtrlPath))
 
-    // val imm = Input(UInt(32.W))
-
-    // val data = Input(UInt(32.W))
-
-    //CSR
-    // val rs1data = Input(UInt(32.W))
     //csralumux
     val wbdataout = Output(UInt(32.W))
 
@@ -122,8 +116,18 @@ class WB extends Module {
 
 //state
 
-  io.exu2wb.ready     := io.exu2wb.valid
-  io.wbctrlpath.ready := io.exu2wb.valid
+  val exuvalid = Wire(Bool())
+  exuvalid := io.exu2wb.valid & io.wbctrlpath.valid
+
+  val wbisready = Wire(Bool())
+  wbisready := Mux(
+    exuvalid,
+    Mux(io.wbctrlpath.bits.datamem_rd, Mux(datamem.io.rready, true.B, false.B), true.B),
+    false.B
+  )
+
+  io.exu2wb.ready     := wbisready
+  io.wbctrlpath.ready := wbisready
 
 //总线连接
   nextpc.io.pc         := io.exu2wb.bits.pc
@@ -138,10 +142,9 @@ class WB extends Module {
   csr.io.idx           := io.exu2wb.bits.inst(31, 20)
   memregmux.io.aludata := io.exu2wb.bits.datamemaddr
 
-  nextpc.io.csrjump := io.wbctrlpath.bits.csrisjump
-  // datamem.io.wr          := io.wbctrlpath.bits.datamem_wr
-  datamem.io.wr          := io.wbctrlpath.bits.datamem_wr & io.exu2wb.valid
-  datamem.io.valid       := io.wbctrlpath.bits.datamem_rd
+  nextpc.io.csrjump      := io.wbctrlpath.bits.csrisjump
+  datamem.io.wr          := Mux(wbisready, io.wbctrlpath.bits.datamem_wr, false.B)
+  datamem.io.rvalid      := Mux(exuvalid, io.wbctrlpath.bits.datamem_rd, false.B)
   datamem.io.wmask       := io.wbctrlpath.bits.datamem_wmask
   csr.io.wr              := io.wbctrlpath.bits.csr_wr
   csr.io.re              := io.wbctrlpath.bits.csr_rd
@@ -153,7 +156,6 @@ class WB extends Module {
 
   //内部连线
   memregmux.io.memdata := datamem.io.dataout
-  datamem.io.clock     := clock
   io.wbdataout         := csralumux.io.out
   csralumux.io.aludata := memregmux.io.out
   csralumux.io.csrdata := csr.io.dataout
@@ -161,10 +163,6 @@ class WB extends Module {
 
   //外部连线
   io.nextpc := nextpc.io.nextpc
-  // io.reg_wr := io.wbctrlpath.bits.reg_wr
-  io.reg_wr := io.wbctrlpath.bits.reg_wr & io.exu2wb.valid
+  io.reg_wr := Mux(wbisready, io.wbctrlpath.bits.reg_wr, false.B)
 
-  //临时使用
-  // io.exu2wb.ready     := true.B
-  // io.wbctrlpath.ready := true.B
 }
