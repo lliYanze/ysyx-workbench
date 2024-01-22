@@ -39,9 +39,8 @@ class IFU extends Module {
   val ifu2iduPath  = Wire(new IFU2IDUPath)
   val axi2mem      = Wire(Flipped(new AxiLiteSignal))
   val instmemvalid = Wire(Bool())
-  // val instmemen    = Wire(Bool())
-  val work2down = Wire(Bool())
-  val work2ing  = Wire(Bool())
+  val work2down    = Wire(Bool())
+  val work2ing     = Wire(Bool())
 
   //state
   val state     = RegInit(s_begin)
@@ -68,6 +67,7 @@ class IFU extends Module {
 
   //AW通道
   axi2mem.awvalid := false.B
+  axi2mem.awaddr  := DontCare
 
   //W通道
   axi2mem.wdata  := DontCare
@@ -79,7 +79,7 @@ class IFU extends Module {
 
   //axi连线
   axi2mem.araddr   := io.pcin
-  instmemvalid     := axi2mem.rvalid
+  instmemvalid     := axi2mem.rvalid & axi2mem.rready
   io.instout       := axi2mem.rdata
   ifu2iduPath.inst := axi2mem.rdata
 
@@ -111,6 +111,7 @@ class IFU extends Module {
   instmemaxi.axi.rready := axi2mem.rready
 
   instmemaxi.axi.awvalid := axi2mem.awvalid
+  instmemaxi.axi.awaddr  := axi2mem.awaddr
   axi2mem.awready        := instmemaxi.axi.awready
 
   instmemaxi.axi.wdata  := axi2mem.wdata
@@ -118,7 +119,6 @@ class IFU extends Module {
   instmemaxi.axi.wvalid := axi2mem.wvalid
   axi2mem.wready        := instmemaxi.axi.wready
 
-  // axi2mem.arvalid := instmemen
   axi2mem.arready := instmemaxi.axi.arready
 
   axi2mem.bresp         := instmemaxi.axi.bresp

@@ -41,50 +41,72 @@ class DataMemRead extends BlackBox with HasBlackBoxInline {
 }
 import datapath.AxiLiteSignal
 
-// class DataMemAxi extends Module {
-//   val axi = IO(new AxiLiteSignal)
-//
-//   val rdata = Reg(axi.rdata.cloneType)
-//   rdata := datamemread.io.dataout
-//   val datamemread = Module(new DataMemRead)
-//   datamemread.io.addr  := axi.araddr
-//   datamemread.io.data  := axi.wdata
-//   datamemread.io.wr    := axi.wvalid
-//   datamemread.io.valid := axi.rvalid
-//   datamemread.io.wmask := axi.wstrb
-//   datamemread.io.clock := clock
-//   axi.rdata            := rdata
-//
-//
-//
-//
-// }
+class DataMemAxi extends Module {
+  val s_waitaddr :: s_wait_rvalid :: s_wait_rready :: Nil = Enum(3)
+
+  val axi      = IO(new AxiLiteSignal)
+  val instmem  = Module(new DataMem)
+  val axistate = RegInit(s_waitaddr)
+
+  val raddr = RegEnable(axi.araddr, axi.arvalid & axi.arready)
+  val rdata = RegEnable(instmem.io.rdata, instmem.io.rvalid)
+
+  instmem.io.raddr  := Mux(axi.arvalid & axi.arready, axi.araddr, raddr)
+  instmem.io.rvalid := axi.arvalid & axi.arready
+  axi.rdata         := instmem.io.rdata
+
+  //AR通道
+  axi.arready := Mux(axistate === s_waitaddr, true.B, false.B) //立刻可以接受地址
+
+  //R通道
+  axi.rvalid := Mux(
+    axistate === s_wait_rvalid, //保证需要先判断 arvalid和arready
+    false.B,
+    Mux(axistate === s_wait_rready, instmem.io.rvalid, true.B) //保持置一直到 cpu 读取完毕
+  )
+  axi.rresp := 0.U
+
+  //AW通道
+  axi.awready := false.B
+
+  //W通道
+  axi.wready := false.B
+
+  //B通道
+  axi.bresp  := DontCare
+  axi.bvalid := DontCare
+
+  axistate := MuxLookup(
+    axistate,
+    s_waitaddr,
+    List(
+      s_waitaddr -> Mux(axi.arvalid & axi.arready, s_wait_rvalid, s_waitaddr),
+      s_wait_rvalid -> Mux(instmem.io.rvalid, Mux(axi.rready, s_waitaddr, s_wait_rready), s_wait_rvalid),
+      s_wait_rready -> Mux(axi.rready, s_waitaddr, s_wait_rready)
+    )
+  )
+}
 
 class DataMem extends Module {
   val io = IO(new Bundle {
-    val addr   = Input(UInt(32.W))
+    val raddr  = Input(UInt(32.W))
+    val waddr  = Input(UInt(32.W))
     val wdata  = Input(UInt(32.W))
     val wvalid = Input(Bool())
-    // val wready = Output(Bool())
-    val wstrb = Input(UInt(3.W))
-    val rdata = Output(UInt(32.W))
+    val wstrb  = Input(UInt(3.W))
+    val rdata  = Output(UInt(32.W))
 
     //握手信号
-    val rvalid = Input(Bool()) //读请求有效
-    // val rready = Output(Bool()) //存储器可以接受读请求
-
-    // val arvalid = Input(Bool()) //CPU已经读出有效suju
+    val rvalid  = Input(Bool()) //读请求有效
     val arready = Output(Bool()) //通知CPU可以读取数据
 
-    // val bresp  = Output(UInt(2.W)) //异常信号
-    // val bready = Input(Bool())
-    // val bvalid = Output(Bool())
-    //
   })
   val datamemread = Module(new DataMemRead)
   val ready       = Reg(io.rvalid.cloneType)
   val memdata     = Reg(datamemread.io.dataout.cloneType)
-  datamemread.io.addr  := io.addr
+  val addr        = Reg(io.raddr.cloneType)
+  addr                 := Mux(io.rvalid, io.raddr, Mux(io.wvalid, io.waddr, addr))
+  datamemread.io.addr  := Mux(io.rvalid, io.raddr, Mux(io.wvalid, io.waddr, addr))
   datamemread.io.data  := io.wdata
   datamemread.io.wr    := io.wvalid
   datamemread.io.valid := io.rvalid

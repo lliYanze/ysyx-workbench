@@ -115,7 +115,6 @@ class WB extends Module {
   val csr       = Module(new CSR)
 
 //state
-
   val exuvalid = Wire(Bool())
   exuvalid := io.exu2wb.valid & io.wbctrlpath.valid
 
@@ -134,7 +133,8 @@ class WB extends Module {
   nextpc.io.pcrs1      := io.exu2wb.bits.pcrs1
   nextpc.io.imm        := io.exu2wb.bits.imm
   nextpc.io.rs1        := io.exu2wb.bits.rs1
-  datamem.io.addr      := io.exu2wb.bits.datamemaddr
+  datamem.io.waddr     := io.exu2wb.bits.datamemaddr
+  datamem.io.raddr     := io.exu2wb.bits.datamemaddr
   datamem.io.wdata     := io.exu2wb.bits.rs2
   csr.io.pc            := io.exu2wb.bits.pc
   csr.io.rs1data       := io.exu2wb.bits.rs1

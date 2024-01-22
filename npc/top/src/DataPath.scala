@@ -59,7 +59,7 @@ class AxiLiteSignal extends Bundle { //mem端
   //握手信号
   //
   //mem读到地址
-  val arvalid = Input(Bool()) //CPU已经读出有效suju
+  val arvalid = Input(Bool()) //CPU已经读出有效数据
   val araddr  = Input(UInt(32.W))
   val arready = Output(Bool()) //通知CPU可以读取数据
 
@@ -70,7 +70,7 @@ class AxiLiteSignal extends Bundle { //mem端
   val rready = Input(Bool()) //存储器可以接受读请求
 
   //mem读到写入地址
-  // val awaddr  = Input(UInt(32.W)) //目前awaddr和araddr一样 没有让读写同时进行
+  val awaddr  = Input(UInt(32.W)) //目前awaddr和araddr一样 没有让读写同时进行
   val awvalid = Input(Bool())
   val awready = Output(Bool())
 
