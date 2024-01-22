@@ -53,3 +53,35 @@ class CtrlPath extends Bundle {
   val exuctrlpath = new EXUCtrlPath
   val wbctrlpath  = new WBCtrlPath
 }
+
+class AxiLiteSignal extends Bundle { //mem端
+
+  //握手信号
+  //
+  //mem读到地址
+  val arvalid = Input(Bool()) //CPU已经读出有效suju
+  val araddr  = Input(UInt(32.W))
+  val arready = Output(Bool()) //通知CPU可以读取数据
+
+  //mem用地址返回数据
+  val rvalid = Output(Bool()) //读请求有效
+  val rresp  = Output(UInt(2.W)) //异常信号
+  val rdata  = Output(UInt(32.W)) //读出的数据
+  val rready = Input(Bool()) //存储器可以接受读请求
+
+  //mem读到写入地址
+  // val awaddr  = Input(UInt(32.W)) //目前awaddr和araddr一样 没有让读写同时进行
+  val awvalid = Input(Bool())
+  val awready = Output(Bool())
+
+  //mem写入数据
+  val wstrb  = Input(UInt(3.W))
+  val wdata  = Input(UInt(32.W))
+  val wvalid = Input(Bool())
+  val wready = Output(Bool())
+
+  //异常处理
+  val bresp  = Output(UInt(2.W)) //异常信号
+  val bvalid = Output(Bool())
+  val bready = Input(Bool())
+}

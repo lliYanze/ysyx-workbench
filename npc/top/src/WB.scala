@@ -122,10 +122,9 @@ class WB extends Module {
   val wbisready = Wire(Bool())
   wbisready := Mux(
     exuvalid,
-    Mux(io.wbctrlpath.bits.datamem_rd, Mux(datamem.io.rready, true.B, false.B), true.B),
+    Mux(io.wbctrlpath.bits.datamem_rd, Mux(datamem.io.arready, true.B, false.B), true.B),
     false.B
   )
-
   io.exu2wb.ready     := wbisready
   io.wbctrlpath.ready := wbisready
 
@@ -136,16 +135,16 @@ class WB extends Module {
   nextpc.io.imm        := io.exu2wb.bits.imm
   nextpc.io.rs1        := io.exu2wb.bits.rs1
   datamem.io.addr      := io.exu2wb.bits.datamemaddr
-  datamem.io.data      := io.exu2wb.bits.rs2
+  datamem.io.wdata     := io.exu2wb.bits.rs2
   csr.io.pc            := io.exu2wb.bits.pc
   csr.io.rs1data       := io.exu2wb.bits.rs1
   csr.io.idx           := io.exu2wb.bits.inst(31, 20)
   memregmux.io.aludata := io.exu2wb.bits.datamemaddr
 
   nextpc.io.csrjump      := io.wbctrlpath.bits.csrisjump
-  datamem.io.wr          := Mux(wbisready, io.wbctrlpath.bits.datamem_wr, false.B)
+  datamem.io.wvalid      := Mux(wbisready, io.wbctrlpath.bits.datamem_wr, false.B)
   datamem.io.rvalid      := Mux(exuvalid, io.wbctrlpath.bits.datamem_rd, false.B)
-  datamem.io.wmask       := io.wbctrlpath.bits.datamem_wmask
+  datamem.io.wstrb       := io.wbctrlpath.bits.datamem_wmask
   csr.io.wr              := io.wbctrlpath.bits.csr_wr
   csr.io.re              := io.wbctrlpath.bits.csr_rd
   csr.io.wpc             := io.wbctrlpath.bits.csr_wpc
@@ -155,7 +154,7 @@ class WB extends Module {
   csralumux.io.choosecsr := io.wbctrlpath.bits.csroralu_isscr
 
   //内部连线
-  memregmux.io.memdata := datamem.io.dataout
+  memregmux.io.memdata := datamem.io.rdata
   io.wbdataout         := csralumux.io.out
   csralumux.io.aludata := memregmux.io.out
   csralumux.io.csrdata := csr.io.dataout
