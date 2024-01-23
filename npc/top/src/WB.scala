@@ -94,7 +94,7 @@ class CSR extends Module {
 
 }
 
-import datapath.{EXU2WBPath, WBCtrlPath}
+import datapath.{AxiLiteSignal, EXU2WBPath, WBCtrlPath}
 
 class WB extends Module {
   val io = IO(new Bundle {
@@ -108,11 +108,14 @@ class WB extends Module {
     val nextpc = Output(UInt(32.W))
   })
 
-  val nextpc    = Module(new NextPc)
-  val datamem   = Module(new DataMem)
-  val memregmux = Module(new MemorRegMux)
-  val csralumux = Module(new CSRALUMUX)
-  val csr       = Module(new CSR)
+  val nextpc     = Module(new NextPc)
+  val datamemaxi = Module(new DataMemAxi)
+  val memregmux  = Module(new MemorRegMux)
+  val csralumux  = Module(new CSRALUMUX)
+  val csr        = Module(new CSR)
+
+//AxiLiteSignal
+  val axi2mem = Wire(new AxiLiteSignal)
 
 //state
   val exuvalid = Wire(Bool())
@@ -121,30 +124,63 @@ class WB extends Module {
   val wbisready = Wire(Bool())
   wbisready := Mux(
     exuvalid,
-    Mux(io.wbctrlpath.bits.datamem_rd, Mux(datamem.io.arready, true.B, false.B), true.B),
+    Mux(
+      io.wbctrlpath.bits.datamem_rd,
+      Mux(datamemaxi.axi.rready & datamemaxi.axi.rvalid, true.B, false.B), //在mem返回有效 才可以wb写回
+      true.B
+    ),
     false.B
   )
   io.exu2wb.ready     := wbisready
   io.wbctrlpath.ready := wbisready
 
+  //axi状态转移
+  //AR通道
+  axi2mem.arvalid := Mux(
+    exuvalid,
+    Mux(
+      io.wbctrlpath.bits.datamem_rd,
+      Mux(axi2mem.arready, io.wbctrlpath.bits.datamem_rd, true.B), //在mem返回有效 才可以wb写回
+      false.B
+    ),
+    false.B
+  )
+  axi2mem.araddr := io.exu2wb.bits.datamemaddr
+
+  //R通道
+  axi2mem.rready := axi2mem.arvalid //处于等待状态就可以接受数据
+  // datamem.io.rvalid := Mux(exuvalid, io.wbctrlpath.bits.datamem_rd, false.B)
+
+  //AW通道
+  axi2mem.awvalid := true.B
+  axi2mem.wvalid  := Mux(exuvalid, io.wbctrlpath.bits.datamem_wr, false.B)
+  axi2mem.awaddr  := io.exu2wb.bits.datamemaddr
+
+  //W通道
+  axi2mem.wdata := io.exu2wb.bits.rs2
+  axi2mem.wstrb := io.wbctrlpath.bits.datamem_wmask
+
+  //B通道
+  axi2mem.bready := DontCare
+
 //总线连接
-  nextpc.io.pc         := io.exu2wb.bits.pc
-  nextpc.io.pclj       := io.exu2wb.bits.pclj
-  nextpc.io.pcrs1      := io.exu2wb.bits.pcrs1
-  nextpc.io.imm        := io.exu2wb.bits.imm
-  nextpc.io.rs1        := io.exu2wb.bits.rs1
-  datamem.io.waddr     := io.exu2wb.bits.datamemaddr
-  datamem.io.raddr     := io.exu2wb.bits.datamemaddr
-  datamem.io.wdata     := io.exu2wb.bits.rs2
+  nextpc.io.pc    := io.exu2wb.bits.pc
+  nextpc.io.pclj  := io.exu2wb.bits.pclj
+  nextpc.io.pcrs1 := io.exu2wb.bits.pcrs1
+  nextpc.io.imm   := io.exu2wb.bits.imm
+  nextpc.io.rs1   := io.exu2wb.bits.rs1
+  // datamem.io.waddr     := io.exu2wb.bits.datamemaddr
+  // datamem.io.raddr     := io.exu2wb.bits.datamemaddr
+  // datamem.io.wdata     := io.exu2wb.bits.rs2
   csr.io.pc            := io.exu2wb.bits.pc
   csr.io.rs1data       := io.exu2wb.bits.rs1
   csr.io.idx           := io.exu2wb.bits.inst(31, 20)
   memregmux.io.aludata := io.exu2wb.bits.datamemaddr
 
-  nextpc.io.csrjump      := io.wbctrlpath.bits.csrisjump
-  datamem.io.wvalid      := Mux(wbisready, io.wbctrlpath.bits.datamem_wr, false.B)
-  datamem.io.rvalid      := Mux(exuvalid, io.wbctrlpath.bits.datamem_rd, false.B)
-  datamem.io.wstrb       := io.wbctrlpath.bits.datamem_wmask
+  nextpc.io.csrjump := io.wbctrlpath.bits.csrisjump
+  // datamem.io.wvalid      := Mux(wbisready, io.wbctrlpath.bits.datamem_wr, false.B)
+  // datamem.io.rvalid      := Mux(exuvalid, io.wbctrlpath.bits.datamem_rd, false.B)
+  // datamem.io.wstrb       := io.wbctrlpath.bits.datamem_wmask
   csr.io.wr              := io.wbctrlpath.bits.csr_wr
   csr.io.re              := io.wbctrlpath.bits.csr_rd
   csr.io.wpc             := io.wbctrlpath.bits.csr_wpc
@@ -154,7 +190,8 @@ class WB extends Module {
   csralumux.io.choosecsr := io.wbctrlpath.bits.csroralu_isscr
 
   //内部连线
-  memregmux.io.memdata := datamem.io.rdata
+  // memregmux.io.memdata := datamem.io.rdata
+  memregmux.io.memdata := axi2mem.rdata
   io.wbdataout         := csralumux.io.out
   csralumux.io.aludata := memregmux.io.out
   csralumux.io.csrdata := csr.io.dataout
@@ -163,5 +200,30 @@ class WB extends Module {
   //外部连线
   io.nextpc := nextpc.io.nextpc
   io.reg_wr := Mux(wbisready, io.wbctrlpath.bits.reg_wr, false.B)
+
+  //axi连线
+  datamemaxi.axi.araddr  := axi2mem.araddr
+  datamemaxi.axi.arvalid := axi2mem.arvalid
+  axi2mem.arready        := datamemaxi.axi.arready
+
+  axi2mem.rdata         := datamemaxi.axi.rdata
+  axi2mem.rresp         := datamemaxi.axi.rresp
+  axi2mem.rvalid        := datamemaxi.axi.rvalid
+  datamemaxi.axi.rready := axi2mem.rready
+
+  datamemaxi.axi.awvalid := axi2mem.awvalid
+  datamemaxi.axi.awaddr  := axi2mem.awaddr
+  axi2mem.awready        := datamemaxi.axi.awready
+
+  datamemaxi.axi.wdata  := axi2mem.wdata
+  datamemaxi.axi.wstrb  := axi2mem.wstrb
+  datamemaxi.axi.wvalid := axi2mem.wvalid
+  axi2mem.wready        := datamemaxi.axi.wready
+
+  // axi2mem.arready := datamemaxi.axi.arready
+
+  axi2mem.bresp         := datamemaxi.axi.bresp
+  axi2mem.bvalid        := datamemaxi.axi.bvalid
+  datamemaxi.axi.bready := axi2mem.bready
 
 }

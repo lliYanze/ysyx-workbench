@@ -483,7 +483,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.BYTE,
           rnotwr,
-          mrd,
+          // mrd,
+          mnotrd,
           CSRCTL.NOP
         ),
         instructions.sh -> List(
@@ -497,7 +498,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.HALF,
           rnotwr,
-          mrd,
+          // mrd,
+          mnotrd,
           CSRCTL.NOP
         ),
         instructions.sw -> List(
@@ -511,7 +513,8 @@ class InstDecode extends Module {
           alutoreg,
           MEMCTL.WORD,
           rnotwr,
-          mrd,
+          // mrd,
+          mnotrd,
           CSRCTL.NOP
         ),
         ///***************B***************//

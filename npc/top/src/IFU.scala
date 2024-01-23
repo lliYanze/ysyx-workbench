@@ -68,14 +68,17 @@ class IFU extends Module {
   //AW通道
   axi2mem.awvalid := false.B
   axi2mem.awaddr  := DontCare
+  assert(axi2mem.awready === false.B, "awready must be false.B")
 
   //W通道
   axi2mem.wdata  := DontCare
   axi2mem.wstrb  := DontCare
   axi2mem.wvalid := false.B
+  assert(axi2mem.wready === false.B, "wready must be false.B")
 
   //B通道
   axi2mem.bready := false.B
+  assert(axi2mem.bvalid === false.B, "bvalid must be false.B")
 
   //axi连线
   axi2mem.araddr   := io.pcin
