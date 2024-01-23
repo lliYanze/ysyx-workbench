@@ -4,6 +4,7 @@ import chisel3._
 import Memory._
 import instsinfo._
 import chisel3.util._
+import npctools._
 
 class NextPc extends Module {
   val io = IO(new Bundle {
@@ -133,6 +134,9 @@ class WB extends Module {
   )
   io.exu2wb.ready     := wbisready
   io.wbctrlpath.ready := wbisready
+
+  // //随机延迟部分
+  // val delay_rready = Module(new DelayTrueRandomCycle)
 
   //axi状态转移
   //AR通道

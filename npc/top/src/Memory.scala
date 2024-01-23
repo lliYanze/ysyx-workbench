@@ -5,7 +5,7 @@ import chisel3.util._
 import chisel3.util.BitPat
 import chisel3.util.experimental.decode._
 import chisel3.experimental._
-import chisel3.util.random.LFSR
+import npctools._
 
 class DataMemRead extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle {
@@ -112,18 +112,15 @@ class DataMem extends Module {
   })
   val datamemread = Module(new DataMemRead)
 
-  //随机延迟
-  val RANDOM: UInt = LFSR(4, io.readvalid) % 8.U + 1.U
-  val delay    = RegInit(0.U(4.W))
-  val olddelay = RegInit(0.U(4.W))
-  val memdata  = RegEnable(datamemread.io.dataout, io.readvalid)
-  olddelay  := delay
-  delay     := Mux(delay === 0.U, Mux(io.readvalid, RANDOM, 0.U), delay - 1.U)
-  io.rvalid := Mux(olddelay === 1.U & delay === 0.U, true.B, false.B)
-  io.rdata  := memdata
+//FIXME: 为了方便默认数据直接就可以读出来,等待valid有效直接读取
+  val memdata = RegEnable(datamemread.io.dataout, io.readvalid)
+  io.rdata := memdata
 
-  // val rvalid = ShiftRegister(io.readvalid, 5)
-  // val memdata = ShiftRegister(datamemread.io.dataout, 5)
+  //随机延迟
+  val delayrvalid = Module(new DelayTrueRandomCycle)
+  delayrvalid.io.en := io.readvalid
+  io.rvalid         := delayrvalid.io.out
+
   val addr = Reg(io.raddr.cloneType)
   addr                      := Mux(io.readvalid, io.raddr, Mux(io.wvalid, io.waddr, addr))
   datamemread.io.addr       := Mux(io.readvalid, io.raddr, Mux(io.wvalid, io.waddr, addr))
@@ -132,10 +129,6 @@ class DataMem extends Module {
   datamemread.io.readvalid  := io.readvalid
   datamemread.io.wmask      := io.wstrb
   datamemread.io.clock      := clock
-  // memdata                   := datamemread.io.dataout
-  // rvalid                    := io.readvalid
-  // io.rdata := memdata
-  // io.rvalid := rvalid
 }
 
 class InstMemRead extends BlackBox with HasBlackBoxInline {
@@ -178,8 +171,10 @@ class InstMemAxi extends Module {
   //R通道
   axi.rvalid := Mux(
     axistate === s_wait_rvalid, //保证需要先判断 arvalid和arready
-    false.B,
-    Mux(axistate === s_wait_rready, instmem.io.inst_valid, true.B) //保持置一直到 cpu 读取完毕
+    // false.B,
+    instmem.io.inst_valid,
+    // Mux(axistate === s_wait_rready, instmem.io.inst_valid, true.B) //保持置一直到 cpu 读取完毕
+    Mux(axistate === s_wait_rready, true.B, false.B) //保持置一直到 cpu 读取完毕
   )
   axi.rresp := 0.U
 
@@ -215,31 +210,24 @@ class InstMemIO extends Bundle {
 }
 
 class InstMem extends Module {
+  //SRAM部分
   val io          = IO(new InstMemIO)
   val instmemread = Module(new InstMemRead)
-  val delay       = RegInit(0.U(4.W))
-  val olddelay    = RegInit(0.U(4.W))
+  val instget     = RegNext(instmemread.io.inst)
 
-  val RANDOM: UInt = LFSR(4, delay === 0.U) % 8.U + 1.U
-  // printf(p"RANDOM: $RANDOM\n")
-  olddelay := delay
-  delay    := Mux(delay === 0.U, Mux(io.en, RANDOM, 0.U), delay - 1.U)
+  //随机延迟部分
+  // val delay    = RegInit(0.U(4.W))
+  // val olddelay = RegInit(0.U(4.W))
+  // val RANDOM: UInt = LFSR(4, delay === 0.U) % 8.U + 1.U
+  // olddelay := delay
+  // delay    := Mux(delay === 0.U, Mux(io.en, RANDOM, 0.U), delay - 1.U)
+  val delaytrue = Module(new DelayTrueRandomCycle)
 
-  io.inst_valid := Mux(olddelay === 1.U & delay === 0.U, true.B, false.B)
-  val instget = RegNext(instmemread.io.inst)
-
-  // val instget     = ShiftRegister(instmemread.io.inst, 1)
-  // val instget = ShiftRegister(instmemread.io.inst, 1)
-  // val instget = ShiftRegister(instmemread.io.inst, RANDOM)
-
-  // val instvalid = RegInit(true.B)
-  // val instvalid = ShiftRegister(io.en, 1)
-  // io.inst_valid := instvalid
-  // instvalid     := io.en
-
+  //连接部分
   instmemread.io.pc    := io.pc
   instmemread.io.clock := clock
-
-  io.inst := instget
-
+  io.inst              := instget
+  // io.inst_valid        := Mux(olddelay === 1.U & delay === 0.U, true.B, false.B)
+  delaytrue.io.en := io.en
+  io.inst_valid   := delaytrue.io.out
 }

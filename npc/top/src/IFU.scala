@@ -2,6 +2,7 @@ package IFU
 
 import chisel3._
 import chisel3.util._
+import npctools._
 
 class PC extends Module {
   val io = IO(new Bundle {
@@ -52,17 +53,22 @@ class IFU extends Module {
 
   work2down := (state === s_working & instmemvalid)
   work2ing  := (state === s_workdown & io.ifu2idu.ready)
+  //随机延迟部分
+  val delay_rready  = Module(new DelayTrueRandomCycle)
+  val delay_arvalid = Module(new DelayTrueRandomCycle)
 
   //axi状态转移
   //AR通道
-  axi2mem.arvalid := Mux(
+  delay_arvalid.io.en := Mux(
     state === s_begin,
     true.B, //由于最开始输入的地址就是有效值所以直接为true
     Mux(state === s_workdown, work2ing, Mux(axi2mem.arready, false.B, true.B))
   )
+  axi2mem.arvalid := delay_arvalid.io.out
 
   //R通道
-  axi2mem.rready := (state === s_working)
+  delay_rready.io.en := (state === s_working & axi2mem.rvalid)
+  axi2mem.rready     := delay_rready.io.out
 
   //AW通道
   axi2mem.awvalid := false.B
@@ -96,7 +102,8 @@ class IFU extends Module {
       s_working -> Mux(instmemvalid, s_workdown, s_working)
     )
   )
-  //Fixme: diff规避最开始0x80000000的问题
+
+  // FIXME: diff规避最开始0x80000000的问题
   when(ifustate.pc === 0.U) {
     io.diff := false.B
   }.otherwise {
