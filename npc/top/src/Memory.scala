@@ -111,11 +111,20 @@ class DataMem extends Module {
 
   })
   val datamemread = Module(new DataMemRead)
-  // val rvalid      = Reg(io.readvalid.cloneType)
-  val rvalid = ShiftRegister(io.readvalid, 5)
-  // val memdata     = Reg(datamemread.io.dataout.cloneType)
-  val memdata = ShiftRegister(datamemread.io.dataout, 5)
-  val addr    = Reg(io.raddr.cloneType)
+
+  //随机延迟
+  val RANDOM: UInt = LFSR(4, io.readvalid) % 8.U + 1.U
+  val delay    = RegInit(0.U(4.W))
+  val olddelay = RegInit(0.U(4.W))
+  val memdata  = RegEnable(datamemread.io.dataout, io.readvalid)
+  olddelay  := delay
+  delay     := Mux(delay === 0.U, Mux(io.readvalid, RANDOM, 0.U), delay - 1.U)
+  io.rvalid := Mux(olddelay === 1.U & delay === 0.U, true.B, false.B)
+  io.rdata  := memdata
+
+  // val rvalid = ShiftRegister(io.readvalid, 5)
+  // val memdata = ShiftRegister(datamemread.io.dataout, 5)
+  val addr = Reg(io.raddr.cloneType)
   addr                      := Mux(io.readvalid, io.raddr, Mux(io.wvalid, io.waddr, addr))
   datamemread.io.addr       := Mux(io.readvalid, io.raddr, Mux(io.wvalid, io.waddr, addr))
   datamemread.io.data       := io.wdata
@@ -125,8 +134,8 @@ class DataMem extends Module {
   datamemread.io.clock      := clock
   // memdata                   := datamemread.io.dataout
   // rvalid                    := io.readvalid
-  io.rdata  := memdata
-  io.rvalid := rvalid
+  // io.rdata := memdata
+  // io.rvalid := rvalid
 }
 
 class InstMemRead extends BlackBox with HasBlackBoxInline {
