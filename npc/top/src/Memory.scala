@@ -4,6 +4,8 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.BitPat
 import chisel3.util.experimental.decode._
+import chisel3.experimental._
+import chisel3.util.random.LFSR
 
 class DataMemRead extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle {
@@ -109,9 +111,11 @@ class DataMem extends Module {
 
   })
   val datamemread = Module(new DataMemRead)
-  val rvalid      = Reg(io.readvalid.cloneType)
-  val memdata     = Reg(datamemread.io.dataout.cloneType)
-  val addr        = Reg(io.raddr.cloneType)
+  // val rvalid      = Reg(io.readvalid.cloneType)
+  val rvalid = ShiftRegister(io.readvalid, 5)
+  // val memdata     = Reg(datamemread.io.dataout.cloneType)
+  val memdata = ShiftRegister(datamemread.io.dataout, 5)
+  val addr    = Reg(io.raddr.cloneType)
   addr                      := Mux(io.readvalid, io.raddr, Mux(io.wvalid, io.waddr, addr))
   datamemread.io.addr       := Mux(io.readvalid, io.raddr, Mux(io.wvalid, io.waddr, addr))
   datamemread.io.data       := io.wdata
@@ -119,10 +123,10 @@ class DataMem extends Module {
   datamemread.io.readvalid  := io.readvalid
   datamemread.io.wmask      := io.wstrb
   datamemread.io.clock      := clock
-  memdata                   := datamemread.io.dataout
-  rvalid                    := io.readvalid
-  io.rdata                  := memdata
-  io.rvalid                 := rvalid
+  // memdata                   := datamemread.io.dataout
+  // rvalid                    := io.readvalid
+  io.rdata  := memdata
+  io.rvalid := rvalid
 }
 
 class InstMemRead extends BlackBox with HasBlackBoxInline {
@@ -143,14 +147,6 @@ class InstMemRead extends BlackBox with HasBlackBoxInline {
        |endmodule
        |""".stripMargin
   )
-}
-
-class InstMemIO extends Bundle {
-  val pc = Input(UInt(32.W))
-  val en = Input(Bool())
-
-  val inst       = Output(UInt(32.W))
-  val inst_valid = Output(Bool())
 }
 
 class InstMemAxi extends Module {
@@ -201,15 +197,36 @@ class InstMemAxi extends Module {
   )
 
 }
+class InstMemIO extends Bundle {
+  val pc = Input(UInt(32.W))
+  val en = Input(Bool())
+
+  val inst       = Output(UInt(32.W))
+  val inst_valid = Output(Bool())
+}
 
 class InstMem extends Module {
   val io          = IO(new InstMemIO)
   val instmemread = Module(new InstMemRead)
-  val instget     = RegNext(instmemread.io.inst)
+  val delay       = RegInit(0.U(4.W))
+  val olddelay    = RegInit(0.U(4.W))
 
-  val instvalid = RegInit(true.B)
-  io.inst_valid := instvalid
-  instvalid     := io.en
+  val RANDOM: UInt = LFSR(4, delay === 0.U) % 8.U + 1.U
+  // printf(p"RANDOM: $RANDOM\n")
+  olddelay := delay
+  delay    := Mux(delay === 0.U, Mux(io.en, RANDOM, 0.U), delay - 1.U)
+
+  io.inst_valid := Mux(olddelay === 1.U & delay === 0.U, true.B, false.B)
+  val instget = RegNext(instmemread.io.inst)
+
+  // val instget     = ShiftRegister(instmemread.io.inst, 1)
+  // val instget = ShiftRegister(instmemread.io.inst, 1)
+  // val instget = ShiftRegister(instmemread.io.inst, RANDOM)
+
+  // val instvalid = RegInit(true.B)
+  // val instvalid = ShiftRegister(io.en, 1)
+  // io.inst_valid := instvalid
+  // instvalid     := io.en
 
   instmemread.io.pc    := io.pc
   instmemread.io.clock := clock

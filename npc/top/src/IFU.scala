@@ -55,7 +55,6 @@ class IFU extends Module {
 
   //axi状态转移
   //AR通道
-
   axi2mem.arvalid := Mux(
     state === s_begin,
     true.B, //由于最开始输入的地址就是有效值所以直接为true
