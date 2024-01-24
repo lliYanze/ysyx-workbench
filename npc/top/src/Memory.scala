@@ -171,9 +171,7 @@ class InstMemAxi extends Module {
   //R通道
   axi.rvalid := Mux(
     axistate === s_wait_rvalid, //保证需要先判断 arvalid和arready
-    // false.B,
     instmem.io.inst_valid,
-    // Mux(axistate === s_wait_rready, instmem.io.inst_valid, true.B) //保持置一直到 cpu 读取完毕
     Mux(axistate === s_wait_rready, true.B, false.B) //保持置一直到 cpu 读取完毕
   )
   axi.rresp := 0.U
@@ -215,19 +213,12 @@ class InstMem extends Module {
   val instmemread = Module(new InstMemRead)
   val instget     = RegNext(instmemread.io.inst)
 
-  //随机延迟部分
-  // val delay    = RegInit(0.U(4.W))
-  // val olddelay = RegInit(0.U(4.W))
-  // val RANDOM: UInt = LFSR(4, delay === 0.U) % 8.U + 1.U
-  // olddelay := delay
-  // delay    := Mux(delay === 0.U, Mux(io.en, RANDOM, 0.U), delay - 1.U)
   val delaytrue = Module(new DelayTrueRandomCycle)
 
   //连接部分
   instmemread.io.pc    := io.pc
   instmemread.io.clock := clock
   io.inst              := instget
-  // io.inst_valid        := Mux(olddelay === 1.U & delay === 0.U, true.B, false.B)
-  delaytrue.io.en := io.en
-  io.inst_valid   := delaytrue.io.out
+  delaytrue.io.en      := io.en
+  io.inst_valid        := delaytrue.io.out
 }

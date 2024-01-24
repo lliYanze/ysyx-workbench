@@ -154,8 +154,7 @@ class WB extends Module {
     false.B
   )
   axi2mem.arvalid := delay_arvalid.io.out
-
-  axi2mem.araddr := io.exu2wb.bits.datamemaddr
+  axi2mem.araddr  := io.exu2wb.bits.datamemaddr
 
   //R通道
   delay_rready.io.en := axi2mem.rvalid
@@ -174,23 +173,16 @@ class WB extends Module {
   axi2mem.bready := DontCare
 
 //总线连接
-  nextpc.io.pc    := io.exu2wb.bits.pc
-  nextpc.io.pclj  := io.exu2wb.bits.pclj
-  nextpc.io.pcrs1 := io.exu2wb.bits.pcrs1
-  nextpc.io.imm   := io.exu2wb.bits.imm
-  nextpc.io.rs1   := io.exu2wb.bits.rs1
-  // datamem.io.waddr     := io.exu2wb.bits.datamemaddr
-  // datamem.io.raddr     := io.exu2wb.bits.datamemaddr
-  // datamem.io.wdata     := io.exu2wb.bits.rs2
-  csr.io.pc            := io.exu2wb.bits.pc
-  csr.io.rs1data       := io.exu2wb.bits.rs1
-  csr.io.idx           := io.exu2wb.bits.inst(31, 20)
-  memregmux.io.aludata := io.exu2wb.bits.datamemaddr
-
-  nextpc.io.csrjump := io.wbctrlpath.bits.csrisjump
-  // datamem.io.wvalid      := Mux(wbisready, io.wbctrlpath.bits.datamem_wr, false.B)
-  // datamem.io.rvalid      := Mux(exuvalid, io.wbctrlpath.bits.datamem_rd, false.B)
-  // datamem.io.wstrb       := io.wbctrlpath.bits.datamem_wmask
+  nextpc.io.pc           := io.exu2wb.bits.pc
+  nextpc.io.pclj         := io.exu2wb.bits.pclj
+  nextpc.io.pcrs1        := io.exu2wb.bits.pcrs1
+  nextpc.io.imm          := io.exu2wb.bits.imm
+  nextpc.io.rs1          := io.exu2wb.bits.rs1
+  csr.io.pc              := io.exu2wb.bits.pc
+  csr.io.rs1data         := io.exu2wb.bits.rs1
+  csr.io.idx             := io.exu2wb.bits.inst(31, 20)
+  memregmux.io.aludata   := io.exu2wb.bits.datamemaddr
+  nextpc.io.csrjump      := io.wbctrlpath.bits.csrisjump
   csr.io.wr              := io.wbctrlpath.bits.csr_wr
   csr.io.re              := io.wbctrlpath.bits.csr_rd
   csr.io.wpc             := io.wbctrlpath.bits.csr_wpc
@@ -200,7 +192,6 @@ class WB extends Module {
   csralumux.io.choosecsr := io.wbctrlpath.bits.csroralu_isscr
 
   //内部连线
-  // memregmux.io.memdata := datamem.io.rdata
   memregmux.io.memdata := axi2mem.rdata
   io.wbdataout         := csralumux.io.out
   csralumux.io.aludata := memregmux.io.out
@@ -230,10 +221,7 @@ class WB extends Module {
   datamemaxi.axi.wvalid := axi2mem.wvalid
   axi2mem.wready        := datamemaxi.axi.wready
 
-  // axi2mem.arready := datamemaxi.axi.arready
-
   axi2mem.bresp         := datamemaxi.axi.bresp
   axi2mem.bvalid        := datamemaxi.axi.bvalid
   datamemaxi.axi.bready := axi2mem.bready
-
 }

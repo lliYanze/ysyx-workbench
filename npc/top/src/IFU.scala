@@ -103,13 +103,8 @@ class IFU extends Module {
       s_working -> Mux(instmemvalid, s_workdown, s_working)
     )
   )
+  io.diff := Mux((old_state === s_workdown) & (state === s_working), true.B, false.B)
 
-  // FIXME: diff规避最开始0x80000000的问题
-  when(ifustate.pc === 0.U) {
-    io.diff := false.B
-  }.otherwise {
-    io.diff := Mux((old_state === s_workdown) & (state === s_working), true.B, false.B)
-  }
   //axi连线
   instmemaxi.axi.araddr  := axi2mem.araddr
   instmemaxi.axi.arvalid := axi2mem.arvalid
@@ -134,10 +129,4 @@ class IFU extends Module {
   axi2mem.bresp         := instmemaxi.axi.bresp
   axi2mem.bvalid        := instmemaxi.axi.bvalid
   instmemaxi.axi.bready := axi2mem.bready
-
-  val cycle = RegInit(0.U(32.W))
-  cycle := Mux(state === work2down, cycle + 1.U, cycle)
-  // printf("cycle is %d \n", cycle)
-  // printf("pc is 0x%x", io.ifu2idu.bits.pc)
-
 }
