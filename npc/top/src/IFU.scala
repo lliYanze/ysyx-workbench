@@ -28,6 +28,7 @@ class IFU extends Module {
     val diff = Output(Bool())
 
   })
+
   val s_begin :: s_working :: s_workdown :: Nil = Enum(3)
 
   //module
@@ -133,5 +134,10 @@ class IFU extends Module {
   axi2mem.bresp         := instmemaxi.axi.bresp
   axi2mem.bvalid        := instmemaxi.axi.bvalid
   instmemaxi.axi.bready := axi2mem.bready
+
+  val cycle = RegInit(0.U(32.W))
+  cycle := Mux(state === work2down, cycle + 1.U, cycle)
+  // printf("cycle is %d \n", cycle)
+  // printf("pc is 0x%x", io.ifu2idu.bits.pc)
 
 }

@@ -135,13 +135,17 @@ class WB extends Module {
   io.exu2wb.ready     := wbisready
   io.wbctrlpath.ready := wbisready
 
-  // //随机延迟部分
-  // val delay_rready = Module(new DelayTrueRandomCycle)
+  //随机延迟部分
+  val delay_arvalid = Module(new DelayTrueRandomCycle)
+  val delay_rready  = Module(new DelayTrueRandomCycle)
 
   //axi状态转移
   //AR通道
-  axi2mem.arvalid := Mux(
-    exuvalid,
+  // FIXME:exu和wb握手后就不应该ctrl信号有效了，但是目前没有实现模块之间握手，所以用一个寄存器来控制无效连续的读信号
+  val exu_valid = RegNext(exuvalid)
+
+  delay_arvalid.io.en := Mux(
+    exuvalid & ~exu_valid,
     Mux(
       io.wbctrlpath.bits.datamem_rd,
       Mux(axi2mem.arready, io.wbctrlpath.bits.datamem_rd, true.B), //在mem返回有效 才可以wb写回
@@ -149,11 +153,13 @@ class WB extends Module {
     ),
     false.B
   )
+  axi2mem.arvalid := delay_arvalid.io.out
+
   axi2mem.araddr := io.exu2wb.bits.datamemaddr
 
   //R通道
-  axi2mem.rready := axi2mem.arvalid //处于等待状态就可以接受数据
-  // datamem.io.rvalid := Mux(exuvalid, io.wbctrlpath.bits.datamem_rd, false.B)
+  delay_rready.io.en := axi2mem.rvalid
+  axi2mem.rready     := delay_rready.io.out
 
   //AW通道
   axi2mem.awvalid := true.B

@@ -110,6 +110,7 @@ static uint64_t get_time() {
 
 static uint32_t rtc_time[2];
 
+extern void wave_close();
 extern "C" int data_read(paddr_t addr, svBitVecVal *wmask, svBit valid) {
   if (addr == RTC_ADDR) {
 
@@ -145,7 +146,9 @@ extern "C" int data_read(paddr_t addr, svBitVecVal *wmask, svBit valid) {
   else if (*wmask == 0x5)
     buf = pmem_read(addr, 2);
   else {
-    printf("data_read wmask is 0x%x   wrong\n", *wmask);
+    printf("data_read mask is 0x%x   wrong\n", *wmask);
+    wave_close();
+
     assert(0);
   }
   log_write(" 从 0x%08x 读取到  0x%08x\n", addr, buf);

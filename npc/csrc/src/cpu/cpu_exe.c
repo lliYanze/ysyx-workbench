@@ -1,5 +1,6 @@
 #include <cpu/cpu.h>
 #include <cpu/difftest/difftest.h>
+#include <stdio.h>
 // #include <macro.h>
 #include <mem/pmem.h>
 // #include <top.h>

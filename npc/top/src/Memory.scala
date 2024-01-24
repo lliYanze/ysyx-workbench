@@ -59,8 +59,8 @@ class DataMemAxi extends Module {
   //R通道
   axi.rvalid := Mux(
     axistate === s_wait_rvalid, //保证需要先判断 arvalid和arready
-    false.B,
-    Mux(axistate === s_wait_rready, datamem.io.rvalid, true.B) //保持置一直到 cpu 读取完毕
+    (datamem.io.rvalid),
+    Mux(axistate === s_wait_rready, true.B, false.B) //保持置一直到 cpu 读取完毕
   )
   axi.rresp := 0.U
 
@@ -93,7 +93,7 @@ class DataMemAxi extends Module {
   datamem.io.wstrb     := axi.wstrb
   datamem.io.readvalid := axi.arvalid & axi.arready
   axi.rdata            := datamem.io.rdata
-  axi.rvalid           := datamem.io.rvalid
+  // axi.rvalid           := datamem.io.rvalid
 }
 
 class DataMem extends Module {

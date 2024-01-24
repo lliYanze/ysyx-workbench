@@ -13,7 +13,7 @@ static void wave_init(int arg, char **argv) {
   top->trace(mytrace, 5);
   mytrace->open("./build/logs/top.vcd");
 }
-static void wave_close() {
+void wave_close() {
   mytrace->close();
   delete top;
 }
