@@ -95,7 +95,7 @@ class CSR extends Module {
 
 }
 
-import datapath.{AxiLiteSignal, EXU2WBPath, WBCtrlPath}
+import datapath._
 
 class WB extends Module {
   val io = IO(new Bundle {
@@ -116,7 +116,7 @@ class WB extends Module {
   val csr        = Module(new CSR)
 
 //AxiLiteSignal
-  val axi2mem = Wire(new AxiLiteSignal)
+  val axi2mem = Wire(new AxiLiteSignal_M)
 
 //state
   val exuvalid = Wire(Bool())
@@ -127,7 +127,7 @@ class WB extends Module {
     exuvalid,
     Mux(
       io.wbctrlpath.bits.datamem_rd,
-      Mux(datamemaxi.axi.rready & datamemaxi.axi.rvalid, true.B, false.B), //在mem返回有效 才可以wb写回
+      Mux(datamemaxi.axi.master.rready & datamemaxi.axi.slaver.rvalid, true.B, false.B), //在mem返回有效 才可以wb写回
       true.B
     ),
     false.B
@@ -148,29 +148,29 @@ class WB extends Module {
     exuvalid & ~exu_valid,
     Mux(
       io.wbctrlpath.bits.datamem_rd,
-      Mux(axi2mem.arready, io.wbctrlpath.bits.datamem_rd, true.B), //在mem返回有效 才可以wb写回
+      Mux(axi2mem.slaver.arready, io.wbctrlpath.bits.datamem_rd, true.B), //在mem返回有效 才可以wb写回
       false.B
     ),
     false.B
   )
-  axi2mem.arvalid := delay_arvalid.io.out
-  axi2mem.araddr  := io.exu2wb.bits.datamemaddr
+  axi2mem.master.arvalid := delay_arvalid.io.out
+  axi2mem.master.araddr  := io.exu2wb.bits.datamemaddr
 
   //R通道
-  delay_rready.io.en := axi2mem.rvalid
-  axi2mem.rready     := delay_rready.io.out
+  delay_rready.io.en    := axi2mem.slaver.rvalid
+  axi2mem.master.rready := delay_rready.io.out
 
   //AW通道
-  axi2mem.awvalid := true.B
-  axi2mem.wvalid  := Mux(exuvalid, io.wbctrlpath.bits.datamem_wr, false.B)
-  axi2mem.awaddr  := io.exu2wb.bits.datamemaddr
+  axi2mem.master.awvalid := true.B
+  axi2mem.master.wvalid  := Mux(exuvalid, io.wbctrlpath.bits.datamem_wr, false.B)
+  axi2mem.master.awaddr  := io.exu2wb.bits.datamemaddr
 
   //W通道
-  axi2mem.wdata := io.exu2wb.bits.rs2
-  axi2mem.wstrb := io.wbctrlpath.bits.datamem_wmask
+  axi2mem.master.wdata := io.exu2wb.bits.rs2
+  axi2mem.master.wstrb := io.wbctrlpath.bits.datamem_wmask
 
   //B通道
-  axi2mem.bready := DontCare
+  axi2mem.master.bready := DontCare
 
 //总线连接
   nextpc.io.pc           := io.exu2wb.bits.pc
@@ -192,7 +192,7 @@ class WB extends Module {
   csralumux.io.choosecsr := io.wbctrlpath.bits.csroralu_isscr
 
   //内部连线
-  memregmux.io.memdata := axi2mem.rdata
+  memregmux.io.memdata := axi2mem.slaver.rdata
   io.wbdataout         := csralumux.io.out
   csralumux.io.aludata := memregmux.io.out
   csralumux.io.csrdata := csr.io.dataout
@@ -203,25 +203,7 @@ class WB extends Module {
   io.reg_wr := Mux(wbisready, io.wbctrlpath.bits.reg_wr, false.B)
 
   //axi连线
-  datamemaxi.axi.araddr  := axi2mem.araddr
-  datamemaxi.axi.arvalid := axi2mem.arvalid
-  axi2mem.arready        := datamemaxi.axi.arready
+  datamemaxi.axi.master := axi2mem.master
+  axi2mem.slaver        := datamemaxi.axi.slaver
 
-  axi2mem.rdata         := datamemaxi.axi.rdata
-  axi2mem.rresp         := datamemaxi.axi.rresp
-  axi2mem.rvalid        := datamemaxi.axi.rvalid
-  datamemaxi.axi.rready := axi2mem.rready
-
-  datamemaxi.axi.awvalid := axi2mem.awvalid
-  datamemaxi.axi.awaddr  := axi2mem.awaddr
-  axi2mem.awready        := datamemaxi.axi.awready
-
-  datamemaxi.axi.wdata  := axi2mem.wdata
-  datamemaxi.axi.wstrb  := axi2mem.wstrb
-  datamemaxi.axi.wvalid := axi2mem.wvalid
-  axi2mem.wready        := datamemaxi.axi.wready
-
-  axi2mem.bresp         := datamemaxi.axi.bresp
-  axi2mem.bvalid        := datamemaxi.axi.bvalid
-  datamemaxi.axi.bready := axi2mem.bready
 }

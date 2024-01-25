@@ -5,7 +5,7 @@ import chisel3.util._
 import chisel3.util.BitPat
 import chisel3.util.experimental.decode._
 import chisel3.experimental._
-import datapath.AxiLiteSignal
+import datapath._
 import npctools._
 
 class MemRead extends BlackBox with HasBlackBoxInline {
@@ -45,54 +45,54 @@ class MemRead extends BlackBox with HasBlackBoxInline {
 
 class DataMemAxi extends Module {
   val s_waitaddr :: s_wait_rvalid :: s_wait_rready :: Nil = Enum(3)
-
-  val axi      = IO(new AxiLiteSignal)
+  // val axi      = IO(new AxiLiteSignal)
+  val axi      = IO(new AxiLiteSignal_S)
   val datamem  = Module(new DataMem)
   val axistate = RegInit(s_waitaddr)
 
-  val raddr = RegEnable(axi.araddr, axi.arvalid & axi.arready)
+  val raddr = RegEnable(axi.master.araddr, axi.master.arvalid & axi.slaver.arready)
   val rdata = RegEnable(datamem.io.rdata, datamem.io.rvalid)
 
   //AR通道
-  axi.arready := Mux(axistate === s_waitaddr, true.B, false.B) //立刻可以接受地址
+  axi.slaver.arready := Mux(axistate === s_waitaddr, true.B, false.B) //立刻可以接受地址
 
   //R通道
-  axi.rvalid := Mux(
+  axi.slaver.rvalid := Mux(
     axistate === s_wait_rvalid, //保证需要先判断 arvalid和arready
     (datamem.io.rvalid),
     Mux(axistate === s_wait_rready, true.B, false.B) //保持置一直到 cpu 读取完毕
   )
-  axi.rresp := 0.U
+  axi.slaver.rresp := 0.U
 
   //AW通道
-  axi.awready := false.B
+  axi.slaver.awready := false.B
 
   //W通道
-  axi.wready := false.B
+  axi.slaver.wready := false.B
 
   //B通道
-  axi.bresp  := DontCare
-  axi.bvalid := DontCare
+  axi.slaver.bresp  := DontCare
+  axi.slaver.bvalid := DontCare
 
   axistate := MuxLookup(
     axistate,
     s_waitaddr,
     List(
-      s_waitaddr -> Mux(axi.arvalid & axi.arready, s_wait_rvalid, s_waitaddr),
-      s_wait_rvalid -> Mux(datamem.io.rvalid, Mux(axi.rready, s_waitaddr, s_wait_rready), s_wait_rvalid),
-      s_wait_rready -> Mux(axi.rready, s_waitaddr, s_wait_rready)
+      s_waitaddr -> Mux(axi.master.arvalid & axi.slaver.arready, s_wait_rvalid, s_waitaddr),
+      s_wait_rvalid -> Mux(datamem.io.rvalid, Mux(axi.master.rready, s_waitaddr, s_wait_rready), s_wait_rvalid),
+      s_wait_rready -> Mux(axi.master.rready, s_waitaddr, s_wait_rready)
     )
   )
 
   //与SRAM的连接
   //AR通道
-  datamem.io.raddr     := Mux(axi.arvalid & axi.arready, axi.araddr, raddr)
-  datamem.io.waddr     := axi.awaddr
-  datamem.io.wdata     := axi.wdata
-  datamem.io.wvalid    := axi.wvalid
-  datamem.io.wstrb     := axi.wstrb
-  datamem.io.readvalid := axi.arvalid & axi.arready
-  axi.rdata            := datamem.io.rdata
+  datamem.io.raddr     := Mux(axi.master.arvalid & axi.slaver.arready, axi.master.araddr, raddr)
+  datamem.io.waddr     := axi.master.awaddr
+  datamem.io.wdata     := axi.master.wdata
+  datamem.io.wvalid    := axi.master.wvalid
+  datamem.io.wstrb     := axi.master.wstrb
+  datamem.io.readvalid := axi.master.arvalid & axi.slaver.arready
+  axi.slaver.rdata     := datamem.io.rdata
   // axi.rvalid           := datamem.io.rvalid
 }
 
@@ -131,68 +131,6 @@ class DataMem extends Module {
   datamemread.io.clock      := clock
 }
 
-class InstMemAxi extends Module {
-  val s_waitaddr :: s_wait_rvalid :: s_wait_rready :: Nil = Enum(3)
-
-  val axi      = IO(new AxiLiteSignal)
-  val instmem  = Module(new InstMem)
-  val axistate = RegInit(s_waitaddr)
-
-  val raddr = RegEnable(axi.araddr, axi.arvalid & axi.arready)
-  val rdata = RegEnable(instmem.io.rdata, instmem.io.rvalid)
-
-  instmem.io.raddr     := Mux(axi.arvalid & axi.arready, axi.araddr, raddr)
-  instmem.io.readvalid := axi.arvalid & axi.arready
-  axi.rdata            := instmem.io.rdata
-
-  //AR通道
-  axi.arready := Mux(axistate === s_waitaddr, true.B, false.B) //立刻可以接受地址
-
-  //R通道
-  axi.rvalid := Mux(
-    axistate === s_wait_rvalid, //保证需要先判断 arvalid和arready
-    instmem.io.rvalid,
-    Mux(axistate === s_wait_rready, true.B, false.B) //保持置一直到 cpu 读取完毕
-  )
-  axi.rresp := 0.U
-
-  //AW通道
-  axi.awready := false.B
-  assert(!axi.awvalid, "InstMemAxi: awvalid must be false")
-
-  //W通道
-  axi.wready := false.B
-  assert(!axi.wvalid, "InstMemAxi: wvalid must be false")
-
-  //B通道
-  axi.bresp  := DontCare
-  axi.bvalid := DontCare
-
-  axistate := MuxLookup(
-    axistate,
-    s_waitaddr,
-    List(
-      s_waitaddr -> Mux(axi.arvalid & axi.arready, s_wait_rvalid, s_waitaddr),
-      s_wait_rvalid -> Mux(instmem.io.rvalid, Mux(axi.rready, s_waitaddr, s_wait_rready), s_wait_rvalid),
-      s_wait_rready -> Mux(axi.rready, s_waitaddr, s_wait_rready)
-    )
-  )
-
-  //与SRAM的连接
-  instmem.io.wvalid := axi.wvalid
-  instmem.io.wstrb  := axi.wstrb
-  instmem.io.waddr  := axi.awaddr
-  instmem.io.wdata  := axi.wdata
-
-}
-class InstMemIO extends Bundle {
-  val pc = Input(UInt(32.W))
-  val en = Input(Bool())
-
-  val inst       = Output(UInt(32.W))
-  val inst_valid = Output(Bool())
-}
-
 class InstMem extends Module {
   val io = IO(new Bundle {
     val raddr  = Input(UInt(32.W))
@@ -211,15 +149,67 @@ class InstMem extends Module {
   val memdata     = RegEnable(instmemread.io.dataout, io.readvalid)
   io.rdata := memdata
 
+  //随机延迟
   val delaytrue = Module(new DelayTrueRandomCycle)
-
-  //连接部分
   delaytrue.io.en := io.readvalid
   io.rvalid       := delaytrue.io.out
 
+  //连接部分
   instmemread.io.addr       := io.raddr
   instmemread.io.clock      := clock
   instmemread.io.writevalid := io.wvalid
   instmemread.io.wmask      := io.wstrb
   instmemread.io.readvalid  := io.readvalid
+}
+class InstMemAxi extends Module {
+  val s_waitaddr :: s_wait_rvalid :: s_wait_rready :: Nil = Enum(3)
+
+  // val axi      = IO(new AxiLiteSignal)
+  val axi      = IO(new AxiLiteSignal_S)
+  val instmem  = Module(new InstMem)
+  val axistate = RegInit(s_waitaddr)
+
+  val raddr = RegEnable(axi.master.araddr, axi.master.arvalid & axi.slaver.arready)
+  val rdata = RegEnable(instmem.io.rdata, instmem.io.rvalid)
+
+  //AR通道
+  axi.slaver.arready := Mux(axistate === s_waitaddr, true.B, false.B) //立刻可以接受地址
+
+  //R通道
+  axi.slaver.rvalid := Mux(
+    axistate === s_wait_rvalid, //保证需要先判断 arvalid和arready
+    (instmem.io.rvalid),
+    Mux(axistate === s_wait_rready, true.B, false.B) //保持置一直到 cpu 读取完毕
+  )
+  axi.slaver.rresp := 0.U
+
+  //AW通道
+  axi.slaver.awready := false.B
+
+  //W通道
+  axi.slaver.wready := false.B
+
+  //B通道
+  axi.slaver.bresp  := DontCare
+  axi.slaver.bvalid := DontCare
+
+  axistate := MuxLookup(
+    axistate,
+    s_waitaddr,
+    List(
+      s_waitaddr -> Mux(axi.master.arvalid & axi.slaver.arready, s_wait_rvalid, s_waitaddr),
+      s_wait_rvalid -> Mux(instmem.io.rvalid, Mux(axi.master.rready, s_waitaddr, s_wait_rready), s_wait_rvalid),
+      s_wait_rready -> Mux(axi.master.rready, s_waitaddr, s_wait_rready)
+    )
+  )
+
+  //与SRAM的连接
+  //AR通道
+  instmem.io.raddr     := Mux(axi.master.arvalid & axi.slaver.arready, axi.master.araddr, raddr)
+  instmem.io.waddr     := axi.master.awaddr
+  instmem.io.wdata     := axi.master.wdata
+  instmem.io.wvalid    := axi.master.wvalid
+  instmem.io.wstrb     := axi.master.wstrb
+  instmem.io.readvalid := axi.master.arvalid & axi.slaver.arready
+  axi.slaver.rdata     := instmem.io.rdata
 }

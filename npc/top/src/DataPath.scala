@@ -1,5 +1,6 @@
 package datapath
 import chisel3._
+import chisel3.util._
 
 class IFU2IDUPath extends Bundle {
   val inst = UInt(32.W)
@@ -85,3 +86,66 @@ class AxiLiteSignal extends Bundle { //mem端
   val bvalid = Output(Bool())
   val bready = Input(Bool())
 }
+class master_source extends Bundle {
+  val arvalid = Input(Bool())
+  val araddr  = Input(UInt(32.W))
+  val rready  = Input(Bool())
+  val awaddr  = Input(UInt(32.W))
+  val awvalid = Input(Bool())
+  val wstrb   = Input(UInt(3.W))
+  val wdata   = Input(UInt(32.W))
+  val wvalid  = Input(Bool())
+  val bready  = Input(Bool())
+}
+
+class slave_source extends Bundle {
+  val arready = Output(Bool())
+  val rvalid  = Output(Bool())
+  val rresp   = Output(UInt(2.W))
+  val rdata   = Output(UInt(32.W))
+  val awready = Output(Bool())
+  val wready  = Output(Bool())
+  val bresp   = Output(UInt(2.W))
+  val bvalid  = Output(Bool())
+}
+
+class AxiLiteSignal_M extends Bundle {
+  val master = Flipped(new master_source)
+  val slaver = Flipped(new slave_source)
+}
+class AxiLiteSignal_S extends Bundle {
+  val master = new master_source
+  val slaver = new slave_source
+}
+
+// class AxiLiteSignal_D_F extends Bundle {
+//   val m2s = Flipped(new master_source)
+//   val s2m = (new slave_source)
+// }
+
+// class master_source extends Bundle {
+//   val arvalid = (Bool()) //CPU已经读出有效数据
+//   val araddr  = (UInt(32.W))
+//   val rready  = (Bool()) //存储器可以接受读请求
+//   val awaddr  = (UInt(32.W)) //目前awaddr和araddr一样 没有让读写同时进行
+//   val awvalid = (Bool())
+//   val wstrb   = (UInt(3.W))
+//   val wdata   = (UInt(32.W))
+//   val wvalid  = (Bool())
+//   val bready  = (Bool())
+// }
+// class slave_source extends Bundle {
+//
+//   val arready = (Bool()) //通知CPU可以读取数据
+//   val rvalid  = (Bool()) //读请求有效
+//   val rresp   = (UInt(2.W)) //异常信号
+//   val rdata   = (UInt(32.W)) //读出的数据
+//   val awready = (Bool())
+//   val bresp   = (UInt(2.W)) //异常信号
+//   val bvalid  = (Bool())
+// }
+//
+// class AxiLiteSignal_D extends Bundle { //m -> c
+//   val m2s = new master_source
+//   val s2m = Flipped(new slave_source)
+// }

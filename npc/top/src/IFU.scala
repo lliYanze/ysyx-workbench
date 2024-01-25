@@ -14,18 +14,17 @@ class PC extends Module {
   io.pc := pc
 }
 
-import datapath.{AxiLiteSignal, IFU2IDUPath}
+// import datapath.{AxiLiteSignal, AxiLiteSignal_D, IFU2IDUPath}
+import datapath._
 import Memory.InstMemAxi
 
 class IFU extends Module {
   val io = IO(new Bundle {
     val ifu2idu = Decoupled(new IFU2IDUPath)
     val instout = Output(UInt(32.W))
-
-    val pcin = Input(UInt(32.W))
-    val pc   = Output(UInt(32.W))
-
-    val diff = Output(Bool())
+    val pcin    = Input(UInt(32.W))
+    val pc      = Output(UInt(32.W))
+    val diff    = Output(Bool())
 
   })
 
@@ -38,8 +37,9 @@ class IFU extends Module {
   io.pc      := io.pcin
 
   //wire
-  val ifu2iduPath  = Wire(new IFU2IDUPath)
-  val axi2mem      = Wire(Flipped(new AxiLiteSignal))
+  val ifu2iduPath = Wire(new IFU2IDUPath)
+  val axi2mem     = Wire(new AxiLiteSignal_M)
+
   val instmemvalid = Wire(Bool())
   val work2down    = Wire(Bool())
   val work2ing     = Wire(Bool())
@@ -63,34 +63,34 @@ class IFU extends Module {
   delay_arvalid.io.en := Mux(
     state === s_begin,
     true.B, //由于最开始输入的地址就是有效值所以直接为true
-    Mux(state === s_workdown, work2ing, Mux(axi2mem.arready, false.B, true.B))
+    Mux(state === s_workdown, work2ing, Mux(axi2mem.slaver.arready, false.B, true.B))
   )
-  axi2mem.arvalid := delay_arvalid.io.out
+  axi2mem.master.arvalid := delay_arvalid.io.out
 
   //R通道
-  delay_rready.io.en := (state === s_working & axi2mem.rvalid)
-  axi2mem.rready     := delay_rready.io.out
+  delay_rready.io.en    := (state === s_working & axi2mem.slaver.rvalid)
+  axi2mem.master.rready := delay_rready.io.out
 
   //AW通道
-  axi2mem.awvalid := false.B
-  axi2mem.awaddr  := DontCare
-  assert(axi2mem.awready === false.B, "awready must be false.B")
+  axi2mem.master.awvalid := false.B
+  axi2mem.master.awaddr  := DontCare
+  assert(axi2mem.slaver.awready === false.B, "awready must be false.B")
 
   //W通道
-  axi2mem.wdata  := DontCare
-  axi2mem.wstrb  := 0x2.U
-  axi2mem.wvalid := false.B
-  assert(axi2mem.wready === false.B, "wready must be false.B")
+  axi2mem.master.wdata  := DontCare
+  axi2mem.master.wstrb  := 0x2.U
+  axi2mem.master.wvalid := false.B
+  assert(axi2mem.slaver.wready === false.B, "wready must be false.B")
 
   //B通道
-  axi2mem.bready := false.B
-  assert(axi2mem.bvalid === false.B, "bvalid must be false.B")
+  axi2mem.master.bready := false.B
+  assert(axi2mem.slaver.bvalid === false.B, "bvalid must be false.B")
 
   //axi连线
-  axi2mem.araddr   := io.pcin
-  instmemvalid     := axi2mem.rvalid & axi2mem.rready
-  io.instout       := axi2mem.rdata
-  ifu2iduPath.inst := axi2mem.rdata
+  axi2mem.master.araddr := io.pcin
+  instmemvalid          := axi2mem.slaver.rvalid & axi2mem.master.rready
+  io.instout            := axi2mem.slaver.rdata
+  ifu2iduPath.inst      := axi2mem.slaver.rdata
 
   //state转移
   old_state := state
@@ -106,27 +106,7 @@ class IFU extends Module {
   io.diff := Mux((old_state === s_workdown) & (state === s_working), true.B, false.B)
 
   //axi连线
-  instmemaxi.axi.araddr  := axi2mem.araddr
-  instmemaxi.axi.arvalid := axi2mem.arvalid
-  axi2mem.arready        := instmemaxi.axi.arready
 
-  axi2mem.rdata         := instmemaxi.axi.rdata
-  axi2mem.rresp         := instmemaxi.axi.rresp
-  axi2mem.rvalid        := instmemaxi.axi.rvalid
-  instmemaxi.axi.rready := axi2mem.rready
-
-  instmemaxi.axi.awvalid := axi2mem.awvalid
-  instmemaxi.axi.awaddr  := axi2mem.awaddr
-  axi2mem.awready        := instmemaxi.axi.awready
-
-  instmemaxi.axi.wdata  := axi2mem.wdata
-  instmemaxi.axi.wstrb  := axi2mem.wstrb
-  instmemaxi.axi.wvalid := axi2mem.wvalid
-  axi2mem.wready        := instmemaxi.axi.wready
-
-  axi2mem.arready := instmemaxi.axi.arready
-
-  axi2mem.bresp         := instmemaxi.axi.bresp
-  axi2mem.bvalid        := instmemaxi.axi.bvalid
-  instmemaxi.axi.bready := axi2mem.bready
+  instmemaxi.axi.master := axi2mem.master
+  axi2mem.slaver        := instmemaxi.axi.slaver
 }
