@@ -78,7 +78,7 @@ class IFU extends Module {
 
   //W通道
   axi2mem.wdata  := DontCare
-  axi2mem.wstrb  := DontCare
+  axi2mem.wstrb  := 0x2.U
   axi2mem.wvalid := false.B
   assert(axi2mem.wready === false.B, "wready must be false.B")
 
