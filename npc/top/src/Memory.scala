@@ -8,7 +8,7 @@ import chisel3.experimental._
 import datapath.AxiLiteSignal
 import npctools._
 
-class DataMemRead extends BlackBox with HasBlackBoxInline {
+class MemRead extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle {
     val addr       = Input(UInt(32.W))
     val data       = Input(UInt(32.W))
@@ -20,11 +20,11 @@ class DataMemRead extends BlackBox with HasBlackBoxInline {
   })
 
   setInline(
-    "DataMemRead.v",
+    "MemRead.v",
     s"""
        | import "DPI-C" function void data_write(input int addr, input int data, input bit[2:0] wmask);
        | import "DPI-C" function int data_read(input int addr, input bit[2:0] wmask, input bit valid);
-       |module DataMemRead(
+       |module MemRead(
        |    input wire [31:0] addr,
        |    input wire [31:0] data,
        |    input wire [2:0] wmask,
@@ -110,7 +110,7 @@ class DataMem extends Module {
     val rvalid    = Output(Bool()) //有有效数据
 
   })
-  val datamemread = Module(new DataMemRead)
+  val datamemread = Module(new MemRead)
 
 //FIXME: 为了方便默认数据直接就可以读出来,等待valid有效直接读取
   val memdata = RegEnable(datamemread.io.dataout, io.readvalid)
@@ -207,7 +207,7 @@ class InstMem extends Module {
     val rvalid    = Output(Bool()) //有有效数据
   })
   //SRAM部分
-  val instmemread = Module(new InstMemRead)
+  val instmemread = Module(new MemRead)
   val memdata     = RegEnable(instmemread.io.dataout, io.readvalid)
   io.rdata := memdata
 
@@ -222,36 +222,4 @@ class InstMem extends Module {
   instmemread.io.writevalid := io.wvalid
   instmemread.io.wmask      := io.wstrb
   instmemread.io.readvalid  := io.readvalid
-}
-class InstMemRead extends BlackBox with HasBlackBoxInline {
-  val io = IO(new Bundle {
-    val addr       = Input(UInt(32.W))
-    val data       = Input(UInt(32.W))
-    val writevalid = Input(Bool())
-    val readvalid  = Input(Bool())
-    val wmask      = Input(UInt(3.W))
-    val clock      = Input(Clock())
-    val dataout    = Output(UInt(32.W))
-  })
-
-  setInline(
-    "InstMemRead.v",
-    s"""
-       |module InstMemRead(
-       |    input wire [31:0] addr,
-       |    input wire [31:0] data,
-       |    input wire [2:0] wmask,
-       |    input wire writevalid,
-       |    input wire readvalid,
-       |    input wire clock,
-       |    output wire [31:0] dataout
-       |);
-       | assign dataout = (readvalid & ~writevalid) ?  data_read(addr, wmask, readvalid & ~writevalid): 0;
-       | always @(posedge clock) begin
-       |    if (writevalid) data_write(addr, data, wmask);
-       | end
-       |
-       |endmodule
-       |""".stripMargin
-  )
 }
