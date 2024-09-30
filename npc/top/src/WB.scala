@@ -108,17 +108,18 @@ class WB extends Module {
     val reg_wr = Output(Bool())
     val nextpc = Output(UInt(32.W))
   })
-
-  val nextpc     = Module(new NextPc)
-  val datamemaxi = Module(new DataMemAxi)
-  val memregmux  = Module(new MemorRegMux)
-  val csralumux  = Module(new CSRALUMUX)
-  val csr        = Module(new CSR)
+  val s_working :: s_workdown :: Nil = Enum(2)
 
 //AxiLiteSignal
-  val axi2mem = Wire(new AxiLiteSignal_M)
+  val axi2mem = IO(new AxiLiteSignal_M)
+
+  val nextpc    = Module(new NextPc)
+  val memregmux = Module(new MemorRegMux)
+  val csralumux = Module(new CSRALUMUX)
+  val csr       = Module(new CSR)
 
 //state
+  val state    = RegInit(s_workdown)
   val exuvalid = Wire(Bool())
   exuvalid := io.exu2wb.valid & io.wbctrlpath.valid
 
@@ -127,7 +128,7 @@ class WB extends Module {
     exuvalid,
     Mux(
       io.wbctrlpath.bits.datamem_rd,
-      Mux(datamemaxi.axi.master.rready & datamemaxi.axi.slaver.rvalid, true.B, false.B), //在mem返回有效 才可以wb写回
+      Mux(axi2mem.master.rready & axi2mem.slaver.rvalid, true.B, false.B), //在mem返回有效 才可以wb写回
       true.B
     ),
     false.B
@@ -144,6 +145,7 @@ class WB extends Module {
   // FIXME:exu和wb握手后就不应该ctrl信号有效了，但是目前没有实现模块之间握手，所以用一个寄存器来控制无效连续的读信号
   val exu_valid = RegNext(exuvalid)
 
+  // BUG:没有正确实现握手:没有延迟到arready的下一个周期，需要将本模块添加状态后才能正确实现
   delay_arvalid.io.en := Mux(
     exuvalid & ~exu_valid,
     Mux(
@@ -201,9 +203,5 @@ class WB extends Module {
   //外部连线
   io.nextpc := nextpc.io.nextpc
   io.reg_wr := Mux(wbisready, io.wbctrlpath.bits.reg_wr, false.B)
-
-  //axi连线
-  datamemaxi.axi.master := axi2mem.master
-  axi2mem.slaver        := datamemaxi.axi.slaver
 
 }

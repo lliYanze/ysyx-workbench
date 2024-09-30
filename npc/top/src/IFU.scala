@@ -14,7 +14,6 @@ class PC extends Module {
   io.pc := pc
 }
 
-// import datapath.{AxiLiteSignal, AxiLiteSignal_D, IFU2IDUPath}
 import datapath._
 import Memory.InstMemAxi
 
@@ -31,14 +30,13 @@ class IFU extends Module {
   val s_begin :: s_working :: s_workdown :: Nil = Enum(3)
 
   //module
-  val pc         = Module(new PC)
-  val instmemaxi = Module(new InstMemAxi)
+  val pc = Module(new PC)
   pc.io.pcin := io.pcin
   io.pc      := io.pcin
 
   //wire
   val ifu2iduPath = Wire(new IFU2IDUPath)
-  val axi2mem     = Wire(new AxiLiteSignal_M)
+  val axi2mem     = IO(new AxiLiteSignal_M)
 
   val instmemvalid = Wire(Bool())
   val work2down    = Wire(Bool())
@@ -105,8 +103,4 @@ class IFU extends Module {
   )
   io.diff := Mux((old_state === s_workdown) & (state === s_working), true.B, false.B)
 
-  //axi连线
-
-  instmemaxi.axi.master := axi2mem.master
-  axi2mem.slaver        := instmemaxi.axi.slaver
 }

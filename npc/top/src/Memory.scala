@@ -45,7 +45,7 @@ class MemRead extends BlackBox with HasBlackBoxInline {
 
 class DataMemAxi extends Module {
   val s_waitaddr :: s_wait_rvalid :: s_wait_rready :: Nil = Enum(3)
-  // val axi      = IO(new AxiLiteSignal)
+
   val axi      = IO(new AxiLiteSignal_S)
   val datamem  = Module(new DataMem)
   val axistate = RegInit(s_waitaddr)
@@ -85,7 +85,6 @@ class DataMemAxi extends Module {
   )
 
   //与SRAM的连接
-  //AR通道
   datamem.io.raddr     := Mux(axi.master.arvalid & axi.slaver.arready, axi.master.araddr, raddr)
   datamem.io.waddr     := axi.master.awaddr
   datamem.io.wdata     := axi.master.wdata
@@ -93,7 +92,6 @@ class DataMemAxi extends Module {
   datamem.io.wstrb     := axi.master.wstrb
   datamem.io.readvalid := axi.master.arvalid & axi.slaver.arready
   axi.slaver.rdata     := datamem.io.rdata
-  // axi.rvalid           := datamem.io.rvalid
 }
 
 class DataMem extends Module {
@@ -164,7 +162,6 @@ class InstMem extends Module {
 class InstMemAxi extends Module {
   val s_waitaddr :: s_wait_rvalid :: s_wait_rready :: Nil = Enum(3)
 
-  // val axi      = IO(new AxiLiteSignal)
   val axi      = IO(new AxiLiteSignal_S)
   val instmem  = Module(new InstMem)
   val axistate = RegInit(s_waitaddr)
@@ -204,7 +201,6 @@ class InstMemAxi extends Module {
   )
 
   //与SRAM的连接
-  //AR通道
   instmem.io.raddr     := Mux(axi.master.arvalid & axi.slaver.arready, axi.master.araddr, raddr)
   instmem.io.waddr     := axi.master.awaddr
   instmem.io.wdata     := axi.master.wdata
@@ -212,4 +208,45 @@ class InstMemAxi extends Module {
   instmem.io.wstrb     := axi.master.wstrb
   instmem.io.readvalid := axi.master.arvalid & axi.slaver.arready
   axi.slaver.rdata     := instmem.io.rdata
+}
+
+class MemAxi extends Module {
+  val instmemaxi = Module(new InstMemAxi)
+  val datamemaxi = Module(new DataMemAxi)
+
+  val getifuaxi = IO(new AxiLiteSignal_S)
+  val getwbaxi  = IO(new AxiLiteSignal_S)
+  assert(~(getifuaxi.master.arvalid & getwbaxi.master.arvalid), "ifu和wb不可以同时有效")
+
+  val axipath = Wire(new AxiLiteSignal_S)
+
+  val s_ifu :: s_wb :: Nil = Enum(2)
+  val state                = RegInit(s_ifu)
+  state := MuxLookup(
+    state,
+    s_ifu,
+    List(
+      s_ifu -> Mux(getwbaxi.master.arvalid, s_wb, s_ifu),
+      s_wb -> Mux(getifuaxi.master.arvalid, s_ifu, s_wb)
+    )
+  )
+
+  getifuaxi.slaver := Mux(state === s_ifu, axipath.slaver, 0.U.asTypeOf(axipath).slaver)
+  getwbaxi.slaver  := Mux(state === s_wb, axipath.slaver, 0.U.asTypeOf(axipath).slaver)
+
+  axipath.slaver := Mux(state === s_ifu, instmemaxi.axi.slaver, datamemaxi.axi.slaver)
+  when(state === s_ifu) {
+    axipath.master        := getifuaxi.master
+    instmemaxi.axi.master := axipath.master
+    datamemaxi.axi.master := 0.U.asTypeOf(axipath).master
+  }.elsewhen(state === s_wb) {
+    axipath.master        := getwbaxi.master
+    datamemaxi.axi.master := axipath.master
+    instmemaxi.axi.master := 0.U.asTypeOf(axipath).master
+  }.otherwise {
+    axipath.master        := getwbaxi.master
+    datamemaxi.axi.master := 0.U.asTypeOf(axipath).master
+    instmemaxi.axi.master := 0.U.asTypeOf(axipath).master
+  }
+
 }

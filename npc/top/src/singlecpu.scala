@@ -11,6 +11,9 @@ import IDU.IDU
 import EXU.EXU
 import WB.WB
 
+import Memory._
+import datapath._
+
 object StageConnect {
   def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T]) = {
     val arch = "multi"
@@ -24,17 +27,27 @@ object StageConnect {
   }
 }
 
+object AxiConnect {
+  def apply[T <: Data](left: AxiLiteSignal_M, right: AxiLiteSignal_S) = {
+    right.master := left.master
+    left.slaver  := right.slaver
+  }
+}
+
 class Core extends Module {
   val io = IO(new Bundle {
     val nextpc = Output(UInt(32.W))
     val pc     = Output(UInt(32.W))
     val diff   = Output(Bool())
   })
-
   val ifu = Module(new IFU)
   val idu = Module(new IDU)
   val exu = Module(new EXU)
   val wb  = Module(new WB)
+
+  // val instmemaxi = Module(new InstMemAxi)
+  // val datamemaxi = Module(new DataMemAxi)
+  val memaxi = Module(new MemAxi)
 
   val endnpc    = Module(new EndNpc)
   val insttrace = Module(new InstTrace)
@@ -50,6 +63,11 @@ class Core extends Module {
   StageConnect(exu.io.exu2wb, wb.io.exu2wb)
   StageConnect(idu.io.ctrlpath, exu.io.ctrlpath)
   StageConnect(exu.io.wbctrlpath, wb.io.wbctrlpath)
+
+  // AxiConnect(ifu.axi2mem, instmemaxi.axi)
+  // AxiConnect(wb.axi2mem, datamemaxi.axi)
+  AxiConnect(ifu.axi2mem, memaxi.getifuaxi)
+  AxiConnect(wb.axi2mem, memaxi.getwbaxi)
 
   //写回时内部有关的信号
   idu.io.regdatain := wb.io.wbdataout
