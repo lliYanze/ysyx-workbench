@@ -75,7 +75,9 @@ IMG ?=
 
 verilator: $(BIN)
 
-NPC_EXE:= LD_PRELOAD=/lib/x86_64-linux-gnu/libasan.so.6 $(BIN) $(ARGS) $(IMG)
+# 如果使用asan，需要在前面加上LD_PRELOAD
+# NPC_EXE:= LD_PRELOAD=/lib/x86_64-linux-gnu/libasan.so.6 $(BIN) $(ARGS) $(IMG)
+NPC_EXE:= $(BIN) $(ARGS) $(IMG)
 
 verilog: 
 	$(call git_commit, "generate verilog")
